@@ -32,4 +32,5 @@ nimble test
 
 ~~~
 nim c -r examples/basic/basic.nim
+nim c -r examples/fonts/fonts.nim
 ~~~
