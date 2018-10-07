@@ -1,12 +1,19 @@
-# This is just an example to get you started. You may wish to put all of your
-# tests into a single file, or separate them into multiple `test1`, `test2`
-# etc. files (better names are recommended, just make sure the name starts with
-# the letter 't').
-#
-# To run these tests, simply execute `nimble test`.
 
 import unittest
 
-import wiish
-test "can add":
-  check add(5, 5) == 10
+import wiishpkg/cmdparser
+
+test "can parse flags":
+  var p = mkParser:
+    flag("-h", "--help", help = "something")
+    flag("-a")
+  
+  check p.parse("-a").a == true
+  check p.parse("--help").help == true
+  check p.parse("-h").help == true
+
+test "can parse string opts":
+  var p = mkParser:
+    opt("-o", string)
+  
+  check p.parse("-o hello").o == "hello"
