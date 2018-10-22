@@ -1,0 +1,11 @@
+[main]
+version = "0.1.0"
+name    = "Wiish Mac Demo"
+distDir = "./dist"
+src     = "basicmac.nim"
+include = []
+
+
+[macos]
+bundle_identifier = "com.example.wiish.basicmac"
+category_type = "public.app-category.example"

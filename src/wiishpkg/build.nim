@@ -1,4 +1,5 @@
 import os
+import osproc
 import ospaths
 import strformat
 import parsetoml
@@ -9,8 +10,8 @@ const default_mac_icon = slurp"./data/default.icns"
 proc doMacBuild(directory:string, config:TomlValueRef) =
   echo "Doing mac build..."
   let app_name = config["main"]["name"].stringVal
-  let bin_file = (directory/config["main"]["bin"].stringVal).normalizedPath
-  let executable_name = bin_file.splitFile.name
+  let src_file = (directory/config["main"]["src"].stringVal).normalizedPath
+  let executable_name = src_file.splitFile.name
   echo &"Name: {app_name}"
   let dist_dir = (directory/config["main"]["distDir"].stringVal/"macos").normalizedPath
   echo &"Output dir: {dist_dir}"
@@ -28,8 +29,18 @@ proc doMacBuild(directory:string, config:TomlValueRef) =
   # Contents/PkgInfo
   (Contents/"PkgInfo").writeFile("APPL????")
 
-  # Contents/MacOS/bin
-  copyFile(bin_file, Contents/"MacOS"/executable_name)
+  # Compile Contents/MacOS/bin
+  echo "Compiling with objc..."
+  echo getCurrentDir()
+  let bin_file = Contents/"MacOS"/executable_name
+  let args = @["objc", &"-o:{bin_file}", src_file]
+  var p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
+  let result = p.waitForExit()
+  if result != 0:
+    echo "Error compiling objc"
+    quit(1)
+
+  # copyFile(bin_file, Contents/"MacOS"/executable_name)
 
   writeFile(Contents/"Resources"/executable_name & ".icns", default_mac_icon)
 
