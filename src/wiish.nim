@@ -19,13 +19,13 @@ let p = newParser("wiish"):
   command "build":
     help("Package an application for distribution")
     flag("-h", "--help", help="Display help")
-    flag("--macos", help="Build for macOS")
+    flag("--mac", help="Build for macOS")
     arg("directory", default=".")
     run:
       if opts.help:
         echo p.help
         quit(0)
-      doBuild(directory = opts.directory, macos = opts.macos)
+      doBuild(directory = opts.directory, macos = opts.mac)
   command "run":
     help("Run an application (from the current dir)")
     flag("-h", "--help", help="Display help")

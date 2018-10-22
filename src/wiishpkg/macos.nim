@@ -2,20 +2,19 @@ import os
 import osproc
 import ospaths
 import strformat
+import posix
 
 import parsetoml
 
 const default_mac_icon = slurp"./data/default.icns"
 
-proc compileMacos*(directory: string, config:TomlValueRef) =
-  ## Compile for macOS
-
 proc doMacRun*(directory:string, config:TomlValueRef) =
   ## Run the mac app
   echo "Doing macOS run..."
+  var p:Process
   let src_file = (directory/config["main"]["src"].stringVal).normalizedPath
   let args = @["objc", "-r", src_file]
-  var p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
+  p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
   let result = p.waitForExit()
   quit(result)
 
@@ -47,7 +46,7 @@ proc doMacBuild*(directory:string, config:TomlValueRef) =
   echo "Compiling with objc..."
   echo getCurrentDir()
   let bin_file = Contents/"MacOS"/executable_name
-  let args = @["objc", &"-o:{bin_file}", src_file]
+  let args = @["objc", "-d:release", &"-o:{bin_file}", src_file]
   var p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
   let result = p.waitForExit()
   if result != 0:
@@ -84,6 +83,8 @@ proc doMacBuild*(directory:string, config:TomlValueRef) =
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
   <string>{version}</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
   <key>LSMinimumSystemVersionByArchitecture</key>
   <dict>
     <key>x86_64</key>

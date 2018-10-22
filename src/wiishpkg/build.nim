@@ -18,3 +18,4 @@ proc doRun*(directory:string = ".") =
   let config = parsetoml.parseFile(config_file)
   when defined(macosx):
     doMacRun(directory, config)
+    
