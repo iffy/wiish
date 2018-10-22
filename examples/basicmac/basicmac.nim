@@ -56,7 +56,7 @@ when defined(macosx):
         
         [window setTitle: @"Hello, World!"];
         [window display];
-        //[window orderFrontRegardless];
+        [window orderFrontRegardless];
         [window makeKeyWindow];
         AppDelegate* appDel = [[AppDelegate alloc] init];
         [NSApp setDelegate: appDel];

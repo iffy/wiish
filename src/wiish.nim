@@ -29,11 +29,12 @@ let p = newParser("wiish"):
   command "run":
     help("Run an application (from the current dir)")
     flag("-h", "--help", help="Display help")
+    arg("directory", default=".")
     run:
       if opts.help:
         echo p.help
         quit(0)
-      echo "run command"
+      doRun(directory = opts.directory)
 
 if isMainModule:
   p.run()
