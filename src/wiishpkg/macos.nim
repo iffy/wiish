@@ -16,12 +16,13 @@ const default_mac_icon = slurp"./data/default.icns"
 
 proc macOSConfig(config:Config):MacOSConfig =
   result = MacOSConfig()
-  result.name = config.name
-  result.version = config.version
-  result.src = config.src
-  result.dst = config.dst
-  result.bundle_identifier = config.toml["macos"]["bundle_identifier"].stringVal
-  result.category_type = config.toml["macos"]["category_type"].stringVal
+  let toml = config.toml
+  result.name = toml.get(@["macos", "main"], "name", ?DEFAULTS.name).stringVal
+  result.version = toml.get(@["macos", "main"], "version", ?DEFAULTS.version).stringVal
+  result.src = toml.get(@["macos", "main"], "src", ?DEFAULTS.src).stringVal
+  result.dst = toml.get(@["macos", "main"], "dst", ?DEFAULTS.dst).stringVal
+  result.bundle_identifier = toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
+  result.category_type = toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 
 proc doMacRun*(directory:string, config:Config) =
   ## Run the mac app
@@ -32,6 +33,7 @@ proc doMacRun*(directory:string, config:Config) =
   let args = @["objc", "-r", src_file]
   p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
   let result = p.waitForExit()
+  echo "result:", $result
   quit(result)
 
 

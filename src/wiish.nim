@@ -16,6 +16,15 @@ let p = newParser("wiish"):
     if opts.help:
       echo p.help
       quit(0)
+  command "init":
+    help("Create a new wiish application")
+    flag("-h", "--help", help="Display help")
+    arg("directory", default=".")
+    run:
+      if opts.help:
+        echo p.help
+        quit(0)
+      doInit(directory = opts.directory)
   command "build":
     help("Package an application for distribution")
     flag("-h", "--help", help="Display help")

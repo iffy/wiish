@@ -2,12 +2,14 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 # TODO
 
+- [X] `wiish init` for creating new projects
 - [ ] MacOS
     - [ ] Generate icon files from png files
 - [ ] Windows desktop app
 - [ ] Linux desktop app
 - [ ] iOS app
 - [ ] Android app
+- [ ] Allow OS-specific options to override `[main]` settings in config
 
 # Getting wiish
 
@@ -19,13 +21,11 @@ nimble build
 
 # Usage
 
-1. First make a `wiish.toml` (see [examples/basicmac/wiish.toml](examples/basicmac/wiish.toml) for an example).
+1. Run `mkdir somedir && cd somedir && wiish init` to make a new project
 
-2. Create a source Nim file (see [examples/basicmac/basicmac.nim](examples/basicmac/basicmac.nim)).
+2. Run the application with `wiish run`
 
-3. Run the application with `./wiish run`
-
-4. Package the application with `./wiish build --mac`
+3. Package the application with `wiish build --mac`
 
 
 # Running tests
