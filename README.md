@@ -43,3 +43,7 @@ nim c -r examples/fonts/fonts.nim
 - SDL does what GLFW does plus sound and other stuff <https://www.khronos.org/opengl/wiki/Related_toolkits_and_APIs>
 
 - NanoVG is a vector graphics library for OpenGL <https://github.com/memononen/nanovg>.  Single file: <https://github.com/memononen/nanovg/tree/master/src>
+
+# TODO
+
+- [ ] Generate icon files from png files
