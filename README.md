@@ -1,26 +1,32 @@
-# Installing dependencies
+Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.
 
-## macOS
+# TODO
+
+- [ ] MacOS
+    - [ ] Generate icon files from png files
+- [ ] Windows desktop app
+- [ ] Linux desktop app
+- [ ] iOS app
+- [ ] Android app
+
+# Getting wiish
+
+Right now, there's no precompiled binaries for `wiish`.  To build it, clone this repo, then:
 
 ~~~
-nimble install
+nimble build
 ~~~
 
-## Linux
+# Usage
 
-TODO
+1. First make a `wiish.toml` (see [examples/basicmac/wiish.toml](examples/basicmac/wiish.toml) for an example).
 
-## Windows
+2. Create a source Nim file (see [examples/basicmac/basicmac.nim](examples/basicmac/basicmac.nim)).
 
-TODO
+3. Run the application with `./wiish run`
 
-## iOS
+4. Package the application with `./wiish build --mac`
 
-TODO
-
-## android
-
-TODO
 
 # Running tests
 
@@ -44,6 +50,4 @@ nim c -r examples/fonts/fonts.nim
 
 - NanoVG is a vector graphics library for OpenGL <https://github.com/memononen/nanovg>.  Single file: <https://github.com/memononen/nanovg/tree/master/src>
 
-# TODO
-
-- [ ] Generate icon files from png files
+- Nuklear might be nice for making GUIs
