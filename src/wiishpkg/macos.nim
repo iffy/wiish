@@ -3,37 +3,53 @@ import osproc
 import ospaths
 import strformat
 import posix
-
 import parsetoml
+
+import ./config
+
+type
+  MacOSConfig = object of Config
+    bundle_identifier*: string
+    category_type*: string
 
 const default_mac_icon = slurp"./data/default.icns"
 
-proc doMacRun*(directory:string, config:TomlValueRef) =
+proc macOSConfig(config:Config):MacOSConfig =
+  result = MacOSConfig()
+  result.name = config.name
+  result.version = config.version
+  result.src = config.src
+  result.dst = config.dst
+  result.bundle_identifier = config.toml["macos"]["bundle_identifier"].stringVal
+  result.category_type = config.toml["macos"]["category_type"].stringVal
+
+proc doMacRun*(directory:string, config:Config) =
   ## Run the mac app
+  let config = config.macOSConfig()
   echo "Doing macOS run..."
   var p:Process
-  let src_file = (directory/config["main"]["src"].stringVal).normalizedPath
+  let src_file = (directory/config.src).normalizedPath
   let args = @["objc", "-r", src_file]
   p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
   let result = p.waitForExit()
   quit(result)
 
 
-proc doMacBuild*(directory:string, config:TomlValueRef) =
+proc doMacBuild*(directory:string, config:Config) =
   ## Package a mac application
   echo "Doing mac build..."
-  let app_name = config["main"]["name"].stringVal
-  let src_file = (directory/config["main"]["src"].stringVal).normalizedPath
+  let config = config.macOSConfig()
+  let src_file = (directory/config.src).normalizedPath
   let executable_name = src_file.splitFile.name
-  echo &"Name: {app_name}"
-  let dist_dir = (directory/config["main"]["distDir"].stringVal/"macos").normalizedPath
+  echo &"Name: {config.name}"
+  let dist_dir = (directory/config.dst/"macos").normalizedPath
   echo &"Output dir: {dist_dir}"
   
-  let version = config["main"]["version"].stringVal
-  let bundle_identifier = config["macos"]["bundle_identifier"].stringVal
-  let category_type = config["macos"]["category_type"].stringVal
+  let version = config.version
+  let bundle_identifier = config.bundle_identifier
+  let category_type = config.category_type
   
-  let unpacked_dir = dist_dir/app_name & ".app"
+  let unpacked_dir = dist_dir/config.name & ".app"
   let Contents = unpacked_dir/"Contents"
   createDir(Contents)
   createDir(Contents/"Resources")
@@ -78,7 +94,7 @@ proc doMacBuild*(directory:string, config:TomlValueRef) =
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>{app_name}</string>
+  <string>{config.name}</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

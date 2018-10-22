@@ -1,10 +1,9 @@
 [main]
-version = "0.1.0"
 name    = "Wiish Mac Demo"
-distDir = "./dist"
+version = "0.1.0"
 src     = "basicmac.nim"
+dst     = "./dist"
 include = []
-
 
 [macos]
 bundle_identifier = "com.example.wiish.basicmac"
