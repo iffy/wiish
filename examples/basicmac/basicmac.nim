@@ -68,15 +68,15 @@ when defined(macosx):
   [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
   NSUInteger windowStyle = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
   NSRect windowRect = NSMakeRect(100,100,400,300);
-  //window = [[MyWindow alloc] 
-  //  initWithContentRect: windowRect
-  //  styleMask: windowStyle
-  //  backing: NSBackingStoreBuffered
-  //  defer: YES];
-  //[window setTitle: @"Hello, World!"];
-  //[window display];
-  //[window orderFrontRegardless];
-  //[window makeKeyWindow];
+  window = [[MyWindow alloc] 
+    initWithContentRect: windowRect
+    styleMask: windowStyle
+    backing: NSBackingStoreBuffered
+    defer: YES];
+  [window setTitle: @"Hello, World!"];
+  [window display];
+  [window orderFrontRegardless];
+  [window makeKeyWindow];
   AppDelegate* appDel = [[AppDelegate alloc] init];
   [NSApp setDelegate: appDel];
   [NSApp run];
