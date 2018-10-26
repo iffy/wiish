@@ -9,7 +9,7 @@ randomize()
 
 suite "build":
   test "build":
-    let directory = (currentSourcePath.parentDir/"../examples/basic").normalizedPath
+    let directory = (currentSourcePath.parentDir/".."/"examples"/"basic").normalizedPath
     doBuild(directory)
 
   test "init and build":
