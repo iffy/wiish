@@ -4,10 +4,12 @@ export events
 type
   App = object
     launched*: EventSource[bool]
+    willTerminate*: EventSource[bool]
 
 ## The singleton application instance.
 var app* = App()
 app.launched = newEventSource[bool]()
+app.willTerminate = newEventSource[bool]()
 
 when defined(macosx):
   when defined(ios):
@@ -17,6 +19,9 @@ when defined(macosx):
     # macOS desktop
     proc mac_onLaunched {.exportc.} =
       app.launched.emit(true)
+    
+    proc mac_onWillTerminate {.exportc.} =
+      app.willTerminate.emit(true)
     
     {.passL: "-framework Foundation" .}
     {.passL: "-framework AppKit" .}
@@ -50,6 +55,7 @@ when defined(macosx):
 }
 - (void) applicationWillTerminate:(NSNotification *)aNotification {
   printf("Application will terminate\n");
+  mac_onWillTerminate();
 }
 @end
 
@@ -58,9 +64,14 @@ when defined(macosx):
 {
   // MyWindow* window;
 }
+- (void)terminateApp;
 - (void)run;
 @end
 @implementation Wiish
+- (void)terminateApp
+{
+  [NSApp terminate:nil];
+}
 - (void)run
 {
   printf("init start\n");
@@ -89,8 +100,14 @@ when defined(macosx):
     
     proc newWiish: Id {.importobjc: "Wiish new", nodecl .}
     proc run(self: Id) {.importobjc: "run", nodecl .}
+    proc terminateApp(self: Id) {.importobjc: "terminateApp", nodecl .}
+    
+    var wiish: Id
 
     proc start*(app:App) =
       echo "Starting app"
-      var wiish = newWiish()
+      wiish = newWiish()
       wiish.run()
+    
+    proc quit*(app:App) =
+      wiish.terminateApp()

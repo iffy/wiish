@@ -9,12 +9,14 @@ type
     version*: string
     src*: string
     dst*: string
+    nimflags*: seq[string]
 
 const DEFAULTS* = (
   name: "Wiish App",
   version: "0.1.0",
   src: "app.nim",
   dst: "dist",
+  nimflags: @[],
 )
 
 proc get*(maintoml: TomlValueRef, key:string): TomlValueRef =
@@ -44,3 +46,6 @@ proc readConfig*(filename:string):Config =
   result.version = toml.get(@["main"], "version", ?DEFAULTS.version).stringVal
   result.src = toml.get(@["main"], "src", ?DEFAULTS.src).stringVal
   result.dst = toml.get(@["main"], "dst", ?DEFAULTS.dst).stringVal
+  result.nimflags = @[]
+  for flag in toml.get(@["main"], "nimflags", ?DEFAULTS.nimflags).arrayVal:
+    result.nimflags.add(flag.stringVal)

@@ -3,7 +3,9 @@ name    = "Wiish Mac Demo"
 version = "0.1.0"
 src     = "basicmac.nim"
 dst     = "./dist"
-include = []
+nimflags = [
+    "-d:glfwStaticLib",
+]
 
 [macos]
 bundle_identifier = "com.example.wiish.basicmac"

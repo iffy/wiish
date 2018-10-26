@@ -17,10 +17,15 @@ const default_mac_icon = slurp"./data/default.icns"
 proc macOSConfig(config:Config):MacOSConfig =
   result = MacOSConfig()
   let toml = config.toml
+  ## Turn this into a template or something
   result.name = toml.get(@["macos", "main"], "name", ?DEFAULTS.name).stringVal
   result.version = toml.get(@["macos", "main"], "version", ?DEFAULTS.version).stringVal
   result.src = toml.get(@["macos", "main"], "src", ?DEFAULTS.src).stringVal
   result.dst = toml.get(@["macos", "main"], "dst", ?DEFAULTS.dst).stringVal
+  result.nimflags = @[]
+  for flag in toml.get(@["macos", "main"], "nimflags", ?DEFAULTS.nimflags).arrayVal:
+    echo "adding nimflag", flag.repr
+    result.nimflags.add(flag.stringVal)
   result.bundle_identifier = toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 
@@ -30,7 +35,13 @@ proc doMacRun*(directory:string, config:Config) =
   echo "Doing macOS run..."
   var p:Process
   let src_file = (directory/config.src).normalizedPath
-  let args = @["objc", "-r", src_file]
+  var args = @[
+    "objc",
+  ]
+  for flag in config.nimflags:
+    args.add(flag)
+  args.add("-r")
+  args.add(src_file)
   p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
   let result = p.waitForExit()
   echo "result:", $result
@@ -64,7 +75,14 @@ proc doMacBuild*(directory:string, config:Config) =
   echo "Compiling with objc..."
   echo getCurrentDir()
   let bin_file = Contents/"MacOS"/executable_name
-  let args = @["objc", "-d:release", &"-o:{bin_file}", src_file]
+  var args = @[
+    "objc",
+    "-d:release",
+  ]
+  for flag in config.nimflags:
+    args.add(flag)
+  args.add(&"-o:{bin_file}")
+  args.add(src_file)
   var p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
   let result = p.waitForExit()
   if result != 0:
