@@ -2,6 +2,7 @@ import os
 import strformat
 import parsetoml
 import ./build_macos
+import ./build_windows
 import ./config
 
 const default_icon = slurp"./data/default.png"
@@ -25,13 +26,17 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
   echo "doBuild ", directory, macos, windows, linux
   if macos:
     doMacBuild(directory, config)
-  else:
-    raise newException(CatchableError, &"Platform not yet supported")
+  if windows:
+    doWindowsBuild(directory, config)
+  if linux:
+    raise newException(CatchableError, &"Linux not supported yet")
 
 proc doRun*(directory:string = ".") =
   let config = getConfig(directory/"wiish.toml")
   when defined(macosx):
     doMacRun(directory, config)
+  when defined(windows):
+    doWindowsRun(directory, config)
 
 proc doInit*(directory:string = ".") =
   directory.createDir()

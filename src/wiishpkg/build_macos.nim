@@ -22,7 +22,6 @@ proc macOSConfig(config:Config):MacOSConfig =
 proc doMacRun*(directory:string, config:Config) =
   ## Run the mac app
   let config = config.macOSConfig()
-  echo "Doing macOS run..."
   var p:Process
   let src_file = (directory/config.src).normalizedPath
   var args = @[
@@ -33,22 +32,17 @@ proc doMacRun*(directory:string, config:Config) =
     args.add(flag)
   args.add("-r")
   args.add(src_file)
-  echo "args:", args
   p = startProcess(command="nim", args = args, options = {poUsePath})
   let result = p.waitForExit()
-  echo "result:", $result
   quit(result)
 
 
 proc doMacBuild*(directory:string, config:Config) =
   ## Package a mac application
-  echo "Doing mac build..."
   let config = config.macOSConfig()
   let src_file = (directory/config.src).normalizedPath
   let executable_name = src_file.splitFile.name
-  echo &"Name: {config.name}"
   let dist_dir = (directory/config.dst/"macos").normalizedPath
-  echo &"Output dir: {dist_dir}"
   
   let version = config.version
   let bundle_identifier = config.bundle_identifier
@@ -64,8 +58,6 @@ proc doMacBuild*(directory:string, config:Config) =
   (Contents/"PkgInfo").writeFile("APPL????")
 
   # Compile Contents/MacOS/bin
-  echo "Compiling with objc..."
-  echo getCurrentDir()
   let bin_file = Contents/"MacOS"/executable_name
   var args = @[
     "objc",
@@ -76,7 +68,6 @@ proc doMacBuild*(directory:string, config:Config) =
     args.add(flag)
   args.add(&"-o:{bin_file}")
   args.add(src_file)
-  echo "args:", args
   var p = startProcess(command="nim", args = args, options = {poUsePath})
   let result = p.waitForExit()
   if result != 0:
