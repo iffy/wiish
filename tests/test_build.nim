@@ -12,6 +12,9 @@ suite "build":
     echo "currentSourcePath: ", currentSourcePath.repr
     echo "abs: ", currentSourcePath.absolutePath.repr
     let directory = (currentSourcePath.absolutePath.parentDir.parentDir/"examples"/"basic").normalizedPath
+    echo "normalized: ", currentSourcePath.parentDir.normalizedPath.repr
+    echo "normalized /a: ", (currentSourcePath.parentDir/"foo").normalizedPath.repr
+    echo "normalized /a/b: ", (currentSourcePath.parentDir/"foo"/"bar").normalizedPath.repr
     echo "parent: ", currentSourcePath.absolutePath.parentDir.repr
     echo "directory: ", directory.repr
     doBuild(directory)
