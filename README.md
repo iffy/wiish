@@ -4,10 +4,10 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 ## Install
 
-Right now, there are no precompiled binaries for `wiish`.  To build it, clone this repo, then:
+First install Nim and nimble, then do
 
 ~~~
-nimble build
+nimble install https://github.com/iffy/wiish.git
 ~~~
 
 ## Make a project
