@@ -1,8 +1,10 @@
 import os
+import osproc
 import strformat
 import parsetoml
 import ./build_macos
 import ./build_windows
+import ./build_linux
 import ./config
 import ./logging
 
@@ -32,14 +34,32 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
     doWindowsBuild(directory, config)
   if linux:
     log("Building Linux desktop...")
-    raise newException(CatchableError, &"Linux not supported yet")
+    doLinuxBuild(directory, config)
 
 proc doRun*(directory:string = ".") =
+  ## Run the application
+  var
+    nim_bin: string
+    args: seq[string]
   let config = getConfig(directory/"wiish.toml")
+  let src_file = directory/config.src
   when defined(macosx):
-    doMacRun(directory, config)
+    nim_bin = "nim"
+    args.add("objc")
   elif defined(windows):
-    doWindowsRun(directory, config)
+    nim_bin = "nim.exe"
+    args.add("c")
+  elif defined(linux):
+    nim_bin = "nim"
+    args.add("c")
+  for flag in config.nimflags:
+    args.add(flag)
+  args.add("-d:glfwStaticLib")
+  args.add("-r")
+  args.add(src_file)
+  var p = startProcess(command=nim_bin, args = args, options = {poUsePath, poParentStreams})
+  let result = p.waitForExit()
+  quit(result)
 
 proc doInit*(directory:string = ".") =
   directory.createDir()

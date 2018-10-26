@@ -2,8 +2,8 @@ import os
 import osproc
 import ospaths
 import strformat
-import posix
 import parsetoml
+import posix
 
 import ./config
 
@@ -18,24 +18,6 @@ proc macOSConfig(config:Config):MacOSConfig =
   result = getConfig[MacOSConfig](config, @["macos", "main"])
   result.bundle_identifier = config.toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
-
-proc doMacRun*(directory:string, config:Config) =
-  ## Run the mac app
-  let config = config.macOSConfig()
-  var p:Process
-  let src_file = (directory/config.src).normalizedPath
-  var args = @[
-    "objc",
-    "-d:glfwStaticLib",
-  ]
-  for flag in config.nimflags:
-    args.add(flag)
-  args.add("-r")
-  args.add(src_file)
-  p = startProcess(command="nim", args = args, options = {poUsePath, poParentStreams})
-  let result = p.waitForExit()
-  quit(result)
-
 
 proc doMacBuild*(directory:string, config:Config) =
   ## Package a mac application
