@@ -37,12 +37,14 @@ proc doMacRun*(directory:string, config:Config) =
   let src_file = (directory/config.src).normalizedPath
   var args = @[
     "objc",
+    "-d:glfwStaticLib",
   ]
   for flag in config.nimflags:
     args.add(flag)
   args.add("-r")
   args.add(src_file)
-  p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
+  echo "args:", args
+  p = startProcess(command="nim", args = args, options = {poUsePath})
   let result = p.waitForExit()
   echo "result:", $result
   quit(result)
@@ -77,13 +79,15 @@ proc doMacBuild*(directory:string, config:Config) =
   let bin_file = Contents/"MacOS"/executable_name
   var args = @[
     "objc",
+    "-d:glfwStaticLib",
     "-d:release",
   ]
   for flag in config.nimflags:
     args.add(flag)
   args.add(&"-o:{bin_file}")
   args.add(src_file)
-  var p = startProcess(command="nim", args = args, options = {poUsePath, poEchoCmd})
+  echo "args:", args
+  var p = startProcess(command="nim", args = args, options = {poUsePath})
   let result = p.waitForExit()
   if result != 0:
     echo "Error compiling objc"

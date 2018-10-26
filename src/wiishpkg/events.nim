@@ -20,6 +20,15 @@ proc emit*[T](es: EventSource[T], message: T) =
 
 template handle*[T](es: EventSource[T], varname:untyped, fnbody:untyped): untyped =
   ## Convient syntax for addListener
+  ##
+  ## .. code-block :: nim
+  ##    eventsource.handle(message):
+  ##      echo "got the message: ", message
+  ##
   es.addListener(proc(varname:T) =
     fnbody
   )
+
+template handle*[T](es: EventSource[T], fnbody: untyped): untyped =
+  ## Convient syntax for when you don't care about the event's message
+  handle(es, _, fnbody)

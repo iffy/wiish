@@ -1,5 +1,4 @@
 ## wiish command line interface
-
 import strformat
 import parseopt
 import tables
@@ -8,7 +7,6 @@ import os
 import parsetoml
 import wiishpkg/build
 import argparse
-
 
 let p = newParser("wiish"):
   flag("-h", "--help", help="Display help")
@@ -46,6 +44,7 @@ let p = newParser("wiish"):
       doRun(directory = opts.directory)
 
 if isMainModule:
+  echo "isMainModule"
   p.run()
 
 
