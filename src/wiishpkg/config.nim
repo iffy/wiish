@@ -33,9 +33,10 @@ proc get*(maintoml: TomlValueRef, key:string): TomlValueRef =
 
 proc get*(maintoml: TomlValueRef, sections:seq[string], key: string, default: TomlValueRef): TomlValueRef =
   for section in sections:
-    let toml = maintoml.get(section)
-    if toml.hasKey(key):
-      return toml[key]
+    if maintoml.hasKey(section):
+      let toml = maintoml.get(section)
+      if toml.hasKey(key):
+        return toml[key]
   return default
 
 proc parseConfig*(filename:string): TomlValueRef =
