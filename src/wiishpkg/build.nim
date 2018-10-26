@@ -4,6 +4,7 @@ import parsetoml
 import ./build_macos
 import ./build_windows
 import ./config
+import ./logging
 
 const default_icon = slurp"./data/default.png"
 const sample_toml = slurp"./data/sample.toml"
@@ -19,23 +20,25 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
   if not macos and not windows and not linux:
     when defined(MacOSX):
       macos = true
-    when defined(Windows):
+    elif defined(Windows):
       windows = true
-    when defined(Linux):
+    elif defined(Linux):
       linux = true
-  echo "doBuild ", directory, macos, windows, linux
   if macos:
+    log("Building macOS desktop...")
     doMacBuild(directory, config)
   if windows:
+    log("Building Windows desktop...")
     doWindowsBuild(directory, config)
   if linux:
+    log("Building Linux desktop...")
     raise newException(CatchableError, &"Linux not supported yet")
 
 proc doRun*(directory:string = ".") =
   let config = getConfig(directory/"wiish.toml")
   when defined(macosx):
     doMacRun(directory, config)
-  when defined(windows):
+  elif defined(windows):
     doWindowsRun(directory, config)
 
 proc doInit*(directory:string = ".") =

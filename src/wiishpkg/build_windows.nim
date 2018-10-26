@@ -26,7 +26,7 @@ proc doWindowsRun*(directory:string, config:Config) =
     args.add(flag)
   args.add("-r")
   args.add(src_file)
-  p = startProcess(command="nim.exe", args = args, options = {poUsePath})
+  p = startProcess(command="nim.exe", args = args, options = {poUsePath, poParentStreams})
   let result = p.waitForExit()
   quit(result)
 

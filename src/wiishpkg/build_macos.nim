@@ -32,7 +32,7 @@ proc doMacRun*(directory:string, config:Config) =
     args.add(flag)
   args.add("-r")
   args.add(src_file)
-  p = startProcess(command="nim", args = args, options = {poUsePath})
+  p = startProcess(command="nim", args = args, options = {poUsePath, poParentStreams})
   let result = p.waitForExit()
   quit(result)
 
@@ -68,7 +68,7 @@ proc doMacBuild*(directory:string, config:Config) =
     args.add(flag)
   args.add(&"-o:{bin_file}")
   args.add(src_file)
-  var p = startProcess(command="nim", args = args, options = {poUsePath})
+  var p = startProcess(command="nim", args = args, options = {poUsePath, poParentStreams})
   let result = p.waitForExit()
   if result != 0:
     echo "Error compiling objc"
