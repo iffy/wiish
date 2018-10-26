@@ -14,7 +14,7 @@ type
 const DEFAULTS* = (
   name: "Wiish App",
   version: "0.1.0",
-  src: "app.nim",
+  src: "myapp.nim",
   dst: "dist",
   nimflags: @[],
 )
@@ -38,14 +38,23 @@ proc get*(maintoml: TomlValueRef, sections:seq[string], key: string, default: To
       return toml[key]
   return default
 
-proc readConfig*(filename:string):Config =
-  result = Config()
-  result.toml = parsetoml.parseFile(filename)
-  var toml = result.toml
-  result.name = toml.get(@["main"], "name", ?DEFAULTS.name).stringVal
-  result.version = toml.get(@["main"], "version", ?DEFAULTS.version).stringVal
-  result.src = toml.get(@["main"], "src", ?DEFAULTS.src).stringVal
-  result.dst = toml.get(@["main"], "dst", ?DEFAULTS.dst).stringVal
+proc parseConfig*(filename:string): TomlValueRef =
+  parsetoml.parseFile(filename)
+
+proc getConfig*[T](toml: TomlValueRef, sections:seq[string] = @["main"]):T =
+  result = T()
+  result.toml = toml
+  result.name = toml.get(sections, "name", ?DEFAULTS.name).stringVal
+  result.version = toml.get(sections, "version", ?DEFAULTS.version).stringVal
+  result.src = toml.get(sections, "src", ?DEFAULTS.src).stringVal
+  result.dst = toml.get(sections, "dst", ?DEFAULTS.dst).stringVal
   result.nimflags = @[]
-  for flag in toml.get(@["main"], "nimflags", ?DEFAULTS.nimflags).arrayVal:
+  for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
     result.nimflags.add(flag.stringVal)
+
+proc getConfig*[T](config: Config, sections:seq[string] = @["main"]):T =
+  getConfig[T](config.toml, sections)
+
+proc getConfig*(filename: string, sections:seq[string] = @["main"]):Config =
+  getConfig[Config](parseConfig(filename), sections)
+  

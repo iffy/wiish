@@ -43,6 +43,7 @@ nim c -r examples/fonts/fonts.nim
 
 ## Notes
 
+This is where I'm currently recording what I've learned about GUI development.
 
 ### Backends
 
@@ -82,7 +83,7 @@ nim c -r examples/fonts/fonts.nim
 
 ### Glossary
 
-- A [**retained mode** GUI](https://en.wikipedia.org/wiki/Retained_mode) is when a bunch of objects are retained and the developer doesn't cause rendering to happen right away.
+- A [**retained mode** GUI](https://en.wikipedia.org/wiki/Retained_mode) is when a bunch of objects are retained by the library (in a tree or something) and the developer doesn't cause rendering to happen right away by making calls.
 - An [**immediate mode** GUI](https://en.wikipedia.org/wiki/Immediate_mode_(computer_graphics)) is when you directly write the graphics to the display.  You probably have to issue all drawing commands on each frame.
 
 ## TODO

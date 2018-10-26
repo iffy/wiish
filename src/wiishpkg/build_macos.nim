@@ -15,19 +15,9 @@ type
 const default_mac_icon = slurp"./data/default.icns"
 
 proc macOSConfig(config:Config):MacOSConfig =
-  result = MacOSConfig()
-  let toml = config.toml
-  ## Turn this into a template or something
-  result.name = toml.get(@["macos", "main"], "name", ?DEFAULTS.name).stringVal
-  result.version = toml.get(@["macos", "main"], "version", ?DEFAULTS.version).stringVal
-  result.src = toml.get(@["macos", "main"], "src", ?DEFAULTS.src).stringVal
-  result.dst = toml.get(@["macos", "main"], "dst", ?DEFAULTS.dst).stringVal
-  result.nimflags = @[]
-  for flag in toml.get(@["macos", "main"], "nimflags", ?DEFAULTS.nimflags).arrayVal:
-    echo "adding nimflag", flag.repr
-    result.nimflags.add(flag.stringVal)
-  result.bundle_identifier = toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
-  result.category_type = toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
+  result = getConfig[MacOSConfig](config, @["macos", "main"])
+  result.bundle_identifier = config.toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
+  result.category_type = config.toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 
 proc doMacRun*(directory:string, config:Config) =
   ## Run the mac app

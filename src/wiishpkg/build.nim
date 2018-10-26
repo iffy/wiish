@@ -1,7 +1,7 @@
 import os
 import strformat
 import parsetoml
-import ./macos
+import ./build_macos
 import ./config
 
 const default_icon = slurp"./data/default.png"
@@ -14,7 +14,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
     macos = macos
     linux = linux
     windows = windows
-  let config = readConfig(directory/"wiish.toml")
+  let config = getConfig(directory/"wiish.toml")
   if not macos and not windows and not linux:
     when defined(MacOSX):
       macos = true
@@ -29,7 +29,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
     raise newException(CatchableError, &"Platform not yet supported")
 
 proc doRun*(directory:string = ".") =
-  let config = readConfig(directory/"wiish.toml")
+  let config = getConfig(directory/"wiish.toml")
   when defined(macosx):
     doMacRun(directory, config)
 
