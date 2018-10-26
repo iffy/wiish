@@ -26,13 +26,19 @@ let p = newParser("wiish"):
   command "build":
     help("Package an application for distribution")
     flag("-h", "--help", help="Display help")
-    flag("--mac", help="Build for macOS")
+    flag("--mac", help="Build macOS desktop app")
+    flag("--win", help="Build Windows desktop app")
+    flag("--linux", help="Build Linux desktop app")
     arg("directory", default=".")
     run:
       if opts.help:
         echo p.help
         quit(0)
-      doBuild(directory = opts.directory, macos = opts.mac)
+      doBuild(
+        directory = opts.directory,
+        macos = opts.mac,
+        windows = opts.win,
+        linux = opts.linux)
   command "run":
     help("Run an application (from the current dir)")
     flag("-h", "--help", help="Display help")

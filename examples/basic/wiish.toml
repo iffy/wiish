@@ -1,10 +1,10 @@
 [main]
-name    = "Wiish Mac Demo"
+name    = "Wiish Basic Demo"
 version = "0.1.0"
-src     = "basicmac.nim"
+src     = "myapp.nim"
 dst     = "./dist"
 nimflags = []
 
 [macos]
-bundle_identifier = "com.example.wiish.basicmac"
+bundle_identifier = "com.example.wiish.basic"
 category_type = "public.app-category.example"

@@ -12,12 +12,18 @@ nimble build
 
 ## Make a project
 
-1. Run `mkdir somedir && cd somedir && wiish init` to make a new project
+```
+mkdir somedir
+cd somedir
+wiish init
+```
 
-2. Run the application with `wiish run`
+Then run or build it with:
 
-3. Package the application with `wiish build --mac`
-
+```
+wiish run
+wiish build
+```
 
 # Developing wiish
 
