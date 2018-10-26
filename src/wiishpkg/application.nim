@@ -3,11 +3,11 @@ export events
 
 type
   App = object
-    ready*: EventSource[bool]
+    launched*: EventSource[bool]
 
 ## The singleton application instance.
 var app* = App()
-app.ready = newEventSource[bool]()
+app.launched = newEventSource[bool]()
 
 when defined(macosx):
   when defined(ios):
@@ -15,8 +15,8 @@ when defined(macosx):
     discard
   else:
     # macOS desktop
-    proc mac_onReady {.exportc.} =
-      app.ready.emit(true)
+    proc mac_onLaunched {.exportc.} =
+      app.launched.emit(true)
     
     {.passL: "-framework Foundation" .}
     {.passL: "-framework AppKit" .}
@@ -46,7 +46,7 @@ when defined(macosx):
 }
 - (void) applicationDidFinishLaunching:(NSNotification *)aNotification {
   printf("Application finished launching\n");
-  mac_onReady();
+  mac_onLaunched();
 }
 - (void) applicationWillTerminate:(NSNotification *)aNotification {
   printf("Application will terminate\n");
