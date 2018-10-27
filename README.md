@@ -91,11 +91,38 @@ This is where I'm currently recording what I've learned about GUI development.
 
 ## TODO
 
-- [X] `wiish init` for creating new projects
-- [ ] MacOS
-    - [ ] Generate icon files from png files
-- [ ] Windows desktop app
-- [ ] Linux desktop app
-- [ ] iOS app
-- [ ] Android app
-- [ ] Allow OS-specific options to override `[main]` settings in config
+- [ ] run
+    - [X] macOS
+    - [ ] iOS
+    - [ ] Linux
+    - [ ] Windows
+    - [ ] Android
+- [ ] build
+    - [X] macOS
+    - [ ] iOS
+    - [ ] Linux AppImage
+    - [ ] Linux snap
+    - [ ] Linux binary
+    - [ ] Windows .exe
+    - [ ] Android
+- [ ] package (make an installer)
+    - [ ] macOS .dmg
+    - [ ] Windows .exe
+- [ ] code signing
+    - [ ] macOS
+    - [ ] iOS
+    - [ ] Windows
+    - [ ] Linux
+- [ ] actually draw something app-like :)
+    - [ ] macOS
+    - [ ] Windows
+    - [ ] Linux
+    - [ ] iOS
+    - [ ] Android
+- [ ] auto update provider
+    - [ ] GitHub
+    - [ ] HTTP server
+- [ ] auto update consumer
+    - [ ] macOS
+    - [ ] Windows
+    - [ ] Linux
