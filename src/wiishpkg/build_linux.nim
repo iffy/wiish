@@ -11,7 +11,7 @@ type
   LinuxConfig = object of Config
 
 proc linuxConfig(config:Config):LinuxConfig =
-  result = getConfig[LinuxConfig](config, @["linux", "main"])
+  result = getDesktopConfig[LinuxConfig](config, @["linux", "desktop"])
 
 proc doLinuxBuild*(directory:string, config:Config) =
   ## Package a Linux application

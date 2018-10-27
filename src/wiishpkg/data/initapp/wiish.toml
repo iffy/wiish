@@ -1,7 +1,14 @@
-[main]
+[desktop]
 name     = "Wiish Demo"
 version  = "0.1.0"
-src      = "myapp.nim"
+src      = "./desktop.nim"
+dst      = "./dist"
+nimflags = []
+
+[mobile]
+name     = "Wiish Mobile Demo"
+version  = "0.1.0"
+src      = "./mobile.nim"
 dst      = "./dist"
 nimflags = []
 

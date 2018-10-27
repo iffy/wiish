@@ -1,7 +1,10 @@
 import os
 import osproc
-import strformat
+import ospaths
 import parsetoml
+import sequtils
+import strformat
+import tables
 import ./build_macos
 import ./build_windows
 import ./build_linux
@@ -9,8 +12,26 @@ import ./config
 import ./logging
 
 const default_icon = slurp"./data/default.png"
-const sample_toml = slurp"./data/sample.toml"
-const sample_app = slurp"./data/sampleapp.nim"
+
+type
+  PackedFile = tuple[
+    name: string,
+    contents: string,
+  ]
+
+const basepath = currentSourcePath.parentDir.joinPath("data/initapp")
+const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
+  return (x[basepath.len+1..^1], slurp(x))
+)
+
+# const sampledir = @[
+#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
+#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
+#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
+# ]
+# sample_toml = slurp"./data/sample.toml"
+# const sample_desktop = slurp"./data/sampledesktop.nim"
+# const sample_mobile = slurp"./data/samplemobile.nim"
 
 
 proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, linux:bool = false) =
@@ -18,7 +39,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
     macos = macos
     linux = linux
     windows = windows
-  let config = getConfig(directory/"wiish.toml")
+  let config = getDesktopConfig(directory/"wiish.toml")
   if not macos and not windows and not linux:
     when defined(MacOSX):
       macos = true
@@ -41,7 +62,7 @@ proc doRun*(directory:string = ".") =
   var
     nim_bin: string
     args: seq[string]
-  let config = getConfig(directory/"wiish.toml")
+  let config = getDesktopConfig(directory/"wiish.toml")
   let src_file = directory/config.src
   when defined(macosx):
     nim_bin = "nim"
@@ -63,14 +84,9 @@ proc doRun*(directory:string = ".") =
 
 proc doInit*(directory:string = ".") =
   directory.createDir()
-  let conf_file = directory/"wiish.toml"
-  if not conf_file.fileExists:
-    writeFile(directory/"wiish.toml", sample_toml)
-    echo &"wrote {conf_file}"
-  let app_nim = directory/"myapp.nim"
-  if not app_nim.fileExists:
-    writeFile(app_nim, sample_app)
-    echo &"wrote {app_nim}"
+  for sample in samples:
+    writeFile(directory/sample.name, sample.contents)
+    echo &"wrote {sample.name}"
   echo &"""Initialized a new wiish app in {directory}
 
 Run:    wiish run {directory}

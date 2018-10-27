@@ -42,7 +42,7 @@ proc get*(maintoml: TomlValueRef, sections:seq[string], key: string, default: To
 proc parseConfig*(filename:string): TomlValueRef =
   parsetoml.parseFile(filename)
 
-proc getConfig*[T](toml: TomlValueRef, sections:seq[string] = @["main"]):T =
+proc getDesktopConfig*[T](toml: TomlValueRef, sections:seq[string] = @["desktop"]):T =
   result = T()
   result.toml = toml
   result.name = toml.get(sections, "name", ?DEFAULTS.name).stringVal
@@ -53,9 +53,9 @@ proc getConfig*[T](toml: TomlValueRef, sections:seq[string] = @["main"]):T =
   for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
     result.nimflags.add(flag.stringVal)
 
-proc getConfig*[T](config: Config, sections:seq[string] = @["main"]):T =
-  getConfig[T](config.toml, sections)
+proc getDesktopConfig*[T](config: Config, sections:seq[string] = @["desktop"]):T =
+  getDesktopConfig[T](config.toml, sections)
 
-proc getConfig*(filename: string, sections:seq[string] = @["main"]):Config =
-  getConfig[Config](parseConfig(filename), sections)
+proc getDesktopConfig*(filename: string, sections:seq[string] = @["desktop"]):Config =
+  getDesktopConfig[Config](parseConfig(filename), sections)
   

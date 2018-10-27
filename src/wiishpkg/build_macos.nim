@@ -15,7 +15,7 @@ type
 const default_mac_icon = slurp"./data/default.icns"
 
 proc macOSConfig(config:Config):MacOSConfig =
-  result = getConfig[MacOSConfig](config, @["macos", "main"])
+  result = getDesktopConfig[MacOSConfig](config, @["macos", "desktop"])
   result.bundle_identifier = config.toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 

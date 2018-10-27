@@ -10,7 +10,7 @@ type
   WindowsConfig = object of Config
 
 proc windowsConfig(config:Config):WindowsConfig =
-  result = getConfig[WindowsConfig](config, @["windows", "main"])
+  result = getDesktopConfig[WindowsConfig](config, @["windows", "desktop"])
 
 proc doWindowsBuild*(directory:string, config:Config) =
   ## Package a Windows application

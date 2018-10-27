@@ -1,8 +1,8 @@
-[main]
-name    = "Wiish Basic Demo"
-version = "0.1.0"
-src     = "myapp.nim"
-dst     = "./dist"
+[desktop]
+name     = "Wiish Basic Demo"
+version  = "0.1.0"
+src      = "desktop.nim"
+dst      = "./dist"
 nimflags = []
 
 [macos]

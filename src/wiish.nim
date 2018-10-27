@@ -50,7 +50,6 @@ let p = newParser("wiish"):
       doRun(directory = opts.directory)
 
 if isMainModule:
-  echo "isMainModule"
   p.run()
 
 
