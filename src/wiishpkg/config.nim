@@ -58,4 +58,20 @@ proc getDesktopConfig*[T](config: Config, sections:seq[string] = @["desktop"]):T
 
 proc getDesktopConfig*(filename: string, sections:seq[string] = @["desktop"]):Config =
   getDesktopConfig[Config](parseConfig(filename), sections)
-  
+
+proc getMobileConfig*[T](toml: TomlValueRef, sections:seq[string] = @["mobile"]):T =
+  result = T()
+  result.toml = toml
+  result.name = toml.get(sections, "name", ?DEFAULTS.name).stringVal
+  result.version = toml.get(sections, "version", ?DEFAULTS.version).stringVal
+  result.src = toml.get(sections, "src", ?DEFAULTS.src).stringVal
+  result.dst = toml.get(sections, "dst", ?DEFAULTS.dst).stringVal
+  result.nimflags = @[]
+  for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
+    result.nimflags.add(flag.stringVal)
+
+proc getMobileConfig*[T](config: Config, sections:seq[string] = @["mobile"]):T =
+  getMobileConfig[T](config.toml, sections)
+
+proc getMobileConfig*(filename: string, sections:seq[string] = @["mobile"]):Config =
+  getMobileConfig[Config](parseConfig(filename), sections)

@@ -29,6 +29,7 @@ let p = newParser("wiish"):
     flag("--mac", help="Build macOS desktop app")
     flag("--win", help="Build Windows desktop app")
     flag("--linux", help="Build Linux desktop app")
+    flag("--ios", help="Build iOS mobile app")
     arg("directory", default=".")
     run:
       if opts.help:
@@ -37,17 +38,22 @@ let p = newParser("wiish"):
       doBuild(
         directory = opts.directory,
         macos = opts.mac,
+        ios = opts.ios,
         windows = opts.win,
         linux = opts.linux)
   command "run":
     help("Run an application (from the current dir)")
     flag("-h", "--help", help="Display help")
+    flag("--ios", help="Run app in the iOS Simulator")
     arg("directory", default=".")
     run:
       if opts.help:
         echo p.help
         quit(0)
-      doRun(directory = opts.directory)
+      if opts.ios:
+        doiOSRun(directory = opts.directory)
+      else:
+        doDesktopRun(directory = opts.directory)
 
 if isMainModule:
   p.run()

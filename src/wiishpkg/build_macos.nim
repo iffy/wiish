@@ -28,7 +28,6 @@ proc doMacBuild*(directory:string, config:Config) =
   
   let version = config.version
   let bundle_identifier = config.bundle_identifier
-  let category_type = config.category_type
   
   let unpacked_dir = dist_dir/config.name & ".app"
   let Contents = unpacked_dir/"Contents"

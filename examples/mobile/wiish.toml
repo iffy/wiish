@@ -17,4 +17,4 @@ bundle_identifier = "com.you.example"
 category_type = "public.app-category.example"
 
 [ios]
-bundle_identifier = "com.you.examplemobile"
+bundle_identifier = "com.you.example"

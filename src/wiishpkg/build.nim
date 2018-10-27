@@ -6,10 +6,13 @@ import sequtils
 import strformat
 import tables
 import ./build_macos
+import ./build_ios
 import ./build_windows
 import ./build_linux
 import ./config
 import ./logging
+
+export doiOSRun
 
 const default_icon = slurp"./data/default.png"
 
@@ -34,9 +37,10 @@ const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
 # const sample_mobile = slurp"./data/samplemobile.nim"
 
 
-proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, linux:bool = false) =
+proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
   var
     macos = macos
+    ios = ios
     linux = linux
     windows = windows
   let config = getDesktopConfig(directory/"wiish.toml")
@@ -50,6 +54,9 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
   if macos:
     log("Building macOS desktop...")
     doMacBuild(directory, config)
+  if ios:
+    log("Building iOS mobile...")
+    discard doiOSBuild(directory, config)
   if windows:
     log("Building Windows desktop...")
     doWindowsBuild(directory, config)
@@ -57,7 +64,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, windows:bool = false, 
     log("Building Linux desktop...")
     doLinuxBuild(directory, config)
 
-proc doRun*(directory:string = ".") =
+proc doDesktopRun*(directory:string = ".") =
   ## Run the application
   var
     nim_bin: string
