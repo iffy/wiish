@@ -43,6 +43,21 @@ nim c -r examples/basic/basic.nim
 nim c -r examples/fonts/fonts.nim
 ~~~
 
+## Current Plan
+
+My current plan is to try to use Skia for drawing.  As a backend, I will use:
+
+| OS      | Backend                   | Fallback  |
+|---------|---------------------------|-----------|
+| macOS   | Vulkan + MoltenVK + Metal | OpenGL ES |
+| iOS     | Vulkan + MoltenVK + Metal | OpenGL ES |
+| Linux   | Vulkan                    |           | 
+| Windows | Vulkan                    |           |
+| Android | Vulkan                    |           |
+
+If Skia is too painful to get working, I'll attempt NanoVG
+
+And it that doesn't work and something better doesn't come along, I'll write my own in Nim.
 
 ## Notes
 
