@@ -45,21 +45,17 @@ nim c -r examples/fonts/fonts.nim
 
 ## Current Plan
 
-My current plan is to try using SDL and Skia.
+In order of preference, my plan is to use:
 
-If that doesn't work, I will try using Vulkan and GLFW:
+1. [nimx](https://github.com/yglukhov/nimx), but I have yet to get it to run
 
-| OS      | Backend                   | Fallback  |
-|---------|---------------------------|-----------|
-| macOS   | Vulkan + MoltenVK + Metal | OpenGL ES |
-| iOS     | Vulkan + MoltenVK + Metal | OpenGL ES |
-| Linux   | Vulkan                    |           | 
-| Windows | Vulkan                    |           |
-| Android | Vulkan                    |           |
+2. SDL + Skia
 
-If Skia is too painful to get working, I'll attempt NanoVG
+3. GLFW + Vulkan ( + MoltenVK + Metal ) + Skia
 
-And it that doesn't work and something better doesn't come along, I'll write my own in Nim.
+If Skia is too painful to get working, I'll attempt NanoVG.
+
+And if none of that works and something better doesn't come along, I'll write my own in Nim.
 
 ## Notes
 
@@ -119,7 +115,8 @@ This is where I'm currently recording what I've learned about GUI development.
     - [ ] iOS
     - [ ] Linux AppImage
     - [ ] Linux snap
-    - [ ] Linux binary
+    - [ ] Linux static binary
+    - [ ] Linux dynamic binary
     - [ ] Windows .exe
     - [ ] Android
 - [ ] package (make an installer)
