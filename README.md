@@ -45,7 +45,9 @@ nim c -r examples/fonts/fonts.nim
 
 ## Current Plan
 
-My current plan is to try to use Skia for drawing.  As a backend, I will use:
+My current plan is to try using SDL and Skia.
+
+If that doesn't work, I will try using Vulkan and GLFW:
 
 | OS      | Backend                   | Fallback  |
 |---------|---------------------------|-----------|
