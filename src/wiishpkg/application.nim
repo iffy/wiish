@@ -11,7 +11,7 @@ proc start*(app:App)
 proc quit*(app:App)
 proc newWindow*(title:string = ""):Window
 
-when defined(macosx) and not defined(ios):
+when defined(macDesktop):
   include ./loops/macos
 else:
   include ./loops/glfwloop

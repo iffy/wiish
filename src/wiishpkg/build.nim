@@ -11,6 +11,7 @@ import ./build_windows
 import ./build_linux
 import ./config
 import ./logging
+import ./wiishtypes
 
 export doiOSRun
 
@@ -45,11 +46,11 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
     windows = windows
   let config = getDesktopConfig(directory/"wiish.toml")
   if not macos and not windows and not linux:
-    when defined(MacOSX):
+    when defined(macDesktop):
       macos = true
-    elif defined(Windows):
+    elif defined(windows):
       windows = true
-    elif defined(Linux):
+    elif defined(linux):
       linux = true
   if macos:
     log("Building macOS desktop...")
@@ -71,7 +72,7 @@ proc doDesktopRun*(directory:string = ".") =
     args: seq[string]
   let config = getDesktopConfig(directory/"wiish.toml")
   let src_file = directory/config.src
-  when defined(macosx):
+  when defined(macDesktop):
     nim_bin = "nim"
     args.add("objc")
   elif defined(windows):

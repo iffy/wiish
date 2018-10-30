@@ -20,7 +20,10 @@ proc newRect*(x, y, width, height: float32 = 0):Rect =
 template newRect*(x, y, width, height: int32 = 0):Rect =
   newRect(x.toFloat, y.toFloat, width.toFloat, height.toFloat)
 
-when defined(macosx) and not defined(ios):
+const
+  macDesktop* = defined(macosx) and not defined(ios)
+
+when defined(macDesktop):
   type
     Id* {.importc: "id", header: "<AppKit/AppKit.h>", final .} = distinct int
   type
