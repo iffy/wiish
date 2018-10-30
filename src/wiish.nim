@@ -24,7 +24,7 @@ let p = newParser("wiish"):
         quit(0)
       doInit(directory = opts.directory)
   command "build":
-    help("Package an application for distribution")
+    help("Build a single-file app/binary")
     flag("-h", "--help", help="Display help")
     flag("--mac", help="Build macOS desktop app")
     flag("--win", help="Build Windows desktop app")

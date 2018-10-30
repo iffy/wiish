@@ -42,7 +42,6 @@ proc doMacBuild*(directory:string, config:Config) =
   let bin_file = Contents/"MacOS"/executable_name
   var args = @[
     "objc",
-    "-d:glfwStaticLib",
     "-d:release",
   ]
   for flag in config.nimflags:

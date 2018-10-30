@@ -3,7 +3,6 @@ import darwin/app_kit
 import ../events
 import ../wiishtypes
 import ../logging
-import ../context
 
 #------------------------------------------------
 # Headers
@@ -42,9 +41,6 @@ proc willTerminate {.exportc.} =
   app.willExit.emit(true)
 
 proc drawWindow(w:Window) {.exportc.} =
-  if w.context.isNil:
-    return
-
   let viewFrame = newRect(
     x = w.nativeWindow.frame.origin.x,
     y = w.nativeWindow.frame.origin.y,
@@ -279,8 +275,7 @@ proc newWindow*(title:string = ""): Window =
   [window orderFrontRegardless];
   [window makeKeyWindow];
   """ .}
-  nwin.context = newGLContext()
-  #nwin.setGLContext()
+  opengl.loadExtensions()
   {.emit: """
   [window makeKeyAndOrderFront:nil];
   """.}

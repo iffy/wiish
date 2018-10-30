@@ -1,6 +1,5 @@
 import opengl
 import ./events
-import ./context
 
 type
   Rect* = tuple[x, y, width, height: float32]
@@ -13,7 +12,6 @@ type
     onDraw*: EventSource[Rect]
 
     # attributes/properties
-    context*: GLContext
     frame*: Rect
 
 proc newRect*(x, y, width, height: float32 = 0):Rect =

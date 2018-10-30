@@ -19,7 +19,7 @@ proc getiOSConfig(config:Config):iOSConfig =
   result.bundle_identifier = config.toml.get(@["ios"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["ios"], "category_type", ?"public.app-category.example").stringVal
 
-proc doiOSBuild*(directory:string, config:Config):string =
+proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   ## Package a iOS application
   let config = config.getiOSConfig()
   let src_file = (directory/config.src).normalizedPath
@@ -40,8 +40,9 @@ proc doiOSBuild*(directory:string, config:Config):string =
   var args = @[
     "objc",
     "-d:glfwStaticLib",
-    "-d:release",
   ]
+  if release:
+    args.add("-d:release")
   for flag in config.nimflags:
     args.add(flag)
   args.add(&"-o:{bin_file}")
@@ -144,7 +145,7 @@ proc doiOSRun*(directory:string = ".") =
 
   # compile the app
   log("Compiling app...")
-  let apppath = doiOSBuild(directory, config)
+  let apppath = doiOSBuild(directory, config, release = false)
   
   # open the simulator
   log("Opening simulator...")
