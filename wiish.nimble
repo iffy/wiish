@@ -19,6 +19,7 @@ requires "https://github.com/mjendrusch/objc.git"
 
 # Graphics dependencies
 
+requires "opengl"
 requires "glfw >= 0.1.0"
 # requires "sdl2 >= 1.2"
 # requires "nanovg >= 0.1"

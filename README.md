@@ -28,6 +28,8 @@ wiish run
 wiish build
 ```
 
+See `wiish --help` for more information.
+
 # Developing wiish
 
 ## Running tests
