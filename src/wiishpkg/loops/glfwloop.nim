@@ -13,7 +13,6 @@ app.willExit = newEventSource[bool]()
 
 proc newWindow*(title:string = ""): wiishtypes.Window =
   new(result)
-  result.willExit = newEventSource[bool]()
   windows.add(result)
 
   var c = DefaultOpenglWindowConfig
@@ -22,7 +21,6 @@ proc newWindow*(title:string = ""): wiishtypes.Window =
 
 proc close*(win: var wiishtypes.Window) =
   windows.del(windows.find(win))
-  win.willExit.emit(true)
   win.glfwWindow.destroy()
 
 
