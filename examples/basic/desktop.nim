@@ -1,17 +1,21 @@
 ## Bare-bones application
 import wiishpkg/main
+import opengl
+import random
 
-var w:Window
+randomize()
 
 app.launched.handle:
   echo "app code: app.launched"
-  w = newWindow()
-  echo "app code: window ", w.repr
-  w.willExit.handle:
-    echo "app code: window.willExit"
-  
+  var w = newWindow("Some Title")
   w.onDraw.handle(rect):
-    echo "app draw: ", rect
+    glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
+    glClear(GL_COLOR_BUFFER_BIT)
+
+  var w2 = newWindow("Another")
+  w2.onDraw.handle(rect):
+    glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
+    glClear(GL_COLOR_BUFFER_BIT)
 
 app.willExit.handle:
   echo "application code: app.willExit"

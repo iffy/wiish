@@ -6,10 +6,14 @@ import ../logging
 import ../context
 
 #------------------------------------------------
-# To add to darwin
+# Headers
 #------------------------------------------------
+
+#------------------------------------------------
+# To add to darwin package
 import darwin/objc/runtime
 proc frame*(v: NSWindow): NSRect {.objc: "frame".}
+#------------------------------------------------
 
 ## List of created windows
 var windows*:seq[Window]
@@ -19,23 +23,28 @@ var app* = App()
 app.launched = newEventSource[bool]()
 app.willExit = newEventSource[bool]()
 
+#------------------------------------------------
+# Convert nim objects to NS objects
+#------------------------------------------------
+template nativeView(win:Window): NSView =
+  cast[NSView](win.nativeViewPtr)
+
+template nativeWindow(win:Window): NSWindow =
+  cast[NSWindow](win.nativeWindowPtr)
+
+#------------------------------------------------
+# Procs for objective C to call
+#------------------------------------------------
 proc didFinishLaunching {.exportc.} =
   app.launched.emit(true)
 
 proc willTerminate {.exportc.} =
   app.willExit.emit(true)
 
-template nativeView(win:Window): NSView =
-  cast[NSView](w.nativeViewPtr)
-
-template nativeWindow(win:Window): NSWindow =
-  cast[NSWindow](w.nativeWindowPtr)
-
 proc drawWindow(w:Window) {.exportc.} =
   if w.context.isNil:
     return
-  
-  # var s = w.nativeView.bounds
+
   let viewFrame = newRect(
     x = w.nativeWindow.frame.origin.x,
     y = w.nativeWindow.frame.origin.y,
@@ -43,9 +52,7 @@ proc drawWindow(w:Window) {.exportc.} =
     height = w.nativeView.frame.size.height,
   )
   w.onDraw.emit(viewFrame)
-  
-  # glClear(GL_COLOR_BUFFER_BIT or GL_STENCIL_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-  # log "drawWindow: ", w.repr
+
   {.emit: """
   [[w->nativeViewPtr openGLContext] flushBuffer];
   """.}
@@ -59,9 +66,11 @@ proc viewDidEndLiveResize(w:Window) {.exportc.} =
 
 # {.passL: "-framework Foundation" .}
 {.passL: "-framework AppKit" .}
+{.passL: "-framework OpenGL" .}
 # {.passL: "-framework ApplicationServices" .}
 
 {.emit: """
+#include <OpenGL/gl.h>
 // WiishWindow
 @interface WiishWindow : NSWindow {
   @public
@@ -86,23 +95,20 @@ proc viewDidEndLiveResize(w:Window) {.exportc.} =
 @end
 @implementation WiishView
 NSOpenGLPixelFormat* createPixelFormat(NSRect frame, int colorBits, int depthBits) {
-   NSOpenGLPixelFormatAttribute pixelAttribs[ 16 ];
-   int pixNum = 0;
-   NSDictionary *fullScreenMode;
-
-   pixelAttribs[pixNum++] = NSOpenGLPFADoubleBuffer;
-   pixelAttribs[pixNum++] = NSOpenGLPFAAccelerated;
-   pixelAttribs[pixNum++] = NSOpenGLPFAColorSize;
-   pixelAttribs[pixNum++] = colorBits;
-   pixelAttribs[pixNum++] = NSOpenGLPFADepthSize;
-   pixelAttribs[pixNum++] = depthBits;
-   pixelAttribs[pixNum] = 0;
-   printf("nsopenglpixelformat %d x %d\n", frame.size.width, frame.size.height);
-   return [[NSOpenGLPixelFormat alloc] initWithAttributes:pixelAttribs];
+    NSOpenGLPixelFormatAttribute pixelAttribs[ 16 ];
+    int pixNum = 0;
+    NSDictionary *fullScreenMode;
+    
+    pixelAttribs[pixNum++] = NSOpenGLPFADoubleBuffer;
+    pixelAttribs[pixNum++] = NSOpenGLPFAAccelerated;
+    pixelAttribs[pixNum++] = NSOpenGLPFAColorSize;
+    pixelAttribs[pixNum++] = colorBits;
+    pixelAttribs[pixNum++] = NSOpenGLPFADepthSize;
+    pixelAttribs[pixNum++] = depthBits;
+    pixelAttribs[pixNum] = 0;
+    return [[NSOpenGLPixelFormat alloc] initWithAttributes:pixelAttribs];
 }
-- (id) initWithFrame:(NSRect)frame colorBits:(int)numColorBits
-       depthBits:(int)numDepthBits fullscreen:(BOOL)runFullScreen
-{
+- (id) initWithFrame:(NSRect)frame colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(BOOL)runFullScreen {
     NSOpenGLPixelFormat *pixelFormat;
 
     pixelFormat = createPixelFormat(frame, numColorBits, numDepthBits);
@@ -120,13 +126,14 @@ NSOpenGLPixelFormat* createPixelFormat(NSRect frame, int colorBits, int depthBit
         self = nil;
     return self;
 }
-
+- (void) prepareOpenGL {
+    glClearColor(0.9, 0.9, 0.9, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
 - (BOOL)acceptsFirstResponder {
     return YES;
 }
 - (void)drawRect:(NSRect)r {
-  //printf("width: %d\n", r.size.width);
-  //printf("height: %d\n", r.size.height);
   drawWindow(window->nimwindow);
 }
 - (void)viewWillStartLiveResize { viewWillStartLiveResize(window->nimwindow); }
@@ -222,18 +229,24 @@ proc start*(app:App) =
 proc quit*(app:App) =
   wiish.terminateApp()
 
-proc newWindow*(): Window =
+proc setGLContext*(window: Window) =
+  {.emit: """
+  [ [window->nativeViewPtr openGLContext ] makeCurrentContext ];
+  """.}
+  
+proc newWindow*(title:string = ""): Window =
   var nwin {.exportc.} = Window()
-  nwin.willExit = newEventSource[bool]()
   nwin.onDraw = newEventSource[wiishtypes.Rect]()
 
   nwin.frame = newRect(200, 300, 400, 400)
   var
     x, y, width, height {.exportc.} : float32
+    window_title {.exportc.}: NSString
   x = nwin.frame.x
   y = nwin.frame.y
   width = nwin.frame.width
   height = nwin.frame.height
+  window_title = title
 
   {.emit: """
   NSUInteger windowStyle = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
@@ -249,7 +262,11 @@ proc newWindow*(): Window =
     defer: YES];
   window->nimwindow = nwin;
   nwin->nativeWindowPtr = window;
-  WiishView* view = [[WiishView alloc] initWithFrame: [window frame]];
+  WiishView* view = [[WiishView alloc]
+    initWithFrame: [window frame]
+    colorBits: 16
+    depthBits: 16
+    fullscreen: FALSE];
   if (view) {
     view->window = window;
     nwin->nativeViewPtr = view;
@@ -257,12 +274,16 @@ proc newWindow*(): Window =
     [window setContentView:view];
     [view release];
   }
-  [window setTitle: @"Hello, World!"];
+  [window setTitle: window_title];
   [window display];
   [window orderFrontRegardless];
   [window makeKeyWindow];
   """ .}
   nwin.context = newGLContext()
+  #nwin.setGLContext()
+  {.emit: """
+  [window makeKeyAndOrderFront:nil];
+  """.}
   windows.add(nwin)
   return nwin
 

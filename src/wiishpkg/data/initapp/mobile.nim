@@ -1,10 +1,8 @@
 ## Hello, World Wiish App
 import wiishpkg/main
 
-var w:Window
-
 app.launched.handle:
-  w = newWindow()
+  var w = newWindow()
   w.willExit.handle:
     echo "Window is closing"
 

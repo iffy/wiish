@@ -9,7 +9,7 @@ export wiishtypes
 
 proc start*(app:App)
 proc quit*(app:App)
-proc newWindow*():Window
+proc newWindow*(title:string = ""):Window
 
 when defined(macosx) and not defined(ios):
   include ./loops/macos

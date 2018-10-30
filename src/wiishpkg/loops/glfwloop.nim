@@ -11,25 +11,22 @@ var app* = App()
 app.launched = newEventSource[bool]()
 app.willExit = newEventSource[bool]()
 
-proc newWindow*():wiishtypes.Window =
-  log "newWindow()"
-  result = wiishtypes.Window()
+proc newWindow*(title:string = ""): wiishtypes.Window =
+  new(result)
   result.willExit = newEventSource[bool]()
   windows.add(result)
 
   var c = DefaultOpenglWindowConfig
-  c.title = "Some title"
-  result.glfwWindow = glfw.newWindow(c)
+  c.title = title
+  result.glfwWindow = newWindow(c)
 
 proc close*(win: var wiishtypes.Window) =
-  log "window.close()"
   windows.del(windows.find(win))
   win.willExit.emit(true)
   win.glfwWindow.destroy()
 
 
 proc mainloop(app:App) =
-  log "mainloop()"
   var therehavebeenwindows = false
   while not(therehavebeenwindows) or (therehavebeenwindows and windows.len > 0):
     if not therehavebeenwindows and windows.len > 0:
@@ -50,13 +47,11 @@ proc mainloop(app:App) =
   app.quit()
 
 proc start*(app:App) =
-  log "app.start()"
   glfw.initialize()
   app.launched.emit(true)
   app.mainloop()
 
 proc quit*(app:App) =
-  log "app.quit()"
   app.willExit.emit(true)
   for w in windows:
     var w = w
@@ -65,7 +60,6 @@ proc quit*(app:App) =
 
 # Handle pressing of control-C
 proc onControlC() {.noconv.} =
-  log "onControlC()"
   app.quit()
   quit(1)
 setControlCHook(onControlC)

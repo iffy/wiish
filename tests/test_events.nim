@@ -47,3 +47,13 @@ suite "events":
     
     es.emit("yup")
     check emitted == "yup"
+  
+  test "ignore message":
+    var es = newEventSource[string]()
+    var emitted:string
+
+    es.handle:
+      emitted.add("yes")
+    
+    es.emit("something")
+    check emitted == "yes"

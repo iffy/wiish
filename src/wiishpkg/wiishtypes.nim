@@ -10,7 +10,6 @@ type
   
   BaseWindow = ref object of RootRef
     # events
-    willExit*: EventSource[bool]
     onDraw*: EventSource[Rect]
 
     # attributes/properties
@@ -37,4 +36,3 @@ else:
     App* = ref object of BaseApp
     Window* = ref object of BaseWindow
       glfwWindow*: glfw.Window
-      
