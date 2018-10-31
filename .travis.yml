@@ -30,18 +30,15 @@ matrix:
   fast_finish: true
 
 ## BEGIN: Assuming you rely on external dependencies
-# addons: # This will only be executed on Linux
-#   apt:
-#     packages:
-#       - libyourdependency
+addons: # This will only be executed on Linux
+  apt:
+    packages:
+      - xorg-dev
 # before_install:
 #   # On MacOS flame/blis can be tested as it is an homebrew package
 #   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
 #   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libyourdependency; fi
 ## END: Assuming you rely on external dependencies
-
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then apt-get install -y xorg-dev; fi
 
 install:
   - export CHOOSENIM_NO_ANALYTICS=1
