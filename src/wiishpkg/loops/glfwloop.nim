@@ -7,11 +7,6 @@ import ../events
 ## List of created windows
 var windows*:seq[wiishtypes.Window]
 
-## The singleton application instance.
-var app* = App()
-app.launched = newEventSource[bool]()
-app.willExit = newEventSource[bool]()
-
 proc newWindow*(title:string = ""): wiishtypes.Window =
   new(result)
   windows.add(result)

@@ -17,11 +17,6 @@ proc frame*(v: NSWindow): NSRect {.objc: "frame".}
 ## List of created windows
 var windows*:seq[Window]
 
-## The singleton application instance.
-var app* = App()
-app.launched = newEventSource[bool]()
-app.willExit = newEventSource[bool]()
-
 #------------------------------------------------
 # Convert nim objects to NS objects
 #------------------------------------------------

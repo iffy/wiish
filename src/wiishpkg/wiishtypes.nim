@@ -39,3 +39,9 @@ else:
     App* = ref object of BaseApp
     Window* = ref object of BaseWindow
       glfwWindow*: glfw.Window
+
+
+## The singleton application instance.
+var app* = App()
+app.launched = newEventSource[bool]()
+app.willExit = newEventSource[bool]()
