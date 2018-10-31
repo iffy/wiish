@@ -23,7 +23,9 @@ template newRect*(x, y, width, height: int32 = 0):Rect =
 const
   macDesktop* = defined(macosx) and not defined(ios)
 
-when defined(macDesktop):
+echo "macDesktop: ", $macDesktop
+
+when macDesktop:
   type
     Id* {.importc: "id", header: "<AppKit/AppKit.h>", final .} = distinct int
   type

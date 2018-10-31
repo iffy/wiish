@@ -46,7 +46,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
     windows = windows
   let config = getDesktopConfig(directory/"wiish.toml")
   if not macos and not windows and not linux:
-    when defined(macDesktop):
+    when macDesktop:
       macos = true
     elif defined(windows):
       windows = true
@@ -70,9 +70,11 @@ proc doDesktopRun*(directory:string = ".") =
   var
     nim_bin: string
     args: seq[string]
+  echo "directory: ", directory
   let config = getDesktopConfig(directory/"wiish.toml")
   let src_file = directory/config.src
-  when defined(macDesktop):
+  echo "src_file: ", src_file
+  when macDesktop:
     nim_bin = "nim"
     args.add("objc")
   elif defined(windows):
@@ -81,11 +83,16 @@ proc doDesktopRun*(directory:string = ".") =
   elif defined(linux):
     nim_bin = "nim"
     args.add("c")
+  else:
+    raise newException(CatchableError, "Unknown OS")
   for flag in config.nimflags:
     args.add(flag)
   args.add("-d:glfwStaticLib")
   args.add("-r")
   args.add(src_file)
+  echo "args: ", args
+  discard startProcess(command="pwd", options = {poParentStreams, poUsePath}).waitForExit()
+  echo "nim_bin: ", nim_bin
   var p = startProcess(command=nim_bin, args = args, options = {poUsePath, poParentStreams})
   let result = p.waitForExit()
   quit(result)
