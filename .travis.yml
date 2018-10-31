@@ -41,7 +41,7 @@ matrix:
 ## END: Assuming you rely on external dependencies
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then apt-get install -y libx11-dev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then apt-get install -y xorg-dev; fi
 
 install:
   - export CHOOSENIM_NO_ANALYTICS=1
