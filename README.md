@@ -3,6 +3,14 @@
 
 Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
+# Planned Features
+
+| Feature           | Windows | macOS | Linux | iOS | Android |
+|:-----------------:|:-------:|:-----:|:-----:|:---:|:-------:|
+| Create installer  |   [ ]   |  [ ]  |  [ ]  | [ ] |   [ ]   |
+| Code signing      |         |       |       |     |         |
+| Automatic updates |         |       |       |     |         |
+
 # Using wiish
 
 ## Install
