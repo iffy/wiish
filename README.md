@@ -28,9 +28,8 @@ nimble install https://github.com/iffy/wiish.git
 ## Make a project
 
 ```
-mkdir somedir
+wiish init somedir
 cd somedir
-wiish init
 ```
 
 Then run or build it with:
