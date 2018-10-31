@@ -1,4 +1,5 @@
 import glfw
+import opengl
 import ../logging
 import ../wiishtypes
 import ../events
@@ -25,6 +26,7 @@ proc close*(win: var wiishtypes.Window) =
 
 
 proc mainloop(app:App) =
+  loadExtensions()
   var therehavebeenwindows = false
   while not(therehavebeenwindows) or (therehavebeenwindows and windows.len > 0):
     if not therehavebeenwindows and windows.len > 0:
@@ -36,11 +38,17 @@ proc mainloop(app:App) =
         w.close()
       else:
         if w.glfwWindow.isKeyDown(keyEscape):
-          log "Escape key is down"
           w.glfwWindow.shouldClose = true
+        let dims = w.glfwWindow.size
+        w.glfwWindow.makeContextCurrent()
+        w.onDraw.emit(newRect(
+          x = 0,
+          y = 0,
+          width = dims.w,
+          height = dims.h,
+        ))
         w.glfwWindow.swapBuffers()
-    pollEvents()
-  log "mainloop finished, quitting now"
+    waitEvents()
   app.willExit.emit(true)
   app.quit()
 
