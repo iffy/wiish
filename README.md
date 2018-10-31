@@ -7,9 +7,12 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 | Feature           | Windows | macOS | Linux | iOS | Android |
 |:-----------------:|:-------:|:-----:|:-----:|:---:|:-------:|
-| Create installer  |   [ ]   |  [ ]  |  [ ]  | [ ] |   [ ]   |
+| Run               |         |   X   |       |     |         |
+| Create executable |         |   X   |       |     |         |
+| Create installer  |         |       |       |     |         |
 | Code signing      |         |       |       |     |         |
 | Automatic updates |         |       |       |     |         |
+| Widgets           |         |       |       |     |         |
 
 # Using wiish
 
