@@ -3,6 +3,17 @@
 
 Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
+# Planned Features
+
+| Feature           | Windows | macOS | Linux | iOS | Android |
+|-------------------|:-------:|:-----:|:-----:|:---:|:-------:|
+| Run               |         |   Y   |       |     |         |
+| Create executable |         |   Y   |       |     |         |
+| Create installer  |         |       |       |     |         |
+| Code signing      |         |       |       |     |         |
+| Automatic updates |         |       |       |  -  |    -    |
+| Widgets           |         |       |       |     |         |
+
 # Using wiish
 
 ## Install
@@ -104,41 +115,3 @@ This is where I'm currently recording what I've learned about GUI development.
 - A [**retained mode** GUI](https://en.wikipedia.org/wiki/Retained_mode) is when a bunch of objects are retained by the library (in a tree or something) and the developer doesn't cause rendering to happen right away by making calls.
 - An [**immediate mode** GUI](https://en.wikipedia.org/wiki/Immediate_mode_(computer_graphics)) is when you directly write the graphics to the display.  You probably have to issue all drawing commands on each frame.
 
-## TODO
-
-- [ ] run
-    - [X] macOS
-    - [ ] iOS
-    - [ ] Linux
-    - [ ] Windows
-    - [ ] Android
-- [ ] build
-    - [X] macOS
-    - [ ] iOS
-    - [ ] Linux AppImage
-    - [ ] Linux snap
-    - [ ] Linux static binary
-    - [ ] Linux dynamic binary
-    - [ ] Windows .exe
-    - [ ] Android
-- [ ] package (make an installer)
-    - [ ] macOS .dmg
-    - [ ] Windows .exe
-- [ ] code signing
-    - [ ] macOS
-    - [ ] iOS
-    - [ ] Windows
-    - [ ] Linux
-- [ ] actually draw something app-like :)
-    - [ ] macOS
-    - [ ] Windows
-    - [ ] Linux
-    - [ ] iOS
-    - [ ] Android
-- [ ] auto update provider
-    - [ ] GitHub
-    - [ ] HTTP server
-- [ ] auto update consumer
-    - [ ] macOS
-    - [ ] Windows
-    - [ ] Linux
