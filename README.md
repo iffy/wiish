@@ -3,6 +3,8 @@
 
 Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
+**Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
+
 # Planned Features
 
 | Feature             | Windows | macOS | Linux | iOS | Android |
