@@ -6,7 +6,7 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 # Planned Features
 
 | Feature           | Windows | macOS | Linux | iOS | Android |
-|:-----------------:|:-------:|:-----:|:-----:|:---:|:-------:|
+|-------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | Run               |         |   Y   |       |     |         |
 | Create executable |         |   Y   |       |     |         |
 | Create installer  |         |       |       |     |         |
