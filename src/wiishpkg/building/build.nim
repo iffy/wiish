@@ -45,7 +45,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
     linux = linux
     windows = windows
   let config = getDesktopConfig(directory/"wiish.toml")
-  if not macos and not windows and not linux:
+  if not macos and not windows and not linux and not ios:
     when macDesktop:
       macos = true
     elif defined(windows):

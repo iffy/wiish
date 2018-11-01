@@ -16,6 +16,9 @@ type
     bundle_identifier*: string
     category_type*: string
 
+const
+  datadir = currentSourcePath.parentDir.joinPath("data")
+
 proc getiOSConfig(config:Config):iOSConfig =
   result = getMobileConfig[iOSConfig](config, @["ios", "mobile"])
   result.bundle_identifier = config.toml.get(@["ios"], "bundle_identifier", ?"com.wiish.example").stringVal
@@ -23,8 +26,16 @@ proc getiOSConfig(config:Config):iOSConfig =
 
 proc createOrUpdateXCodeProject(directory:string, config:Config) =
   # For right now, this proc obliterates what's there, but in the future it might just update files as needed.
-  let projdir = directory/config.dst/"ios"/"proj"
-  createDir(projdir)
+  let
+    projdir = directory/config.dst/"ios"/"xcodeproj"
+    src = datadir/"ios_xcodeproj"
+  echo &"copying {src} to {projdir}"
+  copyDir(src, projdir)
+
+#   const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
+#   return (x[basepath.len+1..^1], slurp(x))
+# )
+
 
 
 proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
