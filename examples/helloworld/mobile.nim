@@ -2,9 +2,7 @@
 import wiishpkg/main
 
 app.launched.handle:
-  var w = newWindow()
-  w.willExit.handle:
-    echo "Window is closing"
+  echo "App launched"
 
 app.willExit.handle:
   echo "App is exiting"

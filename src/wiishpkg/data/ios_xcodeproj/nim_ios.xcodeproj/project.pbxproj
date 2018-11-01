@@ -13,7 +13,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		C95E033C218A4B5200C507CA /* test2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = test2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C95E033C218A4B5200C507CA /* nim_ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = nim_ios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C95E034E218A4B5200C507CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C95E0351218A4B5200C507CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C95E0353218A4B5200C507CA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -34,7 +34,7 @@
 		C95E0333218A4B5100C507CA = {
 			isa = PBXGroup;
 			children = (
-				C95E033E218A4B5200C507CA /* test2 */,
+				C95E033E218A4B5200C507CA /* nim_ios */,
 				C95E033D218A4B5200C507CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -42,12 +42,12 @@
 		C95E033D218A4B5200C507CA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C95E033C218A4B5200C507CA /* test2.app */,
+				C95E033C218A4B5200C507CA /* nim_ios.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		C95E033E218A4B5200C507CA /* test2 */ = {
+		C95E033E218A4B5200C507CA /* nim_ios */ = {
 			isa = PBXGroup;
 			children = (
 				C95E034E218A4B5200C507CA /* Assets.xcassets */,
@@ -55,15 +55,15 @@
 				C95E0353218A4B5200C507CA /* Info.plist */,
 				C95E0354218A4B5200C507CA /* main.m */,
 			);
-			path = test2;
+			path = nim_ios;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C95E033B218A4B5100C507CA /* test2 */ = {
+		C95E033B218A4B5100C507CA /* nim_ios */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C95E0358218A4B5200C507CA /* Build configuration list for PBXNativeTarget "test2" */;
+			buildConfigurationList = C95E0358218A4B5200C507CA /* Build configuration list for PBXNativeTarget "nim_ios" */;
 			buildPhases = (
 				C95E0338218A4B5100C507CA /* Sources */,
 				C95E0339218A4B5100C507CA /* Frameworks */,
@@ -73,9 +73,9 @@
 			);
 			dependencies = (
 			);
-			name = test2;
-			productName = test2;
-			productReference = C95E033C218A4B5200C507CA /* test2.app */;
+			name = nim_ios;
+			productName = nim_ios;
+			productReference = C95E033C218A4B5200C507CA /* nim_ios.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0920;
-				ORGANIZATIONNAME = "Matt Haggard";
+				ORGANIZATIONNAME = "Test Ing";
 				TargetAttributes = {
 					C95E033B218A4B5100C507CA = {
 						CreatedOnToolsVersion = 9.2;
@@ -93,7 +93,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C95E0337218A4B5100C507CA /* Build configuration list for PBXProject "test2" */;
+			buildConfigurationList = C95E0337218A4B5100C507CA /* Build configuration list for PBXProject "nim_ios" */;
 			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -106,7 +106,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C95E033B218A4B5100C507CA /* test2 */,
+				C95E033B218A4B5100C507CA /* nim_ios */,
 			);
 		};
 /* End PBXProject section */
@@ -255,9 +255,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = test2/Info.plist;
+				INFOPLIST_FILE = nim_ios/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.onepartrain.test2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onepartrain.nim_ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -268,9 +268,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = test2/Info.plist;
+				INFOPLIST_FILE = nim_ios/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.onepartrain.test2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onepartrain.nim_ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -279,7 +279,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C95E0337218A4B5100C507CA /* Build configuration list for PBXProject "test2" */ = {
+		C95E0337218A4B5100C507CA /* Build configuration list for PBXProject "nim_ios" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C95E0356218A4B5200C507CA /* Debug */,
@@ -288,7 +288,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C95E0358218A4B5200C507CA /* Build configuration list for PBXNativeTarget "test2" */ = {
+		C95E0358218A4B5200C507CA /* Build configuration list for PBXNativeTarget "nim_ios" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C95E0359218A4B5200C507CA /* Debug */,

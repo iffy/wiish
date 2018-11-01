@@ -1,9 +1,6 @@
 //
 //  main.m
-//  test2
-//
-//  Created by Matt Haggard on 10/31/18.
-//  Copyright © 2018 Matt Haggard. All rights reserved.
+//  nim_iosapp
 //
 
 #import <UIKit/UIKit.h>
