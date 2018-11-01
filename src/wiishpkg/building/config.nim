@@ -1,3 +1,4 @@
+## Wiish config file parsing
 import parsetoml
 import strutils
 

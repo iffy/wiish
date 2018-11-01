@@ -1,5 +1,6 @@
 import opengl
-import ./events
+import ../events
+import ../defs
 
 type
   Rect* = tuple[x, y, width, height: float32]
@@ -19,11 +20,6 @@ proc newRect*(x, y, width, height: float32 = 0):Rect =
 
 template newRect*(x, y, width, height: int32 = 0):Rect =
   newRect(x.toFloat, y.toFloat, width.toFloat, height.toFloat)
-
-const
-  macDesktop* = defined(macosx) and not defined(ios)
-
-echo "macDesktop: ", $macDesktop
 
 when macDesktop:
   type

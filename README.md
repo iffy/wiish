@@ -3,6 +3,13 @@
 
 Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
+**Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
+
+Wiish provides 2 main things:
+
+1. Building/packaging apps with a command line tool (`wiish`) and config file format (`wiish.toml`).  Code for this is mostly in `src/wiishpkg/building`.
+2. Writing apps with a Nim library (`wiishpkg/main`).  It's intended that the `wiishpkg/main` components could be replaced with something else if you prefer.  Code for this is mostly in `src/wiishpkg/lib`.
+
 # Planned Features
 
 | Feature             | Windows | macOS | Linux | iOS | Android |

@@ -1,8 +1,8 @@
 import opengl
 import darwin/app_kit
-import ../events
-import ../wiishtypes
 import ../logging
+import ../wiishtypes
+import ../../events
 
 #------------------------------------------------
 # Headers
