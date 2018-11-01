@@ -1,3 +1,5 @@
+## Code for building iOS applications.
+##
 import os
 import osproc
 import ospaths
@@ -20,8 +22,7 @@ proc getiOSConfig(config:Config):iOSConfig =
   result.category_type = config.toml.get(@["ios"], "category_type", ?"public.app-category.example").stringVal
 
 proc createOrUpdateXCodeProject(directory:string, config:Config) =
-  # For right now, this proc obliterates what's there
-  # In the future it might just update as needed
+  # For right now, this proc obliterates what's there, but in the future it might just update files as needed.
   let projdir = directory/config.dst/"ios"/"proj"
   createDir(projdir)
 
