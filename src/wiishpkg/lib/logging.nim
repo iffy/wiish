@@ -1,3 +1,5 @@
+## Logging for the wiish applications
+##
 import times
 import strformat
 

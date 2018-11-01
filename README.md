@@ -7,8 +7,8 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 Wiish provides 2 main things:
 
-1. A command line tool (`wiish`) and config file format (`wiish.toml`) for building and packaging apps
-2. A Nim library (`wiishpkg`) to use as a starting point for making your app.  It's intended that the `wiishpkg` components could be replaced with something else if you prefer.
+1. A command line tool (`wiish`) and config file format (`wiish.toml`) for building and packaging apps.  Code for this is mostly in `src/wiishpkg/building`.
+2. A Nim library (`wiishpkg/main`) to use as a starting point for making your app.  It's intended that the `wiishpkg/main` components could be replaced with something else if you prefer.  Code for this is mostly in `src/wiishpkg/lib`.
 
 # Planned Features
 

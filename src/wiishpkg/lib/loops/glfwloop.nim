@@ -2,7 +2,7 @@ import glfw
 import opengl
 import ../logging
 import ../wiishtypes
-import ../events
+import ../../events
 
 ## List of created windows
 var windows*:seq[wiishtypes.Window]

@@ -1,11 +1,9 @@
 import sequtils
-import ./events
+import ../events
+import ../defs
 import ./logging
 import os
-export events
-
 import ./wiishtypes
-export wiishtypes
 
 proc start*(app:App)
 proc quit*(app:App)
@@ -16,3 +14,4 @@ when macDesktop:
 else:
   include ./loops/glfwloop
 
+export app

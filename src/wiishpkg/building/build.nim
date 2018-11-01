@@ -11,7 +11,7 @@ import ./build_windows
 import ./build_linux
 import ./config
 import ./logging
-import ./wiishtypes
+import ../defs
 
 export doiOSRun
 

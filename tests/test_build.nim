@@ -3,7 +3,7 @@ import os
 import strformat
 import random
 import ospaths
-import wiishpkg/build
+import wiishpkg/building
 
 randomize()
 
