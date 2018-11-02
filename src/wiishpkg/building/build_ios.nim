@@ -78,7 +78,6 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   var identities = listCodesigningIdentities()
 
   # build it
-  # xcodebuild build -configuration Debug -project examples/helloworld/dist/ios/xcodeproj/nim_ios.xcodeproj/ CODE_SIGN_IDENTITY="iPhone Developer: haggardii@gmail.com (K93YJK24C6)" -arch x86_64 -sdk iphonesimulator11.2 -xcconfig good.xcconfig
   let configuration = "Debug"
   let sdk_name = "iphonesimulator"
   p = startProcess(command = "xcrun", args = @[
@@ -97,13 +96,16 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     "ONLY_ACTIVE_ARCH=NO",
     "VALID_ARCHS=x86_64 armv7s x86_64",
     "PLATFORM_PREFERRED_ARCH=x86_64",
-    &"PRODUCT_BUNDLE_IDENTIFIER=\"{config.bundle_identifier}\""
+    &"PRODUCT_BUNDLE_IDENTIFIER={config.bundle_identifier}",
+    &"PRODUCT_NAME={config.name}",
+    &"TARGET_NAME={config.name}",
   ], options = {poUsePath, poParentStreams})
   if p.waitForExit() != 0:
     log("Error building")
     quit(1)
 
-  result = projdir/"build"/(&"{configuration}-{sdk_name}")/"nim_ios.app"
+  result = projdir/"build"/(&"{configuration}-{sdk_name}")/(&"{config.name}.app")
+  echo "app name: ", result.repr
 
   # xcodebuild clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project nim_ios.xcodeproj/
   
@@ -256,14 +258,13 @@ proc doiOSRun*(directory:string = ".") =
     raise newException(CatchableError, "Error installing application")
 
   # XXX figure out how to know when it's installed
-  log("Sleeping 5 seconds to hopefully wait for the app to get installed...")
-  sleep(5000)
+  # log("Sleeping 5 seconds to hopefully wait for the app to get installed...")
+  # sleep(5000)
 
   # start the app
-  let bundle_identifier = config.bundle_identifier #"com.example.nim_ios" # XXX change this to config.bundle_identifier when building the app
-  log(&"Starting app {bundle_identifier}...")
+  log(&"Starting app {config.bundle_identifier}...")
   p = startProcess(command="xcrun", args = @[
-    "simctl", "launch", "booted", bundle_identifier,
+    "simctl", "launch", "booted", config.bundle_identifier,
   ], options = {poUsePath, poParentStreams})
   if p.waitForExit() != 0:
     raise newException(CatchableError, "Error launching application")
