@@ -7,6 +7,7 @@ import strformat
 import strutils
 import parsetoml
 import posix
+import re
 
 import ./config
 import ./logging
@@ -15,6 +16,7 @@ type
   iOSConfig = object of Config
     bundle_identifier*: string
     category_type*: string
+    codesign_identity*: string
 
 const
   datadir = currentSourcePath.parentDir.joinPath("data")
@@ -23,23 +25,46 @@ proc getiOSConfig(config:Config):iOSConfig =
   result = getMobileConfig[iOSConfig](config, @["ios", "mobile"])
   result.bundle_identifier = config.toml.get(@["ios"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["ios"], "category_type", ?"public.app-category.example").stringVal
+  result.codesign_identity = config.toml.get(@["ios", "mobile"], "codesign_identity", ?"unknown").stringVal
 
-proc createOrUpdateXCodeProject(directory:string, config:Config) =
+proc createOrUpdateXCodeProject(directory:string, config:Config):string =
   # For right now, this proc obliterates what's there, but in the future it might just update files as needed.
   let
     projdir = directory/config.dst/"ios"/"xcodeproj"
     src = datadir/"ios_xcodeproj"
   echo &"copying {src} to {projdir}"
   copyDir(src, projdir)
+  result = projdir
 
 #   const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
 #   return (x[basepath.len+1..^1], slurp(x))
 # )
 
 
+type
+  CodeSignIdentity = object
+    hash*: string
+    name*: string
+    shortid*: string
+    fullname*: string
+proc listCodesigningIdentities(): seq[CodeSignIdentity] =
+  let output = execProcess(command = "security", args = @[
+    "find-identity", "-v", "-p", "codesigning",
+  ], options = {poUsePath})
+  for line in output.splitLines():
+    if line =~ re("\\s+\\d\\)\\s+(.*?)\\s+\"(.*?)\\s\\((.*?)\\)"):
+      var identity = CodeSignIdentity()
+      identity.hash = matches[0]
+      identity.name = matches[1]
+      identity.shortid = matches[2]
+      identity.fullname = &"{identity.name} ({identity.shortid})"
+      result.add(identity)
+
 
 proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   ## Package a iOS application
+  var
+    p: Process
   let config = config.getiOSConfig()
   let src_file = directory/config.src
   let executable_name = src_file.splitFile.name
@@ -47,7 +72,41 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   
   let version = config.version
 
-  createOrUpdateXCodeProject(directory, config)
+  let projdir = createOrUpdateXCodeProject(directory, config)
+  
+  # find an identity to sign with
+  var identities = listCodesigningIdentities()
+
+  # build it
+  # xcodebuild build -configuration Debug -project examples/helloworld/dist/ios/xcodeproj/nim_ios.xcodeproj/ CODE_SIGN_IDENTITY="iPhone Developer: haggardii@gmail.com (K93YJK24C6)" -arch x86_64 -sdk iphonesimulator11.2 -xcconfig good.xcconfig
+  let configuration = "Debug"
+  let sdk_name = "iphonesimulator"
+  p = startProcess(command = "xcrun", args = @[
+    "xcodebuild",
+    "build",
+    "-configuration", configuration,
+    "-arch", "x86_64",
+    "-sdk", &"{sdk_name}11.2",
+    "-project", projdir/"nim_ios.xcodeproj",
+    &"CODE_SIGN_IDENTITY=\"{identities[0].fullname}\"",
+    "ARCH=x86_64",
+    "ARCHS_STANDARD_32_64_BIT=x86_64",
+    "ARCHS_STANDARD=x86_64",
+    "ARCHS=x86_64",
+    "CURRENT_ARCH=x86_64",
+    "ONLY_ACTIVE_ARCH=NO",
+    "VALID_ARCHS=x86_64 armv7s x86_64",
+    "PLATFORM_PREFERRED_ARCH=x86_64",
+    &"PRODUCT_BUNDLE_IDENTIFIER=\"{config.bundle_identifier}\""
+  ], options = {poUsePath, poParentStreams})
+  if p.waitForExit() != 0:
+    log("Error building")
+    quit(1)
+
+  result = projdir/"build"/(&"{configuration}-{sdk_name}")/"nim_ios.app"
+
+  # xcodebuild clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project nim_ios.xcodeproj/
+  
   
   # let Contents = dist_dir/config.name & ".app"
   # result = Contents
@@ -196,11 +255,19 @@ proc doiOSRun*(directory:string = ".") =
   if p.waitForExit() != 0:
     raise newException(CatchableError, "Error installing application")
 
+  # XXX figure out how to know when it's installed
+  log("Sleeping 5 seconds to hopefully wait for the app to get installed...")
+  sleep(5000)
+
   # start the app
-  log("Starting app...")
+  let bundle_identifier = config.bundle_identifier #"com.example.nim_ios" # XXX change this to config.bundle_identifier when building the app
+  log(&"Starting app {bundle_identifier}...")
   p = startProcess(command="xcrun", args = @[
-    "simctl", "launch", "booted", config.bundle_identifier,
+    "simctl", "launch", "booted", bundle_identifier,
   ], options = {poUsePath, poParentStreams})
   if p.waitForExit() != 0:
     raise newException(CatchableError, "Error launching application")
 
+  # Watch logs, see
+  # xcrun simctl spawn booted log help stream
+  # xcrun simctl spawn booted log stream --predicate 'processId > 100'
