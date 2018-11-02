@@ -51,9 +51,10 @@ install:
 script:
     - nimble refresh
     - nimble test
-    - nim check --os:macosx examples/basic/desktop.nim
-    - nim check --os:windows examples/basic/desktop.nim
-    - nim check --os:linux examples/basic/desktop.nim
+    - nim check --os:macosx examples/helloworld/desktop.nim
+    # - nim check --os:ios examples/helloworld/mobile.nim
+    - nim check --os:windows examples/helloworld/desktop.nim
+    - nim check --os:linux examples/helloworld/desktop.nim
 
 branches:
   except:
