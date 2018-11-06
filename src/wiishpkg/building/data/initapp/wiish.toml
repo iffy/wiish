@@ -1,20 +1,20 @@
 [desktop]
 name     = "Wiish Demo"
 version  = "0.1.0"
-src      = "./desktop.nim"
-dst      = "./dist"
+src      = "main_desktop.nim"
+dst      = "dist"
 nimflags = []
 
 [mobile]
-name     = "Wiish Mobile Demo"
+name     = "Wiish"
 version  = "0.1.0"
-src      = "./mobile.nim"
-dst      = "./dist"
+src      = "main_mobile.nim"
+dst      = "dist"
 nimflags = []
 
 [macos]
-bundle_identifier = "com.you.example"
+bundle_identifier = "com.wiish.exampledesktop"
 category_type = "public.app-category.example"
 
 [ios]
-bundle_identifier = "com.you.examplemobile"
+bundle_identifier = "com.wiish.examplemobile"

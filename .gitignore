@@ -2,3 +2,5 @@ dist
 .DS_Store
 nimcache/
 wiish
+tmp
+libSDL2.a

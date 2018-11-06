@@ -1,3 +1,4 @@
+import sdl2
 import opengl
 import ../events
 import ../defs
@@ -21,20 +22,26 @@ proc newRect*(x, y, width, height: float32 = 0):Rect =
 template newRect*(x, y, width, height: int32 = 0):Rect =
   newRect(x.toFloat, y.toFloat, width.toFloat, height.toFloat)
 
-when macDesktop:
-  type
-    Id* {.importc: "id", header: "<AppKit/AppKit.h>", final .} = distinct int
-  type
-    App* = ref object of BaseApp
-    Window* = ref object of BaseWindow
-      nativeWindowPtr*: pointer # WiishWindow
-      nativeViewPtr*: pointer # WiishView
-else:
-  import glfw
-  type
-    App* = ref object of BaseApp
-    Window* = ref object of BaseWindow
-      glfwWindow*: glfw.Window
+type
+  App* = ref object of BaseApp
+    windows*: seq[Window]
+  Window* = ref object of BaseWindow
+    sdlWindow*: sdl2.WindowPtr
+    sdlGlContext*: sdl2.GlContextPtr
+# when macDesktop:
+#   type
+#     Id* {.importc: "id", header: "<AppKit/AppKit.h>", final .} = distinct int
+#   type
+#     App* = ref object of BaseApp
+#     Window* = ref object of BaseWindow
+#       nativeWindowPtr*: pointer # WiishWindow
+#       nativeViewPtr*: pointer # WiishView
+# else:
+#   import glfw
+#   type
+#     App* = ref object of BaseApp
+#     Window* = ref object of BaseWindow
+#       glfwWindow*: glfw.Window
 
 
 ## The singleton application instance.

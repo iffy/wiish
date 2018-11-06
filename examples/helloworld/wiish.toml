@@ -1,15 +1,15 @@
 [desktop]
 name     = "Wiish Demo"
 version  = "0.1.0"
-src      = "./desktop.nim"
-dst      = "./dist"
+src      = "main_desktop.nim"
+dst      = "dist"
 nimflags = []
 
 [mobile]
 name     = "Wiish"
 version  = "0.1.0"
-src      = "./mobile.nim"
-dst      = "./dist"
+src      = "main_mobile.nim"
+dst      = "dist"
 nimflags = []
 
 [macos]

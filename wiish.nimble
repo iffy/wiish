@@ -15,12 +15,13 @@ requires "parsetoml >= 0.3.2"
 # requires "argparse >= 0.1.0"
 requires "https://github.com/iffy/nim-argparse.git"
 
-requires "https://github.com/mjendrusch/objc.git"
+# requires "https://github.com/mjendrusch/objc.git"
 
 # Graphics dependencies
 
 requires "opengl"
-requires "glfw >= 0.1.0"
-# requires "sdl2 >= 1.2"
+# requires "glfw >= 0.1.0"
+requires "sdl2 >= 1.2"
 # requires "nanovg >= 0.1"
 requires "https://github.com/yglukhov/darwin"
+# requires "nimx"

@@ -10,7 +10,7 @@ import ./build_ios
 import ./build_windows
 import ./build_linux
 import ./config
-import ./logging
+import ./buildlogging
 import ../defs
 
 export doiOSRun
@@ -27,6 +27,8 @@ const basepath = currentSourcePath.parentDir.joinPath("data/initapp")
 const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
   return (x[basepath.len+1..^1], slurp(x))
 )
+
+
 
 # const sampledir = @[
 #   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
@@ -76,18 +78,17 @@ proc doDesktopRun*(directory:string = ".") =
   echo "src_file: ", src_file
   when macDesktop:
     nim_bin = "nim"
-    args.add("objc")
   elif defined(windows):
     nim_bin = "nim.exe"
-    args.add("c")
   elif defined(linux):
     nim_bin = "nim"
-    args.add("c")
   else:
     raise newException(CatchableError, "Unknown OS")
+  args.add("c")
   for flag in config.nimflags:
     args.add(flag)
-  args.add("-d:glfwStaticLib")
+  # args.add("-d:glfwStaticLib")
+  args.add("--threads:on")
   args.add("-r")
   args.add(src_file)
   echo "args: ", args

@@ -1,0 +1,6 @@
+# ignore files without extensions (e.g. binaries)
+*
+!/**/
+!*.*
+dist
+.DS_Store

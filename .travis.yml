@@ -49,12 +49,9 @@ install:
   - choosenim $CHANNEL
 
 script:
-    - nimble refresh
-    - nimble test
-    - nim check --os:macosx examples/helloworld/desktop.nim
-    # - nim check --os:ios examples/helloworld/mobile.nim
-    - nim check --os:windows examples/helloworld/desktop.nim
-    - nim check --os:linux examples/helloworld/desktop.nim
+  - nimble refresh
+  - nimble test
+  - tests/dochecks.sh
 
 branches:
   except:
