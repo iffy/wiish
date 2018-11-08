@@ -1,6 +1,9 @@
 # For when this is used as a library
 import ./events
 export events
-import ./application
+import ./lib/wiishtypes
+export wiishtypes
+import ./lib/application
 export application
-export application.app
+import ./lib/logging
+export logging
