@@ -10,6 +10,7 @@ type
     version*: string
     src*: string
     dst*: string
+    icon*: string
     nimflags*: seq[string]
 
 const DEFAULTS* = (
@@ -18,6 +19,7 @@ const DEFAULTS* = (
   src: "myapp.nim",
   dst: "dist",
   nimflags: @[],
+  icon: "",
 )
 
 proc get*(maintoml: TomlValueRef, key:string): TomlValueRef =
@@ -50,6 +52,7 @@ proc getDesktopConfig*[T](toml: TomlValueRef, sections:seq[string] = @["desktop"
   result.version = toml.get(sections, "version", ?DEFAULTS.version).stringVal
   result.src = toml.get(sections, "src", ?DEFAULTS.src).stringVal
   result.dst = toml.get(sections, "dst", ?DEFAULTS.dst).stringVal
+  result.icon = toml.get(sections, "icon", ?DEFAULTS.icon).stringVal
   result.nimflags = @[]
   for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
     result.nimflags.add(flag.stringVal)

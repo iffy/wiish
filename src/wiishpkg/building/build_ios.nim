@@ -11,6 +11,7 @@ import re
 
 import ./config
 import ./buildlogging
+import ./buildutil
 
 type
   iOSConfig = object of Config
@@ -20,7 +21,6 @@ type
     sdk_version*: string
 
 const
-  datadir = currentSourcePath.parentDir.joinPath("data")
   simulator_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
 
 proc getiOSConfig(config:Config):iOSConfig =
@@ -30,22 +30,6 @@ proc getiOSConfig(config:Config):iOSConfig =
   result.category_type = config.toml.get(@["ios"], "category_type", ?"public.app-category.example").stringVal
   result.codesign_identity = config.toml.get(@["ios", "mobile"], "codesign_identity", ?"unknown").stringVal
   result.sdk_version = config.toml.get(@["ios", "mobile"], "sdk_version", ?"").stringVal
-
-proc run(args:varargs[string, `$`]) =
-  var p = startProcess(command = args[0],
-    args = args[1..^1],
-    options = {poUsePath, poParentStreams})
-  if p.waitForExit() != 0:
-    raise newException(CatchableError, "Error running process")
-
-proc runoutput(args:varargs[string, `$`]):string =
-  result = execProcess(command = args[0],
-    args = args[1..^1],
-    options = {poUsePath})
-
-template basename(path:string):string =
-  let split = path.splitFile
-  split.name & split.ext
 
 type
   CodeSignIdentity = object
@@ -69,7 +53,7 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2.a, creating it if necessary
   let
     platform = if simulator: "iphonesimulator" else: "iphoneos"
-    xcodeProjPath = datadir/"sdl2src/Xcode-iOS/SDL"
+    xcodeProjPath = DATADIR/"sdl2src/Xcode-iOS/SDL"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2.a"
   if not fileExists(result):
     log &"Building {result.basename}..."
@@ -136,7 +120,7 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   run("ibtool",
     "--output-format", "human-readable-text",
     "--compile", appDir/"LaunchScreen.storyboardc",
-    datadir/"ios-util"/"LaunchScreen.storyboard",
+    DATADIR/"ios-util"/"LaunchScreen.storyboard",
     "--sdk", sdkPath,
   )
 
