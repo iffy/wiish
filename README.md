@@ -22,7 +22,7 @@ Wiish provides 2 main things:
 | Code signing        |         |       |       |     |         |
 | Logging             |         |       |       |     |         |
 | Automatic updates   |         |       |       |  -  |    -    |
-| App icon            |         |       |       |     |         |
+| App icon            |         |   Y   |       |     |         |
 | File associations   |         |       |       |  -  |    -    |
 | Widgets             |         |       |       |     |         |
 

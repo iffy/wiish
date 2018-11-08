@@ -6,62 +6,96 @@ import parsetoml
 import posix
 
 import ./config
+import ./buildutil
+import ./buildlogging
 
 type
   MacOSConfig = object of Config
     bundle_identifier*: string
     category_type*: string
 
-const default_mac_icon = slurp"./data/default.icns"
+const
+  default_icon = DATADIR/"default.png"
 
 proc macOSConfig(config:Config):MacOSConfig =
   result = getDesktopConfig[MacOSConfig](config, @["macos", "desktop"])
   result.bundle_identifier = config.toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 
+proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
+  discard runoutput("sips",
+    "-z", $height, $width,
+    "--out", outfile,
+    "-s", "format", "png",
+    srcfile)
+
+proc createICNS*(srcfile:string, output:string) =
+  ## Create an ICNS icon pack from a source image
+  if srcfile.splitFile.ext == ".icns":
+    # It's already an icns
+    copyDir(srcfile, output)
+  else:
+    # Convert it
+    let
+      iconsetPath = output.parentDir/"tmp.iconset"
+    createDir(iconsetPath)
+    srcfile.resizePNG(iconsetPath/"icon_512x512@2x.png", 1024, 1024)
+    srcfile.resizePNG(iconsetPath/"icon_512x512.png", 512, 512)
+    srcfile.resizePNG(iconsetPath/"icon_256x256@2x.png", 512, 512)
+    srcfile.resizePNG(iconsetPath/"icon_256x256.png", 256, 256)
+    srcfile.resizePNG(iconsetPath/"icon_128x128@2x.png", 256, 256)
+    srcfile.resizePNG(iconsetPath/"icon_128x128.png", 128, 128)
+    srcfile.resizePNG(iconsetPath/"icon_32x32@2x.png", 64, 64)
+    srcfile.resizePNG(iconsetPath/"icon_32x32.png", 32, 32)
+    srcfile.resizePNG(iconsetPath/"icon_16x16@2x.png", 32, 32)
+    srcfile.resizePNG(iconsetPath/"icon_16x16.png", 16, 16)
+    run("iconutil", "-c", "icns", "--output", output, iconsetPath)
+    removeDir(iconsetPath)
+
 proc doMacBuild*(directory:string, config:Config) =
-  ## Package a mac application
-  let config = config.macOSConfig()
-  let src_file = (directory/config.src).normalizedPath
-  let executable_name = src_file.splitFile.name
-  let dist_dir = (directory/config.dst/"macos").normalizedPath
+  ## Build a macOS .app
+  let
+    config = config.macOSConfig()
+    buildDir = directory/config.dst/"macos"
+    appSrc = directory/config.src
+    appDir = buildDir/config.name & ".app"
+    contentsDir = appDir/"Contents"
+    executablePath = contentsDir/"MacOS"/appSrc.splitFile.name
   
-  let version = config.version
-  let bundle_identifier = config.bundle_identifier
-  
-  let unpacked_dir = dist_dir/config.name & ".app"
-  let Contents = unpacked_dir/"Contents"
-  createDir(Contents)
-  createDir(Contents/"Resources")
-  createDir(Contents/"MacOS")
+  createDir(contentsDir)
+  createDir(contentsDir/"Resources")
+  createDir(contentsDir/"MacOS")
 
   # Contents/PkgInfo
-  (Contents/"PkgInfo").writeFile("APPL????")
+  (contentsDir/"PkgInfo").writeFile("APPL????")
 
   # Compile Contents/MacOS/bin
-  let bin_file = Contents/"MacOS"/executable_name
   var args = @[
-    "objc",
+    "nim",
+    "c",
     "-d:release",
   ]
   for flag in config.nimflags:
     args.add(flag)
-  args.add(&"-o:{bin_file}")
-  args.add(src_file)
-  var p = startProcess(command="nim", args = args, options = {poUsePath, poParentStreams})
-  let result = p.waitForExit()
-  if result != 0:
-    echo "Error compiling objc"
-    quit(1)
+  args.add(&"-o:{executablePath}")
+  args.add(appSrc)
+  run(args)
 
-  # copyFile(bin_file, Contents/"MacOS"/executable_name)
-
-  writeFile(Contents/"Resources"/executable_name & ".icns", default_mac_icon)
+  # Generate icons
+  log "Generating .icns file ..."
+  var iconSrcPath:string
+  if config.icon == "":
+    iconSrcPath = default_icon
+  else:
+    iconSrcPath = directory/config.icon
+  let iconDstPath = contentsDir/"Resources"/appSrc.splitFile.name & ".icns"
+  log "from ", iconSrcPath, " to ", iconDstPath
+  createICNS(iconSrcPath, iconDstPath)
 
   # Contents/Info.plist
   # <key>CFBundleIconFile</key>
-  # <string>{executable_name}</string>
-  (Contents/"Info.plist").writeFile(&"""
+  # <string>{executablePath}</string>
+  (contentsDir/"Info.plist").writeFile(&"""
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -71,11 +105,11 @@ proc doMacBuild*(directory:string, config:Config) =
   <key>CFBundleDevelopmentRegion</key>
   <string>English</string>
   <key>CFBundleExecutable</key>
-  <string>{executable_name}</string>
+  <string>{executablePath.basename}</string>
   <key>CFBundleIdentifier</key>
-  <string>{bundle_identifier}</string>
+  <string>{config.bundle_identifier}</string>
   <key>CFBundleIconFile</key>
-  <string>{executable_name}.icns</string>
+  <string>{iconDstPath.basename}</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -83,7 +117,7 @@ proc doMacBuild*(directory:string, config:Config) =
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>{version}</string>
+  <string>{config.version}</string>
   <key>NSHighResolutionCapable</key>
   <true/>
   <key>LSMinimumSystemVersionByArchitecture</key>
@@ -95,3 +129,5 @@ proc doMacBuild*(directory:string, config:Config) =
   <true/>
 </dict>
 </plist>""")
+
+  log "ok"
