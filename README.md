@@ -9,8 +9,8 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 Wiish provides 2 main things:
 
-1. Building/packaging apps with a command line tool (`wiish`) and config file format (`wiish.toml`).  Code for this is mostly in `src/wiishpkg/building`.
-2. Writing apps with a Nim library (`wiishpkg/main`).  It's intended that the `wiishpkg/main` components could be replaced with something else if you prefer.  Code for this is mostly in `src/wiishpkg/lib`.
+1. `wiish` - A command line tool for running, building and packaging apps.
+2. `wiishpkg` - A Nim library for making apps.
 
 # Planned Features
 
@@ -21,6 +21,7 @@ Wiish provides 2 main things:
 | Create installer    |         |       |       |     |         |
 | Code signing        |         |       |       |     |         |
 | Logging             |         |       |       |     |         |
+| Console log w/ run  |         |       |       |     |         |
 | Automatic updates   |         |       |       |  -  |    -    |
 | App icon            |         |   Y   |       |     |         |
 | File associations   |         |       |       |  -  |    -    |
@@ -61,7 +62,19 @@ nimble test
 tests/dochecks.sh
 ~~~
 
-## Current Plan
+## Design Plan
+
+I'd really like the components of Wiish to be modular.  For instance:
+
+- You should be able to use the `wiish` command line tool without importing anything from `wiishpkg` in your app.  
+
+- If you want to write low-level OpenGL, you should be able to do that.  Or if you want to use a higher-level library, you should be able to do that, too.
+
+- Auto-updating and logging should be useably no matter what GUI library you use.
+
+In other words, components shouldn't be interwined so much that they're inseparable.  Instead, they should be easily replaced.
+
+---
 
 In order of preference, my plan is to use:
 
