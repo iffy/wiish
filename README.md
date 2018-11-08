@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/iffy/wiish.svg?branch=master)](https://travis-ci.org/iffy/wiish)
 [![Windows build status](https://ci.appveyor.com/api/projects/status/hnv03meyx4absx4t/branch/master?svg=true)](https://ci.appveyor.com/project/iffy/wiish/branch/master)
 
+<div style="text-align:center;"><img src="./logo.png"></div>
+
 Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
 **Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
