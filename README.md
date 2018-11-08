@@ -56,13 +56,7 @@ See `wiish --help` for more information.
 
 ~~~
 nimble test
-~~~
-
-## Running examples
-
-~~~
-nim c -r examples/basic/basic.nim
-nim c -r examples/fonts/fonts.nim
+tests/dochecks.sh
 ~~~
 
 ## Current Plan
