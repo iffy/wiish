@@ -18,3 +18,4 @@ category_type = "public.app-category.example"
 
 [ios]
 bundle_identifier = "com.wiish.examplemobile"
+sdk_version = "" # If blank, auto-detect the latest installed version

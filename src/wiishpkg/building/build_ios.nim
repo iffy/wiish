@@ -17,9 +17,11 @@ type
     bundle_identifier*: string
     category_type*: string
     codesign_identity*: string
+    sdk_version*: string
 
 const
   datadir = currentSourcePath.parentDir.joinPath("data")
+  simulator_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
 
 proc getiOSConfig(config:Config):iOSConfig =
   ## Read iOS-specific config from the config file
@@ -27,6 +29,7 @@ proc getiOSConfig(config:Config):iOSConfig =
   result.bundle_identifier = config.toml.get(@["ios"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["ios"], "category_type", ?"public.app-category.example").stringVal
   result.codesign_identity = config.toml.get(@["ios", "mobile"], "codesign_identity", ?"unknown").stringVal
+  result.sdk_version = config.toml.get(@["ios", "mobile"], "sdk_version", ?"").stringVal
 
 proc run(args:varargs[string, `$`]) =
   var p = startProcess(command = args[0],
@@ -62,7 +65,7 @@ proc listCodesigningIdentities(): seq[CodeSignIdentity] =
       identity.fullname = &"{identity.name} ({identity.shortid})"
       result.add(identity)
 
-proc buildSDLlib(sdkversion:string, simulator:bool = true):string =
+proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2.a, creating it if necessary
   let
     platform = if simulator: "iphonesimulator" else: "iphoneos"
@@ -74,7 +77,7 @@ proc buildSDLlib(sdkversion:string, simulator:bool = true):string =
       "xcodebuild",
       "-project", xcodeProjPath/"SDL.xcodeproj",
       "-configuration", "Release",
-      "-sdk", platform & sdkversion,
+      "-sdk", platform & sdk_version,
       "SYMROOT=build",
     ]
     if simulator:
@@ -88,6 +91,13 @@ proc buildSDLlib(sdkversion:string, simulator:bool = true):string =
   if not fileExists(result):
     raise newException(CatchableError, "Failed to build libSDL2.a")
 
+proc listPossibleSDKVersions(simulator: bool):seq[string] =
+  ## List all SDK versions installed on this computer
+  for kind, thing in walkDir(simulator_sdk_root):
+    let name = thing.basename
+    if name =~ re".*?(\d+\.\d+)\.sdk":
+      result.add(matches[0])
+
 proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   ## Build an iOS .app
   ## Returns the path to the packaged .app
@@ -95,7 +105,6 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     config = config.getiOSConfig()
     buildDir = directory/config.dst/"ios"
     appSrc = directory/config.src
-    sdkversion = "11.2"
     simulator = true
     sdkName = if simulator: "iphonesimulator" else: "iphoneos"
     identities = listCodesigningIdentities()
@@ -104,10 +113,16 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     executablePath = appDir/"executable"
   var
     nimFlags, linkerFlags, compilerFlags: seq[string]
+    sdk_version = config.sdk_version
   
+  if sdk_version == "":
+    log &"Choosing sdk version ..."
+    sdk_version = listPossibleSDKVersions(simulator)[^1]
+    log &"Chose SDK version: {sdk_version}"
+
   var sdkPath:string
   if simulator:
-    sdkPath = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator" & sdkversion & ".sdk"
+    sdkPath = simulator_sdk_root / "iPhoneSimulator" & sdk_version & ".sdk"
   else:
     raise newException(CatchableError, "Non-simulator not yet supported")
 
@@ -151,7 +166,7 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   # let signing_identity = identities[0].fullname
 
   log "Obtaining SDL2 library ..."
-  let sdllibSrc = buildSDLlib(sdkversion, simulator)
+  let sdllibSrc = buildSDLlib(sdk_version, simulator)
   
   log "Configuring build ..."
   template linkAndCompile(flag:untyped) =
@@ -172,7 +187,7 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   else:
     raise newException(CatchableError, "Non-simulator not yet supported")
   
-  linkAndCompile(&"-mios-simulator-version-min={sdkversion}")
+  linkAndCompile(&"-mios-simulator-version-min={sdk_version}")
   linkerFlags.add([
     "-fobjc-link-runtime",
     "-L", sdllibSrc.parentDir,
