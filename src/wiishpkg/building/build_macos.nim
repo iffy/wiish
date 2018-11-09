@@ -22,13 +22,6 @@ proc macOSConfig(config:Config):MacOSConfig =
   result.bundle_identifier = config.toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
   result.category_type = config.toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 
-proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
-  discard runoutput("sips",
-    "-z", $height, $width,
-    "--out", outfile,
-    "-s", "format", "png",
-    srcfile)
-
 proc createICNS*(srcfile:string, output:string) =
   ## Create an ICNS icon pack from a source image
   if srcfile.splitFile.ext == ".icns":
@@ -89,7 +82,6 @@ proc doMacBuild*(directory:string, config:Config) =
   else:
     iconSrcPath = directory/config.icon
   let iconDstPath = contentsDir/"Resources"/appSrc.splitFile.name & ".icns"
-  log "from ", iconSrcPath, " to ", iconDstPath
   createICNS(iconSrcPath, iconDstPath)
 
   # Contents/Info.plist

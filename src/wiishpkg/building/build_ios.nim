@@ -124,6 +124,14 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     "--sdk", sdkPath,
   )
 
+  log &"Creating icons ..."
+  var iconSrcPath:string
+  if config.icon == "":
+    iconSrcPath = DATADIR/"default_square.png"
+  else:
+    iconSrcPath = directory/config.icon
+  iconSrcPath.resizePNG(appDir/"Icon.png", 180, 180)
+
   log &"Creating Info.plist ..."
   appInfoPlistPath.writeFile(&"""
   <?xml version="1.0" encoding="UTF-8" ?>
@@ -140,6 +148,16 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     <string>{config.version}</string>
     <key>CFBundleVersion</key>
     <string>{config.version}.1</string>
+    <key>CFBundleIcons</key>
+    <dict>
+      <key>CFBundlePrimaryIcon</key>
+      <dict>
+        <key>CFBundleIconFiles</key>
+        <array>
+          <string>Icon.png</string>
+        </array>
+      </dict>
+    </dict>
     <key>UILaunchStoryboardName</key>
     <string>LaunchScreen</string>
   </dict>

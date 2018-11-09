@@ -70,6 +70,7 @@ proc getMobileConfig*[T](toml: TomlValueRef, sections:seq[string] = @["mobile"])
   result.version = toml.get(sections, "version", ?DEFAULTS.version).stringVal
   result.src = toml.get(sections, "src", ?DEFAULTS.src).stringVal
   result.dst = toml.get(sections, "dst", ?DEFAULTS.dst).stringVal
+  result.icon = toml.get(sections, "icon", ?DEFAULTS.icon).stringVal
   result.nimflags = @[]
   for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
     result.nimflags.add(flag.stringVal)

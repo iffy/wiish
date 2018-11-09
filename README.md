@@ -23,7 +23,7 @@ Wiish provides 2 main things:
 | Logging             |         |       |       |     |         |
 | Console log w/ run  |         |       |       |  Y  |         |
 | Automatic updates   |         |       |       |  -  |    -    |
-| App icon            |         |   Y   |       |     |         |
+| App icon            |         |   Y   |       |  Y  |         |
 | File associations   |         |       |       |  -  |    -    |
 | Widgets             |         |       |       |     |         |
 

@@ -22,3 +22,14 @@ template basename*(path:string):string =
   ## Return a file's basename
   let split = path.splitFile
   split.name & split.ext
+
+proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
+  ## Resize a PNG image
+  when defined(macosx):
+    discard runoutput("sips",
+      "-z", $height, $width,
+      "--out", outfile,
+      "-s", "format", "png",
+      srcfile)
+  else:
+    raise newException(CatchableError, "PNG resizing is not supported on this platform")
