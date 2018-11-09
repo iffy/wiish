@@ -14,7 +14,7 @@ template sdlMain*() =
     
     when defined(ios):
       {.emit: "#define __IPHONEOS__".}
-    
+
     {.emit: """
 // The following piece of code is a copy-paste from SDL/SDL_main.h
 // It is required to avoid dependency on SDL headers

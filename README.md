@@ -40,6 +40,12 @@ First install Nim and nimble, then do
 nimble install https://github.com/iffy/wiish.git
 ~~~
 
+### Linux
+
+On Linux, you must also install `libsdl2-dev`.
+
+**Ubuntu**: `apt-get install libsdl2-dev`
+
 ## Make a project
 
 ```
