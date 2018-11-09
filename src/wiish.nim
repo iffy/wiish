@@ -5,7 +5,7 @@ import tables
 import macros
 import os
 import parsetoml
-import wiishpkg/building
+import wiishpkg/building/build
 import argparse
 
 let p = newParser("wiish"):

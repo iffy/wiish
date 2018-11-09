@@ -21,7 +21,7 @@ Wiish provides 2 main things:
 | Create installer    |         |       |       |     |         |
 | Code signing        |         |       |       |     |         |
 | Logging             |         |       |       |     |         |
-| Console log w/ run  |         |       |       |     |         |
+| Console log w/ run  |         |       |       |  Y  |         |
 | Automatic updates   |         |       |       |  -  |    -    |
 | App icon            |         |   Y   |       |     |         |
 | File associations   |         |       |       |  -  |    -    |
@@ -70,7 +70,7 @@ I'd really like the components of Wiish to be modular.  For instance:
 
 - If you want to write low-level OpenGL, you should be able to do that.  Or if you want to use a higher-level library, you should be able to do that, too.
 
-- Auto-updating and logging should be useably no matter what GUI library you use.
+- Auto-updating and logging should be usable no matter what GUI library you use.
 
 In other words, components shouldn't be interwined so much that they're inseparable.  Instead, they should be easily replaced.
 

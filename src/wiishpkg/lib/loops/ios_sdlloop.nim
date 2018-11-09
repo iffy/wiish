@@ -1,4 +1,6 @@
 # Based heavily on https://github.com/yglukhov/nimx/blob/master/nimx/linkage_details.nim
+# I intend to make what changes I can and then submit patches back to nimx
+# so that this code is more modular (i.e. I could import it from nimx and it would just work) 
 
 import sdl2 except Event, Rect
 import opengl
