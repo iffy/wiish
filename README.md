@@ -12,7 +12,7 @@ Wiish provides 2 main things:
 1. `wiish` - A command line tool for running, building and packaging apps.
 2. `wiishpkg` - A Nim library for making apps.
 
-# Planned Features
+# Features
 
 | Feature             | Windows | macOS | Linux | iOS | Android |
 |---------------------|:-------:|:-----:|:-----:|:---:|:-------:|
@@ -26,6 +26,8 @@ Wiish provides 2 main things:
 | App icon            |         |   Y   |       |     |         |
 | File associations   |         |       |       |  -  |    -    |
 | Widgets             |         |       |       |     |         |
+
+**Y** = complete, **-** = not applicable
 
 # Using wiish
 
