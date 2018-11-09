@@ -8,13 +8,24 @@ type
   BaseApp = ref object of RootRef
     launched*: EventSource[bool]
     willExit*: EventSource[bool]
+    event*: EventSource[Event]
   
   BaseWindow = ref object of RootRef
     # events
     onDraw*: EventSource[Rect]
-
     # attributes/properties
     frame*: Rect
+  
+  EventKind* = enum
+    Unknown,
+    FingerDown,
+    FingerUp,
+    MouseMotion,
+    MouseButtonUp,
+    MouseButtonDown,
+  
+  Event* = ref object of RootRef
+    kind*: EventKind
 
 proc newRect*(x, y, width, height: float32 = 0):Rect =
   result = (x, y, width, height)
@@ -48,3 +59,4 @@ type
 var app* = App()
 app.launched = newEventSource[bool]()
 app.willExit = newEventSource[bool]()
+app.event = newEventSource[Event]()

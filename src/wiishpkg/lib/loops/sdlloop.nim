@@ -442,20 +442,38 @@ proc drawWindow(w: Window) =
 #             discard
 
 proc handleEvent(event: ptr sdl2.Event): Bool32 =
-    if event.kind == UserEvent5:
-        let evt = cast[UserEventPtr](event)
-        let p = cast[proc (data: pointer) {.cdecl.}](evt.data1)
-        if p.isNil:
-            echo "WARNING: UserEvent5 with nil proc"
-        else:
-            p(evt.data2)
-    else:
-        discard
-        # This branch should never execute on a foreign thread!!!
-        # var e = eventWithSDLEvent(event)
-        # if (e.kind != etUnknown):
-        #     discard mainApplication().handleEvent(e)
-    result = True32
+  var
+    wiishEvent: wiishtypes.Event
+  new(wiishEvent)
+  case event.kind
+  of sdl2.MouseButtonDown:
+    wiishEvent.kind = wiishtypes.MouseButtonDown
+  of sdl2.MouseButtonUp:
+    wiishEvent.kind = wiishtypes.MouseButtonUp
+  of sdl2.MouseMotion:
+    wiishEvent.kind = wiishtypes.MouseMotion
+  of sdl2.FingerDown:
+    wiishEvent.kind = wiishtypes.FingerDown
+  of sdl2.FingerUp:
+    wiishEvent.kind = wiishtypes.FingerUp
+  else:
+    discard
+  if wiishEvent.kind != Unknown:
+    app.event.emit(wiishEvent)
+    # if event.kind == UserEvent5:
+    #     let evt = cast[UserEventPtr](event)
+    #     let p = cast[proc (data: pointer) {.cdecl.}](evt.data1)
+    #     if p.isNil:
+    #         echo "WARNING: UserEvent5 with nil proc"
+    #     else:
+    #         p(evt.data2)
+    # else:
+    #     discard
+    #     # This branch should never execute on a foreign thread!!!
+    #     # var e = eventWithSDLEvent(event)
+    #     # if (e.kind != etUnknown):
+    #     #     discard mainApplication().handleEvent(e)
+    # result = True32
 
 # method onResize*(w: Window, newSize: Size) =
 #     discard glMakeCurrent(w.sdlWindow, w.sdlGlContext)
