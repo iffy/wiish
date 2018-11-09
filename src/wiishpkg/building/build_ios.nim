@@ -162,6 +162,7 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     "-d:ios",
     "-d:iPhone",
     "--dynlibOverride:SDL2",
+    &"-d:appBundleIdentifier={config.bundle_identifier}",
   ])
   if simulator:
     nimFlags.add([
@@ -247,7 +248,6 @@ proc doiOSRun*(directory:string = ".") =
   let startmessage = runoutput("xcrun", "simctl", "launch", "booted", config.bundle_identifier)
   let childPid = startmessage.strip.split(" ")[1]
 
-  # Watch logs, see
-  echo "To see the logs run something like:"
-  echo &"  xcrun simctl spawn booted log stream --predicate 'processId = {childPid}'"
-  # xcrun simctl spawn booted log help stream
+  # Watch the logs
+  run("xcrun", "simctl", "spawn", "booted", "log", "stream",
+    "--predicate", &"subsystem contains \"{config.bundle_identifier}\"")

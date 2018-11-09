@@ -21,7 +21,7 @@ Wiish provides 2 main things:
 | Create installer    |         |       |       |     |         |
 | Code signing        |         |       |       |     |         |
 | Logging             |         |       |       |     |         |
-| Console log w/ run  |         |       |       |     |         |
+| Console log w/ run  |         |       |       |  Y  |         |
 | Automatic updates   |         |       |       |  -  |    -    |
 | App icon            |         |   Y   |       |     |         |
 | File associations   |         |       |       |  -  |    -    |
