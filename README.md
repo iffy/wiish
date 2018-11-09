@@ -14,18 +14,19 @@ Wiish provides 2 main things:
 
 # Features
 
-| Feature             | Windows | macOS | Linux | iOS | Android |
-|---------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| Run                 |         |   Y   |   Y   |  Y  |         |
-| Create "app"        |         |   Y   |       |  Y  |         |
-| Create installer    |         |       |       |     |         |
-| Code signing        |         |       |       |     |         |
-| Logging             |         |       |       |     |         |
-| Console log w/ run  |         |       |       |  Y  |         |
-| Automatic updates   |         |       |       |  -  |    -    |
-| App icon            |         |   Y   |       |  Y  |         |
-| File associations   |         |       |       |  -  |    -    |
-| Widgets             |         |       |       |     |         |
+| Feature                | Windows | macOS | Linux | iOS | Android |
+|------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
+| Run                    |         |   Y   |   Y   |  Y  |         |
+| Create "app"           |         |   Y   |       |  Y  |         |
+| Create installer       |         |       |       |     |         |
+| Code signing           |         |       |       |     |         |
+| Log to file            |         |       |       |     |         |
+| Log to console w/ run  |         |       |       |  Y  |         |
+| Menu bar               |         |       |       |  -  |    -    |
+| Automatic updates      |         |       |       |  -  |    -    |
+| App icon               |         |   Y   |       |  Y  |         |
+| File associations      |         |       |       |  -  |    -    |
+| Widgets                |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable
 
