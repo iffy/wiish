@@ -3,7 +3,6 @@ name     = "Wiish Demo"
 version  = "0.1.0"
 src      = "main_desktop.nim"
 dst      = "dist"
-
 # Path to an image file to use for the application icon.
 # The file will automatically be converted to the correct
 # format.
@@ -14,6 +13,7 @@ name     = "Wiish"
 version  = "0.1.0"
 src      = "main_mobile.nim"
 dst      = "dist"
+icon     = ""
 
 [macos]
 bundle_identifier = "com.wiish.exampledesktop"
