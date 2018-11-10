@@ -36,7 +36,9 @@ template newRect*(x, y, width, height: int32 = 0):Rect =
 type
   App* = ref object of BaseApp
     windows*: seq[Window]
+  
   Window* = ref object of BaseWindow
+    app*: ref BaseApp
     sdlWindow*: sdl2.WindowPtr
     sdlGlContext*: sdl2.GlContextPtr
 

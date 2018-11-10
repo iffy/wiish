@@ -6,7 +6,7 @@ import random
 randomize()
 
 app.launched.handle:
-  echo "app code: app.launched"
+  log "app code: app.launched"
   var w = newWindow("Some Title")
   w.onDraw.handle(rect):
     glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
@@ -18,7 +18,7 @@ app.launched.handle:
     glClear(GL_COLOR_BUFFER_BIT)
 
 app.willExit.handle:
-  echo "application code: app.willExit"
+  log "application code: app.willExit"
 
 app.start()
 
