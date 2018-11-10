@@ -30,17 +30,6 @@ const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
 )
 
 
-
-# const sampledir = @[
-#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
-#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
-#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
-# ]
-# sample_toml = slurp"./data/sample.toml"
-# const sample_desktop = slurp"./data/sampledesktop.nim"
-# const sample_mobile = slurp"./data/samplemobile.nim"
-
-
 proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
   var
     macos = macos
