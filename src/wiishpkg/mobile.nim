@@ -1,4 +1,4 @@
-# For when this is used as a library
+## Mobile application utilities
 import ./events
 export events
 import ./lib/wiishtypes

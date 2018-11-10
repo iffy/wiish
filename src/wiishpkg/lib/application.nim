@@ -14,11 +14,5 @@ when defined(ios):
   include ./loops/ios_sdlloop
 else:
   include ./loops/sdlloop
-# when macDesktop:
-#   include ./loops/macos
-# elif defined(ios):
-#   include ./loops/ios_xcode
-# else:
-#   include ./loops/glfwloop
 
 export app

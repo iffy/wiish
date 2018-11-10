@@ -1,5 +1,5 @@
 ## Hello, World Wiish App
-import wiishpkg/main
+import wiishpkg/desktop
 import opengl
 
 import random
@@ -12,7 +12,7 @@ var
 app.launched.handle:
   # This is run as soon as the application is ready
   # to start making windows.
-  echo "App launched"
+  log "App launched"
 
   # Create a new window.
   var w = newWindow(title = "Hello, Wiish!")
@@ -24,7 +24,7 @@ app.launched.handle:
 
 app.willExit.handle:
   # Run this code just before the application exits
-  echo "App is exiting"
+  log "App is exiting"
 
 app.event.handle(evt):
   case evt.kind

@@ -1,5 +1,5 @@
 ## Bare-bones application
-import wiishpkg/main
+import wiishpkg/desktop
 import opengl
 import random
 

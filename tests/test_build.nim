@@ -12,7 +12,7 @@ proc tmpDir():string =
 
 suite "build":
   test "build":
-    let directory = currentSourcePath.absolutePath.parentDir.parentDir/"examples"/"basic"
+    let directory = currentSourcePath.absolutePath.parentDir.parentDir/"examples"/"helloworld"
     doBuild(directory)
 
   test "init and build":

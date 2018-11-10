@@ -39,21 +39,6 @@ type
   Window* = ref object of BaseWindow
     sdlWindow*: sdl2.WindowPtr
     sdlGlContext*: sdl2.GlContextPtr
-# when macDesktop:
-#   type
-#     Id* {.importc: "id", header: "<AppKit/AppKit.h>", final .} = distinct int
-#   type
-#     App* = ref object of BaseApp
-#     Window* = ref object of BaseWindow
-#       nativeWindowPtr*: pointer # WiishWindow
-#       nativeViewPtr*: pointer # WiishView
-# else:
-#   import glfw
-#   type
-#     App* = ref object of BaseApp
-#     Window* = ref object of BaseWindow
-#       glfwWindow*: glfw.Window
-
 
 ## The singleton application instance.
 var app* = App()

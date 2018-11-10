@@ -1,7 +1,7 @@
 ## Hello, World Wiish App
 import opengl
 import math
-import wiishpkg/main
+import wiishpkg/mobile
 
 app.launched.handle:
   log "App launched"

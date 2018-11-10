@@ -10,7 +10,9 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 Wiish provides 2 main things:
 
 1. `wiish` - A command line tool for running, building and packaging apps.
-2. `wiishpkg` - A Nim library for making apps.
+2. `wiishpkg` - A Nim library for making apps.  This is further divided into:
+    - `wiishpkg/desktop` - Library for making desktop apps.
+    - `wiishpkg/mobile` - Library  for making mobile apps.
 
 # Features
 
@@ -61,6 +63,10 @@ wiish build
 ```
 
 See `wiish --help` for more information.
+
+## More examples
+
+See the [`examples`](./examples) directory for more examples of how to use this library.
 
 # Developing wiish
 
