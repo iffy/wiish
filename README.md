@@ -24,6 +24,7 @@ Wiish provides 2 main things:
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |       |       |     |         |
 | Log to console w/ run  |         |       |       |  Y  |         |
+| Package resources      |         |       |       |     |         |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |
 | App icon               |         |   Y   |       |  Y  |         |

@@ -1,24 +1,41 @@
-## Bare-bones application
+## Hello, World Wiish App
+import sdl2
 import wiishpkg/desktop
 import opengl
-import random
 
+import random
 randomize()
+var
+  r = 45/255.0
+  g = 52/255.0
+  b = 54/255.0
 
 app.launched.handle:
-  log "app code: app.launched"
-  var w = app.newGLWindow("Some Title")
-  w.onDraw.handle(rect):
-    glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
-    glClear(GL_COLOR_BUFFER_BIT)
+  # This is run as soon as the application is ready
+  # to start making windows.
+  log "App launched"
 
-  var w2 = app.newGLWindow("Another")
-  w2.onDraw.handle(rect):
-    glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
+  # Create a new window.
+  var w = app.newGLWindow(title = "Hello, Wiish!")
+  
+  # Perform drawing for the window.
+  w.onDraw.handle(rect):
+    glClearColor(r, g, b, 0)
     glClear(GL_COLOR_BUFFER_BIT)
 
 app.willExit.handle:
-  log "application code: app.willExit"
+  # Run this code just before the application exits
+  log "App is exiting"
+
+app.sdl_event.handle(evt):
+  log "Event"
+  case evt.kind
+  of MouseButtonDown:
+    r = random(255).toFloat / 255.0
+    g = random(255).toFloat / 255.0
+    b = random(255).toFloat / 255.0
+  else:
+    discard
 
 app.start()
 

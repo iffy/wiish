@@ -9,7 +9,7 @@ import ./wiishtypes
 
 # template start*(app:Application)
 proc quit*(app: Application)
-# proc newSDLWindow*(app: Application, title:string = ""): Window
+proc newSDLWindow*(app: Application, title:string = ""): Window
 proc newGLWindow*(app: Application, title:string = ""): Window
 
 include ./loops/sdlloop
