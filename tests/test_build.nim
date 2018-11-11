@@ -4,6 +4,7 @@ import strformat
 import random
 import ospaths
 import wiishpkg/building/build
+import wiishpkg/building/buildutil
 
 randomize()
 
@@ -11,9 +12,15 @@ proc tmpDir():string =
   os.getTempDir() / &"wiishtest{random.rand(10000000)}"
 
 suite "build":
-  test "build":
-    let directory = currentSourcePath.absolutePath.parentDir.parentDir/"examples"/"basic"
-    doBuild(directory)
+  # Build all the examples/
+  for example in walkDir(currentSourcePath.parentDir.parentDir/"examples"):
+    if example.kind == pcDir:
+      test("build examples/" & example.path.basename):
+        doBuild(example.path)
+      when defined(macosx):
+        if (example.path/"main_mobile.nim").fileExists:
+          test("build --ios examples/" & example.path.basename):
+            doBuild(example.path, ios = true)
 
   test "init and build":
     let tmpdir = tmpDir()

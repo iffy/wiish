@@ -1,9 +1,11 @@
-# For when this is used as a library
+## Desktop application utilities
 import ./events
 export events
 import ./lib/wiishtypes
 export wiishtypes
-import ./lib/application
-export application
+import ./lib/lowlevel
+export lowlevel
 import ./lib/logging
 export logging
+
+var app* = createApplication()

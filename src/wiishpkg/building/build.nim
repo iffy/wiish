@@ -11,6 +11,7 @@ import ./build_windows
 import ./build_linux
 import ./config
 import ./buildlogging
+import ./buildutil
 import ../defs
 
 export doiOSRun
@@ -27,17 +28,6 @@ const basepath = currentSourcePath.parentDir.joinPath("data/initapp")
 const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
   return (x[basepath.len+1..^1], slurp(x))
 )
-
-
-
-# const sampledir = @[
-#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
-#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
-#   ("wiish.toml", slurp("./data/initapp/wiish.toml")),
-# ]
-# sample_toml = slurp"./data/sample.toml"
-# const sample_desktop = slurp"./data/sampledesktop.nim"
-# const sample_mobile = slurp"./data/samplemobile.nim"
 
 
 proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
@@ -70,33 +60,29 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
 proc doDesktopRun*(directory:string = ".") =
   ## Run the application
   var
-    nim_bin: string
     args: seq[string]
-  echo "directory: ", directory
   let config = getDesktopConfig(directory/"wiish.toml")
   let src_file = directory/config.src
-  echo "src_file: ", src_file
   when macDesktop:
-    nim_bin = "nim"
+    args.add("nim")
   elif defined(windows):
-    nim_bin = "nim.exe"
+    args.add("nim.exe")
   elif defined(linux):
-    nim_bin = "nim"
+    args.add("nim")
   else:
     raise newException(CatchableError, "Unknown OS")
   args.add("c")
   for flag in config.nimflags:
     args.add(flag)
   # args.add("-d:glfwStaticLib")
+  # if defined(linux):
+  #   args.add("--dynlibOverride:SDL2")
   args.add("--threads:on")
   args.add("-r")
   args.add(src_file)
   echo "args: ", args
-  discard startProcess(command="pwd", options = {poParentStreams, poUsePath}).waitForExit()
-  echo "nim_bin: ", nim_bin
-  var p = startProcess(command=nim_bin, args = args, options = {poUsePath, poParentStreams})
-  let result = p.waitForExit()
-  quit(result)
+  run(args)
+  quit(0)
 
 proc doInit*(directory:string = ".") =
   directory.createDir()

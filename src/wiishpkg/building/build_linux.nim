@@ -6,6 +6,7 @@ import posix
 import parsetoml
 
 import ./config
+import ./buildutil
 
 type
   LinuxConfig = object of Config
