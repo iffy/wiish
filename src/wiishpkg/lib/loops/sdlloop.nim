@@ -106,12 +106,12 @@ template sdlMain*() =
  
 """.}
 
-macro passToCAndL(s: string): typed =
+macro passToCAndL(s: string): typed {.used.} =
   result = newNimNode(nnkStmtList)
   result.add parseStmt("{.passL: \"" & s.strVal & "\".}\n")
   result.add parseStmt("{.passC: \"" & s.strVal & "\".}\n")
 
-macro useFrameworks(n: varargs[string]): typed =
+macro useFrameworks(n: varargs[string]): typed {.used.} =
   result = newNimNode(nnkStmtList, n)
   for i in 0..n.len-1:
     result.add parseStmt("passToCAndL(\"-framework " & n[i].strVal & "\")")
@@ -234,9 +234,9 @@ proc nextEvent(app: Application, evt: var sdl2.Event) =
   var was_event = false
   when defined(ios):
     proc iPhoneSetEventPump(enabled: Bool32) {.importc: "SDL_iPhoneSetEventPump".}
-    iPhoneSetEventPump(true)
+    iPhoneSetEventPump(True32)
     pumpEvents()
-    iPhoneSetEventPump(false)
+    iPhoneSetEventPump(False32)
     while pollEvent(evt):
       discard handleEvent(app, addr evt)
       was_event = true
