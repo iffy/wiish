@@ -5,7 +5,7 @@ import wiishpkg/mobile
 
 app.launched.handle:
   log "App launched"
-  var w = newWindow()
+  var w = app.newGLWindow()
   w.onDraw.handle(rect):
     glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
     glClear(GL_COLOR_BUFFER_BIT)

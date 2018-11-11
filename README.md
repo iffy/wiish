@@ -28,7 +28,9 @@ Wiish provides 2 main things:
 | Automatic updates      |         |       |       |  -  |    -    |
 | App icon               |         |   Y   |       |  Y  |         |
 | File associations      |         |       |       |  -  |    -    |
-| Widgets                |         |       |       |     |         |
+| OpenGL windows         |         |   Y   |   Y   |  Y  |         |
+| SDL2 windows           |         |       |       |     |         |
+| Included widget lib    |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable
 
@@ -60,26 +62,20 @@ Then run or build it with:
 ```
 wiish run
 wiish build
+wiish build --mac
+wiish build --ios
+wiish run --ios
 ```
 
-See `wiish --help` for more information.
+See `wiish --help` for full information.
 
 ## More examples
 
 See the [`examples`](./examples) directory for more examples of how to use this library.
 
-# Developing wiish
-
-## Running tests
-
-~~~
-nimble test
-tests/dochecks.sh
-~~~
-
 ## Design Plan
 
-I'd really like the components of Wiish to be modular.  For instance:
+Wiish components are meant to be replaceable and expendable.  For instance:
 
 - You should be able to use the `wiish` command line tool without importing anything from `wiishpkg` in your app.  
 
@@ -87,7 +83,7 @@ I'd really like the components of Wiish to be modular.  For instance:
 
 - Auto-updating and logging should be usable no matter what GUI library you use.
 
-In other words, components shouldn't be interwined so much that they're inseparable.  Instead, they should be easily replaced.
+In other words, components shouldn't be interwined so much that they're inseparable.  Also, you should always be able to drop down the a lower level if needed.  Instead, they should be easily replaced.
 
 ---
 
@@ -102,6 +98,16 @@ In order of preference, my plan is to use:
 If Skia is too painful to get working, I'll attempt NanoVG.
 
 And if none of that works and something better doesn't come along, I'll write my own in Nim.
+
+
+# Developing wiish
+
+## Running tests
+
+~~~
+nimble test
+tests/dochecks.sh
+~~~
 
 ## Notes
 

@@ -1,4 +1,5 @@
 ## Hello, World Wiish App
+import sdl2
 import wiishpkg/desktop
 import opengl
 
@@ -15,7 +16,7 @@ app.launched.handle:
   log "App launched"
 
   # Create a new window.
-  var w = newWindow(title = "Hello, Wiish!")
+  var w = app.newGLWindow(title = "Hello, Wiish!")
   
   # Perform drawing for the window.
   w.onDraw.handle(rect):
@@ -26,7 +27,8 @@ app.willExit.handle:
   # Run this code just before the application exits
   log "App is exiting"
 
-app.event.handle(evt):
+app.sdl_event.handle(evt):
+  log "Event"
   case evt.kind
   of MouseButtonDown:
     r = random(255).toFloat / 255.0

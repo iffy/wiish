@@ -1,5 +1,6 @@
 ## This module provides functions for creating SDL windows
-## and listening for events
+## A good chunk of this code is based heavily on
+## https://github.com/yglukhov/nimx
 import sdl2 except Event, Rect
 import opengl
 import macros
@@ -19,7 +20,6 @@ template sdlMain*() =
 // The following piece of code is a copy-paste from SDL/SDL_main.h
 // It is required to avoid dependency on SDL headers
 ////////////////////////////////////////////////////////////////////////////////
-
 
 /**
  *  \file SDL_main.h
@@ -106,53 +106,44 @@ template sdlMain*() =
  
 """.}
 
-when defined(ios):
-  {.passL: "-framework AudioToolbox" .}
-  {.passC: "-framework AudioToolbox" .}
-  {.passL: "-framework AVFoundation" .}
-  {.passC: "-framework AVFoundation" .}
-  {.passL: "-framework CoreAudio" .}
-  {.passC: "-framework CoreAudio" .}
-  {.passL: "-framework CoreGraphics" .}
-  {.passC: "-framework CoreGraphics" .}
-  {.passL: "-framework CoreMotion" .}
-  {.passC: "-framework CoreMotion" .}
-  {.passL: "-framework GameController" .}
-  {.passC: "-framework GameController" .}
-  {.passL: "-framework Metal" .}
-  {.passC: "-framework Metal" .}
-  {.passL: "-framework OpenGLES" .}
-  {.passC: "-framework OpenGLES" .}
-  {.passL: "-framework QuartzCore" .}
-  {.passC: "-framework QuartzCore" .}
-  {.passL: "-framework UIKit" .}
-  {.passC: "-framework UIKit" .}
-elif defined(macosx):
-  {.passL: "-framework AudioToolbox" .}
-  {.passC: "-framework AudioToolbox" .}
-  {.passL: "-framework CoreAudio" .}
-  {.passC: "-framework CoreAudio" .}
-  {.passL: "-framework CoreGraphics" .}
-  {.passC: "-framework CoreGraphics" .}
-  {.passL: "-framework OpenGL" .}
-  {.passC: "-framework OpenGL" .}
-  {.passL: "-framework AppKit" .}
-  {.passC: "-framework AppKit" .}
-  {.passL: "-framework AudioUnit" .}
-  {.passC: "-framework AudioUnit" .}
-  {.passL: "-framework ForceFeedback" .}
-  {.passC: "-framework ForceFeedback" .}
-  {.passL: "-framework IOKit" .}
-  {.passC: "-framework IOKit" .}
-  {.passL: "-framework Carbon" .}
-  {.passC: "-framework Carbon" .}
-  {.passL: "-framework CoreServices" .}
-  {.passC: "-framework CoreServices" .}
-  {.passL: "-framework ApplicationServices" .}
-  {.passC: "-framework ApplicationServices" .}
-  {.passL: "-framework QuartzCore" .}
-  {.passC: "-framework QuartzCore" .}
+macro passToCAndL(s: string): typed =
+  result = newNimNode(nnkStmtList)
+  result.add parseStmt("{.passL: \"" & s.strVal & "\".}\n")
+  result.add parseStmt("{.passC: \"" & s.strVal & "\".}\n")
 
+macro useFrameworks(n: varargs[string]): typed =
+  result = newNimNode(nnkStmtList, n)
+  for i in 0..n.len-1:
+    result.add parseStmt("passToCAndL(\"-framework " & n[i].strVal & "\")")
+
+when defined(ios):
+  useFrameworks(
+    "AudioToolbox",
+    "AVFoundation",
+    "CoreAudio",
+    "CoreGraphics",
+    "CoreMotion",
+    "GameController",
+    "Metal",
+    "OpenGLES",
+    "QuartzCore",
+    "UIKit",
+  )
+elif defined(macosx):
+  useFrameworks(
+    "AudioToolbox",
+    "CoreAudio",
+    "CoreGraphics",
+    "OpenGL",
+    "AppKit",
+    "AudioUnit",
+    "ForceFeedback",
+    "IOKit",
+    "Carbon",
+    "CoreServices",
+    "ApplicationServices",
+    "QuartzCore",
+  )
 
 proc initSDLIfNeeded() =
   var sdlInitialized {.global.} = false
@@ -192,7 +183,7 @@ proc show*(w: Window)=
   w.sdlWindow.showWindow()
   w.sdlWindow.raiseWindow()
 
-proc newWindow*(title:string = ""): Window =
+proc newGLWindow*(app: Application, title:string = ""): Window =
   initSDLIfNeeded()
   result.new()
   app.windows.add(result)
@@ -208,39 +199,9 @@ proc drawWindow(w: Window) =
   w.onDraw.emit(newRect(0, 0, 0, 0))
   w.sdlWindow.glSwapWindow()
 
-proc handleEvent(event: ptr sdl2.Event): Bool32 =
-  var
-    wiishEvent: wiishtypes.Event
-  new(wiishEvent)
-  case event.kind
-  of sdl2.MouseButtonDown:
-    wiishEvent.kind = wiishtypes.MouseButtonDown
-  of sdl2.MouseButtonUp:
-    wiishEvent.kind = wiishtypes.MouseButtonUp
-  of sdl2.MouseMotion:
-    wiishEvent.kind = wiishtypes.MouseMotion
-  of sdl2.FingerDown:
-    wiishEvent.kind = wiishtypes.FingerDown
-  of sdl2.FingerUp:
-    wiishEvent.kind = wiishtypes.FingerUp
-  else:
-    discard
-  if wiishEvent.kind != Unknown:
-    app.event.emit(wiishEvent)
-    # if event.kind == UserEvent5:
-    #     let evt = cast[UserEventPtr](event)
-    #     let p = cast[proc (data: pointer) {.cdecl.}](evt.data1)
-    #     if p.isNil:
-    #         echo "WARNING: UserEvent5 with nil proc"
-    #     else:
-    #         p(evt.data2)
-    # else:
-    #     discard
-    #     # This branch should never execute on a foreign thread!!!
-    #     # var e = eventWithSDLEvent(event)
-    #     # if (e.kind != etUnknown):
-    #     #     discard mainApplication().handleEvent(e)
-    # result = True32
+proc handleEvent(app: Application, event: ptr sdl2.Event): Bool32 =
+  app.sdl_event.emit(event)
+  result = True32
 
 # method onResize*(w: Window, newSize: Size) =
 #     discard glMakeCurrent(w.sdlWindow, w.sdlGlContext)
@@ -254,31 +215,40 @@ proc handleEvent(event: ptr sdl2.Event): Bool32 =
 #         w.pixelRatio = screenScaleFactor()
 #     glViewport(0, 0, GLSizei(constrainedSize.width * w.pixelRatio), GLsizei(constrainedSize.height * w.pixelRatio))
 
-proc nextEvent(evt: var sdl2.Event) =
-  var doPoll = false
-  if waitEvent(evt):
-    discard handleEvent(addr evt)
-    doPoll = evt.kind != QuitEvent
-  if doPoll:
+proc nextEvent(app: Application, evt: var sdl2.Event) =
+  when defined(ios):
+    proc iPhoneSetEventPump(enabled: Bool32) {.importc: "SDL_iPhoneSetEventPump".}
+    iPhoneSetEventPump(true)
+    pumpEvents()
+    iPhoneSetEventPump(false)
+    while pollEvent(evt):
+      discard handleEvent(app, addr evt)
+  else:
+    var doPoll = false
+    if waitEvent(evt):
+      discard handleEvent(app, addr evt)
+      doPoll = evt.kind != QuitEvent
+    if doPoll:
       while pollEvent(evt):
-          discard handleEvent(addr evt)
-          if evt.kind == QuitEvent:
-              break
+        discard handleEvent(app, addr evt)
+        if evt.kind == QuitEvent:
+          break
+  
   for w in app.windows:
     w.drawWindow()
 
-template start*(app:App) =
+template start*(app: Application) =
   sdlMain()
   var evt = sdl2.Event(kind: UserEvent1)
   app.launched.emit(true)
   while true:
-    nextEvent(evt)
+    nextEvent(app, evt)
     if evt.kind == QuitEvent:
       break
 
   app.willExit.emit(true)
   discard quit(evt)
 
-proc quit*(app:App) =
+proc quit*(app: Application) =
   echo "NOT IMPLEMENTED"
 

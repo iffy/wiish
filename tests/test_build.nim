@@ -18,8 +18,9 @@ suite "build":
       test("build examples/" & example.path.basename):
         doBuild(example.path)
       when defined(macosx):
-        test("build --ios examples/" & example.path.basename):
-          doBuild(example.path, ios = true)
+        if (example.path/"main_mobile.nim").fileExists:
+          test("build --ios examples/" & example.path.basename):
+            doBuild(example.path, ios = true)
 
   test "init and build":
     let tmpdir = tmpDir()

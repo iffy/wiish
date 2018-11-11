@@ -7,12 +7,12 @@ randomize()
 
 app.launched.handle:
   log "app code: app.launched"
-  var w = newWindow("Some Title")
+  var w = app.newGLWindow("Some Title")
   w.onDraw.handle(rect):
     glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
     glClear(GL_COLOR_BUFFER_BIT)
 
-  var w2 = newWindow("Another")
+  var w2 = app.newGLWindow("Another")
   w2.onDraw.handle(rect):
     glClearColor(rand(1.0), rand(1.0), rand(1.0), 0)
     glClear(GL_COLOR_BUFFER_BIT)
