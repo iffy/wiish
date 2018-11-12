@@ -44,6 +44,8 @@ proc doMacBuild*(directory:string, configPath:string) =
     appDir = buildDir/config.name & ".app"
     contentsDir = appDir/"Contents"
     executablePath = contentsDir/"MacOS"/appSrc.splitFile.name
+    srcResources = directory/config.resourceDir
+    dstResources = contentsDir/"Resources"/"resources"
   
   createDir(contentsDir)
   createDir(contentsDir/"Resources")
@@ -111,5 +113,10 @@ proc doMacBuild*(directory:string, configPath:string) =
   <true/>
 </dict>
 </plist>""")
+
+  # Contents/Resources/resources
+  log &"Copying resources from {srcResources} to {dstResources} ..."
+  createDir(dstResources)
+  copyDir(srcResources, dstResources)
 
   log "ok"

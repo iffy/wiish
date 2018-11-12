@@ -45,6 +45,7 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
       windows = true
     elif defined(linux):
       linux = true
+  
   if macos:
     log("Building macOS desktop...")
     doMacBuild(directory, configPath)
@@ -79,8 +80,7 @@ proc doDesktopRun*(directory:string = ".") =
     raise newException(CatchableError, "Unknown OS")
   src_file = directory/config.src
   args.add("c")
-  for flag in config.nimflags:
-    args.add(flag)
+  args.add(config.nimflags)
   # args.add("-d:glfwStaticLib")
   # if defined(linux):
   #   args.add("--dynlibOverride:SDL2")

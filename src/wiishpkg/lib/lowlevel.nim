@@ -1,9 +1,10 @@
 ## Module of low level windowing and event handling stuff
 import sequtils
+import os
+import ospaths
 import ../events
 import ../defs
 import ./logging
-import os
 import ./wiishtypes
 
 
@@ -11,19 +12,32 @@ import ./wiishtypes
 proc quit*(app: Application)
 proc newSDLWindow*(app: Application, title:string = ""): Window
 proc newGLWindow*(app: Application, title:string = ""): Window
+proc resourcePath*(app: Application, filename: string): string
 
-# proc resourcePath*(app: Application, filename: string): string =
-#   if defined(wiishDev):
-#     # wiish run
 
-#   else:
-#     # Built application
-#     if defined(ios):
-#       discard
-#     elif defined(android):
-#       discard
-#     elif defined(macosx):
-#       discard
+when defined(wiishDev):
+  import ../building/config
+  proc resourcePath*(app: Application, filename: string): string =
+    ## Return the path to a static resource included in the application
+    let
+      appdir = getAppDir()
+      configPath = appdir/"wiish.toml"
+      config = getMyOSConfig(configPath)
+    result = joinPath(config.resourceDir, filename) # XXX this is not safe from going above resourcePath
+else:
+  proc resourcePath*(app: Application, filename: string): string =
+    ## Return the path to a static resource included in the application
+    let
+      root = 
+        when defined(ios):
+          getAppDir()
+        elif defined(android):
+          getAppDir()
+        elif defined(macosx):
+          getAppDir()/"../Resources/resources"
+        else:
+          getAppDir()
+    result = joinPath(root, filename) # XXX this is not safe from going above resourcePath
 
 
 include ./loops/sdlloop
