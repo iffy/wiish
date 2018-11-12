@@ -1,7 +1,7 @@
 ## This module provides functions for creating SDL windows
 ## A good chunk of this code is based heavily on
 ## https://github.com/yglukhov/nimx
-import sdl2 except Event, Rect
+import sdl2/sdl except Window, Rect
 import opengl
 import macros
 import times
@@ -148,28 +148,28 @@ elif defined(macosx):
 proc initSDLIfNeeded() =
   var sdlInitialized {.global.} = false
   if not sdlInitialized:
-    if sdl2.init(INIT_EVERYTHING) != SdlSuccess:
-      echo "Error: sdl2.init(INIT_EVERYTHING): ", getError()
+    if sdl.init(sdl.INIT_EVERYTHING) != 0:
+      echo "Error: sdl.init(INIT_EVERYTHING): ", getError()
     sdlInitialized = true
     
-    if glSetAttribute(SDL_GL_STENCIL_SIZE, 8) != 0:
+    if glSetAttribute(sdl.GL_STENCIL_SIZE, 8) != 0:
       echo "Error: could not set stencil size: ", getError()
 
     when defined(ios) or defined(android):
-      discard glSetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0x0004)
-      discard glSetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2)
+      discard glSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, 0x0004)
+      discard glSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
 
 proc show*(w: Window) =
   w.sdlWindow.showWindow()
   w.sdlWindow.raiseWindow()
 
-proc initGLWindow(w: Window, r: Rect)=
-  w.sdlWindow = createWindow(nil, cint(r.x), cint(r.y), cint(r.width), cint(r.height), SDL_WINDOW_OPENGL or SDL_WINDOW_RESIZABLE or SDL_WINDOW_ALLOW_HIGHDPI or SDL_WINDOW_HIDDEN)
+proc initGLWindow(w: Window, r: Rectangle)=
+  w.sdlWindow = createWindow(nil, cint(r.x), cint(r.y), cint(r.width), cint(r.height), sdl.WINDOW_OPENGL or sdl.WINDOW_RESIZABLE or sdl.WINDOW_ALLOW_HIGHDPI or sdl.WINDOW_HIDDEN)
   if w.sdlWindow == nil:
     echo "Could not create window!"
     quit 1
 
-  discard glSetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1)
+  discard glSetAttribute(sdl.GL_SHARE_WITH_CURRENT_CONTEXT, 1)
   w.sdlGlContext = w.sdlWindow.glCreateContext()
   when not defined(ios):
     loadExtensions()
@@ -183,12 +183,12 @@ proc newGLWindow*(app: Application, title:string = ""): Window =
   initSDLIfNeeded()
   result.new()
   app.windows.add(result)
-  result.initGLWindow(newRect(100, 200, 300, 400))
-  result.sdlWindow.setTitle(title)
+  result.initGLWindow(newRectangle(100, 200, 300, 400))
+  result.sdlWindow.setWindowTitle(title)
   result.show()
 
-proc initSDLWindow(w: Window, r: Rect) =
-  w.sdlWindow = createWindow(nil, cint(r.x), cint(r.y), cint(r.width), cint(r.height), SDL_WINDOW_RESIZABLE or SDL_WINDOW_ALLOW_HIGHDPI or SDL_WINDOW_HIDDEN)
+proc initSDLWindow(w: Window, r: Rectangle) =
+  w.sdlWindow = createWindow(nil, cint(r.x), cint(r.y), cint(r.width), cint(r.height), sdl.WINDOW_RESIZABLE or sdl.WINDOW_ALLOW_HIGHDPI or sdl.WINDOW_HIDDEN)
   if w.sdlWindow == nil:
     echo "Could not create window!"
     quit 1
@@ -197,8 +197,8 @@ proc newSDLWindow*(app: Application, title:string = ""): Window =
   initSDLIfNeeded()
   result.new()
   app.windows.add(result)
-  result.initSDLWindow(newRect(150, 250, 300, 400))
-  result.sdlWindow.setTitle(title)
+  result.initSDLWindow(newRectangle(150, 250, 300, 400))
+  result.sdlWindow.setWindowTitle(title)
   result.show()
 
 proc drawWindow(w: Window) =
@@ -208,15 +208,15 @@ proc drawWindow(w: Window) =
     glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
     glClear(GL_COLOR_BUFFER_BIT)
     glFlush()
-    w.onDraw.emit(newRect(0, 0, 0, 0))
+    w.onDraw.emit(newRectangle(0, 0, 0, 0))
     w.sdlWindow.glSwapWindow()
   else:
     # SDL window
-    w.onDraw.emit(newRect(0, 0, 0, 0))
+    w.onDraw.emit(newRectangle(0, 0, 0, 0))
 
-proc handleEvent(app: Application, event: ptr sdl2.Event): Bool32 =
+proc handleEvent(app: Application, event: ptr sdl.Event): cint =
   app.sdl_event.emit(event)
-  result = True32
+  result = 1
 
 # method onResize*(w: Window, newSize: Size) =
 #     discard glMakeCurrent(w.sdlWindow, w.sdlGlContext)
@@ -230,19 +230,19 @@ proc handleEvent(app: Application, event: ptr sdl2.Event): Bool32 =
 #         w.pixelRatio = screenScaleFactor()
 #     glViewport(0, 0, GLSizei(constrainedSize.width * w.pixelRatio), GLsizei(constrainedSize.height * w.pixelRatio))
 
-proc nextEvent(app: Application, evt: var sdl2.Event) =
+proc nextEvent(app: Application, evt: var sdl.Event) =
   var was_event = false
   when defined(ios):
-    proc iPhoneSetEventPump(enabled: Bool32) {.importc: "SDL_iPhoneSetEventPump".}
-    iPhoneSetEventPump(True32)
+    proc iPhoneSetEventPump(enabled: cint) {.importc: "SDL_iPhoneSetEventPump".}
+    iPhoneSetEventPump(1)
     pumpEvents()
-    iPhoneSetEventPump(False32)
-    while pollEvent(evt):
+    iPhoneSetEventPump(0)
+    while pollEvent(addr evt) == 1:
       discard handleEvent(app, addr evt)
       was_event = true
   else:
     # var doPoll = false
-    if waitEvent(evt):
+    if waitEvent(addr evt) == 1:
       discard handleEvent(app, addr evt)
       was_event = true
       # doPoll = evt.kind != QuitEvent
@@ -258,15 +258,20 @@ proc nextEvent(app: Application, evt: var sdl2.Event) =
 
 template start*(app: Application) =
   sdlMain()
-  var evt = sdl2.Event(kind: UserEvent1)
+  var evt: sdl.Event
+  # var evt = sdl.Event(kind: UserEvent1)
   app.launched.emit(true)
   while true:
     nextEvent(app, evt)
-    if evt.kind == QuitEvent:
+    case evt.kind
+    of sdl.QUIT:
       break
+    else:
+      discard
 
   app.willExit.emit(true)
-  discard quit(evt)
+  sdl.quit()
+  quit(0)
 
 proc quit*(app: Application) =
   echo "NOT IMPLEMENTED"

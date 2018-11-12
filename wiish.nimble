@@ -21,7 +21,7 @@ requires "https://github.com/iffy/nim-argparse.git"
 
 requires "opengl"
 # requires "glfw >= 0.1.0"
-requires "sdl2 >= 1.2"
+requires "sdl2_nim >= 2.0.8.0"
 # requires "nanovg >= 0.1"
 requires "https://github.com/yglukhov/darwin"
 # requires "nimx"
