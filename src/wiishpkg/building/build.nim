@@ -53,10 +53,10 @@ proc doBuild*(directory:string = ".", macos,ios,android,windows,linux:bool = fal
     info "Building macOS desktop..."
     doMacBuild(directory, configPath)
   if ios:
-    info "Building iOS mobile..."
+    info "Building iOS app ..."
     discard doiOSBuild(directory, configPath)
   if android:
-    log("Building Android mobile ...")
+    info "Building Android app ..."
     discard doAndroidBuild(directory, configPath)
   if windows:
     info "Building Windows desktop..."

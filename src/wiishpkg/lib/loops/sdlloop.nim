@@ -170,7 +170,7 @@ proc initGLWindow(w: Window, r: Rect)=
 
   discard glSetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1)
   w.sdlGlContext = w.sdlWindow.glCreateContext()
-  when not defined(ios):
+  when not defined(ios) and not defined(android):
     loadExtensions()
   if w.sdlGlContext == nil:
     echo "Could not create context!"
