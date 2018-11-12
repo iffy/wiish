@@ -219,7 +219,7 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   var args = @["nim", "c"]
   args.add(nimFlags)
   args.add(appSrc)
-  log args.join(" ")
+  # log args.join(" ")
   run(args)
 
 proc doiOSRun*(directory:string = ".") =
