@@ -9,18 +9,8 @@ import ./config
 import ./buildutil
 import ./buildlogging
 
-type
-  MacOSConfig = object of Config
-    bundle_identifier*: string
-    category_type*: string
-
 const
   default_icon = DATADIR/"default.png"
-
-proc macOSConfig(config:Config):MacOSConfig =
-  result = getDesktopConfig[MacOSConfig](config, @["macos", "desktop"])
-  result.bundle_identifier = config.toml.get(@["macos"], "bundle_identifier", ?"com.wiish.example").stringVal
-  result.category_type = config.toml.get(@["macos"], "category_type", ?"public.app-category.example").stringVal
 
 proc createICNS*(srcfile:string, output:string) =
   ## Create an ICNS icon pack from a source image
@@ -45,10 +35,10 @@ proc createICNS*(srcfile:string, output:string) =
     run("iconutil", "-c", "icns", "--output", output, iconsetPath)
     removeDir(iconsetPath)
 
-proc doMacBuild*(directory:string, config:Config) =
+proc doMacBuild*(directory:string, configPath:string) =
   ## Build a macOS .app
   let
-    config = config.macOSConfig()
+    config = getMacosConfig(configPath)
     buildDir = directory/config.dst/"macos"
     appSrc = directory/config.src
     appDir = buildDir/config.name & ".app"

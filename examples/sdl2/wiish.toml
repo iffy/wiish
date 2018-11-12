@@ -1,19 +1,20 @@
+[main]
+version     = "0.1.0"
+dst         = "dist"
+resourceDir = "resources"
+
 [desktop]
-name     = "Wiish Demo"
-version  = "0.1.0"
-src      = "main_desktop.nim"
-dst      = "dist"
+name        = "Wiish Demo"
+src         = "main_desktop.nim"
 # Path to an image file to use for the application icon.
 # The file will automatically be converted to the correct
 # format.
-icon     = ""
+icon        = ""
 
 [mobile]
-name     = "Wiish"
-version  = "0.1.0"
-src      = "main_mobile.nim"
-dst      = "dist"
-icon     = ""
+name        = "Wiish"
+src         = "main_mobile.nim"
+icon        = ""
 
 [macos]
 bundle_identifier = "com.wiish.exampledesktop"

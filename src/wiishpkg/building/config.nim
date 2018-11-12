@@ -5,39 +5,27 @@ import strutils
 type
   ## Config is a project's configuration
   Config* = object of RootObj
-    toml*: TomlValueRef
     name*: string
     version*: string
     src*: string
     dst*: string
     icon*: string
+    resourceDir*: string
     nimflags*: seq[string]
+    # macos/ios
+    codesign_identity*: string
+    bundle_identifier*: string
+    # macos
+    category_type*: string
+    # ios
+    sdk_version*: string
 
-const DEFAULTS* = (
-  name: "Wiish App",
-  version: "0.1.0",
-  src: "myapp.nim",
-  dst: "dist",
-  nimflags: @[],
-  icon: "",
-)
 
-proc get*(maintoml: TomlValueRef, key:string): TomlValueRef =
-  let parts = key.split(".")
-  var toml = maintoml
-  for i,part in parts:
-    if toml.hasKey(part):
-      toml = toml[part]
-      if i == parts.len-1:
-        return toml
-    else:
-      break
-  return nil
 
-proc get*(maintoml: TomlValueRef, sections:seq[string], key: string, default: TomlValueRef): TomlValueRef =
+proc get*[T](maintoml: TomlValueRef, sections:seq[string], key: string, default: T): TomlValueRef =
   for section in sections:
     if maintoml.hasKey(section):
-      let toml = maintoml.get(section)
+      let toml = maintoml[section]
       if toml.hasKey(key):
         return toml[key]
   return default
@@ -45,38 +33,34 @@ proc get*(maintoml: TomlValueRef, sections:seq[string], key: string, default: To
 proc parseConfig*(filename:string): TomlValueRef =
   parsetoml.parseFile(filename)
 
-proc getDesktopConfig*[T](toml: TomlValueRef, sections:seq[string] = @["desktop"]):T =
-  result = T()
-  result.toml = toml
-  result.name = toml.get(sections, "name", ?DEFAULTS.name).stringVal
-  result.version = toml.get(sections, "version", ?DEFAULTS.version).stringVal
-  result.src = toml.get(sections, "src", ?DEFAULTS.src).stringVal
-  result.dst = toml.get(sections, "dst", ?DEFAULTS.dst).stringVal
-  result.icon = toml.get(sections, "icon", ?DEFAULTS.icon).stringVal
+proc getConfig*(filename: string, sections:seq[string]):Config =
+  let toml = parseConfig(filename)
+  result = Config()
+  result.name = toml.get(sections, "name", ?"WiishApp").stringVal
+  result.version = toml.get(sections, "version", ?"0.1.0").stringVal
+  result.src = toml.get(sections, "src", ?"main.nim").stringVal
+  result.dst = toml.get(sections, "dst", ?"dist").stringVal
+  result.icon = toml.get(sections, "icon", ?"").stringVal
+  result.resourceDir = toml.get(sections, "resourceDir", ?"resources").stringVal
   result.nimflags = @[]
-  for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
+  for flag in toml.get(sections, "nimflags", ?(@[])).arrayVal:
     result.nimflags.add(flag.stringVal)
+  # macos/ios
+  result.codesign_identity = toml.get(sections, "codesign_identity", ?"").stringVal
+  result.bundle_identifier = toml.get(sections, "bundle_identifier", ?"").stringVal
+  # macos
+  result.category_type = toml.get(sections, "category_type", ?"").stringVal
+  # ios
+  result.sdk_version = toml.get(sections, "sdk_version", ?"").stringVal
 
-proc getDesktopConfig*[T](config: Config, sections:seq[string] = @["desktop"]):T =
-  getDesktopConfig[T](config.toml, sections)
+template getMacosConfig*(filename: string): Config =
+  getConfig(filename, @["macos", "desktop", "main"])
 
-proc getDesktopConfig*(filename: string, sections:seq[string] = @["desktop"]):Config =
-  getDesktopConfig[Config](parseConfig(filename), sections)
+template getWindowsConfig*(filename: string): Config =
+  getConfig(filename, @["windows", "desktop", "main"])
 
-proc getMobileConfig*[T](toml: TomlValueRef, sections:seq[string] = @["mobile"]):T =
-  result = T()
-  result.toml = toml
-  result.name = toml.get(sections, "name", ?DEFAULTS.name).stringVal
-  result.version = toml.get(sections, "version", ?DEFAULTS.version).stringVal
-  result.src = toml.get(sections, "src", ?DEFAULTS.src).stringVal
-  result.dst = toml.get(sections, "dst", ?DEFAULTS.dst).stringVal
-  result.icon = toml.get(sections, "icon", ?DEFAULTS.icon).stringVal
-  result.nimflags = @[]
-  for flag in toml.get(sections, "nimflags", ?DEFAULTS.nimflags).arrayVal:
-    result.nimflags.add(flag.stringVal)
+template getLinuxConfig*(filename: string): Config =
+  getConfig(filename, @["linux", "desktop", "main"])
 
-proc getMobileConfig*[T](config: Config, sections:seq[string] = @["mobile"]):T =
-  getMobileConfig[T](config.toml, sections)
-
-proc getMobileConfig*(filename: string, sections:seq[string] = @["mobile"]):Config =
-  getMobileConfig[Config](parseConfig(filename), sections)
+template getiOSConfig*(filename: string): Config =
+  getConfig(filename, @["ios", "mobile", "main"])

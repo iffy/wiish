@@ -31,12 +31,13 @@ const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
 
 
 proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
+  let
+    configPath = directory/"wiish.toml"
   var
     macos = macos
     ios = ios
     linux = linux
     windows = windows
-  let config = getDesktopConfig(directory/"wiish.toml")
   if not macos and not windows and not linux and not ios:
     when macDesktop:
       macos = true
@@ -46,37 +47,44 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
       linux = true
   if macos:
     log("Building macOS desktop...")
-    doMacBuild(directory, config)
+    doMacBuild(directory, configPath)
   if ios:
     log("Building iOS mobile...")
-    discard doiOSBuild(directory, config)
+    discard doiOSBuild(directory, configPath)
   if windows:
     log("Building Windows desktop...")
-    doWindowsBuild(directory, config)
+    doWindowsBuild(directory, configPath)
   if linux:
     log("Building Linux desktop...")
-    doLinuxBuild(directory, config)
+    doLinuxBuild(directory, configPath)
 
 proc doDesktopRun*(directory:string = ".") =
-  ## Run the application
+  ## Run the desktop application
   var
     args: seq[string]
-  let config = getDesktopConfig(directory/"wiish.toml")
-  let src_file = directory/config.src
+    src_file: string
+    config: Config
+  let
+    configPath = directory/"wiish.toml"
   when macDesktop:
     args.add("nim")
+    config = getMacosConfig(configPath)
   elif defined(windows):
     args.add("nim.exe")
+    config = getWindowsConfig(configPath)
   elif defined(linux):
     args.add("nim")
+    config = getLinuxConfig(configPath)
   else:
     raise newException(CatchableError, "Unknown OS")
+  src_file = directory/config.src
   args.add("c")
   for flag in config.nimflags:
     args.add(flag)
   # args.add("-d:glfwStaticLib")
   # if defined(linux):
   #   args.add("--dynlibOverride:SDL2")
+  args.add("-d:wiishDev")
   args.add("--threads:on")
   args.add("-r")
   args.add(src_file)
