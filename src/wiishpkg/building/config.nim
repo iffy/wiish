@@ -65,9 +65,14 @@ template getLinuxConfig*(filename: string): Config =
 template getiOSConfig*(filename: string): Config =
   getConfig(filename, @["ios", "mobile", "main"])
 
+template getAndroidConfig*(filename: string): Config =
+  getConfig(filename, @["android", "mobile", "main"])
+
 template getMyOSConfig*(filename: string): Config =
   when defined(ios):
     getiOSConfig(filename)
+  elif defined(android):
+    getAndroidConfig(filename)
   elif defined(macosx):
     getMacosConfig(filename)
   elif defined(windows):

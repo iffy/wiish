@@ -9,12 +9,14 @@ import ./build_macos
 import ./build_ios
 import ./build_windows
 import ./build_linux
+import ./build_android
 import ./config
 import ./buildlogging
 import ./buildutil
 import ../defs
 
 export doiOSRun
+export doAndroidRun
 
 const default_icon = slurp"./data/default.png"
 
@@ -30,15 +32,16 @@ const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
 )
 
 
-proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
+proc doBuild*(directory:string = ".", macos,ios,android,windows,linux:bool = false) =
   let
     configPath = directory/"wiish.toml"
   var
     macos = macos
     ios = ios
+    android = android
     linux = linux
     windows = windows
-  if not macos and not windows and not linux and not ios:
+  if not macos and not windows and not linux and not ios and not android:
     when macDesktop:
       macos = true
     elif defined(windows):
@@ -52,6 +55,9 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
   if ios:
     log("Building iOS mobile...")
     discard doiOSBuild(directory, configPath)
+  if android:
+    log("Building Android mobile ...")
+    discard doAndroidBuild(directory, configPath)
   if windows:
     log("Building Windows desktop...")
     doWindowsBuild(directory, configPath)
