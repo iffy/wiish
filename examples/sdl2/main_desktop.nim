@@ -1,7 +1,6 @@
 ## Hello, World Wiish App
 import wiishpkg/desktop
 import sdl2, sdl2/gfx, sdl2/ttf
-import ospaths
 
 app.launched.handle:
   log "App launched"

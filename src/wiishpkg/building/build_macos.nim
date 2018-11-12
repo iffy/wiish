@@ -115,8 +115,9 @@ proc doMacBuild*(directory:string, configPath:string) =
 </plist>""")
 
   # Contents/Resources/resources
-  log &"Copying resources from {srcResources} to {dstResources} ..."
-  createDir(dstResources)
-  copyDir(srcResources, dstResources)
+  if srcResources.dirExists:
+    log &"Copying resources from {srcResources} to {dstResources} ..."
+    createDir(dstResources)
+    copyDir(srcResources, dstResources)
 
   log "ok"

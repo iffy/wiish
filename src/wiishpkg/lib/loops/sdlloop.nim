@@ -148,8 +148,8 @@ elif defined(macosx):
 proc initSDLIfNeeded() =
   var sdlInitialized {.global.} = false
   if not sdlInitialized:
-    if sdl2.init(INIT_VIDEO) != SdlSuccess:
-      echo "Error: sdl2.init(INIT_VIDEO): ", getError()
+    if sdl2.init(INIT_EVERYTHING) != SdlSuccess:
+      echo "Error: sdl2.init(INIT_EVERYTHING): ", getError()
     sdlInitialized = true
     
     if glSetAttribute(SDL_GL_STENCIL_SIZE, 8) != 0:

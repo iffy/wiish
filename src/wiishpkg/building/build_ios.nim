@@ -80,6 +80,8 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     appDir = buildDir/config.name & ".app"
     appInfoPlistPath = appDir/"Info.plist"
     executablePath = appDir/"executable"
+    srcResources = directory/config.resourceDir
+    dstResources = appDir/"static"
   var
     nimFlags, linkerFlags, compilerFlags: seq[string]
     sdk_version = config.sdk_version
@@ -149,6 +151,11 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   </plist>
   """)
 
+  if srcResources.dirExists:
+    log &"Copying resources from {srcResources} to {dstResources} ..."
+    createDir(dstResources)
+    copyDir(srcResources, dstResources)
+
   # log "Choosing signing identity ..."
   # let signing_identity = identities[0].fullname
 
@@ -165,6 +172,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     "-d:ios",
     "-d:iPhone",
     "--dynlibOverride:SDL2",
+    "--dynlibOverride:SDL2_ttf",
     &"-d:appBundleIdentifier={config.bundle_identifier}",
   ])
   if simulator:
@@ -184,6 +192,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   
   nimFlags.add(["--threads:on"])
   linkerFlags.add("-lSDL2")
+  linkerFlags.add("-lSDL2_ttf")
   nimFlags.add([
     "--warning[LockLevel]:off",
     "--verbosity:0",

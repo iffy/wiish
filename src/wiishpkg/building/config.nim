@@ -47,7 +47,7 @@ proc getConfig*(filename: string, sections:seq[string]):Config =
     result.nimflags.add(flag.stringVal)
   # macos/ios
   result.codesign_identity = toml.get(sections, "codesign_identity", ?"").stringVal
-  result.bundle_identifier = toml.get(sections, "bundle_identifier", ?"").stringVal
+  result.bundle_identifier = toml.get(sections, "bundle_identifier", ?"com.example.wiishdemo").stringVal
   # macos
   result.category_type = toml.get(sections, "category_type", ?"").stringVal
   # ios

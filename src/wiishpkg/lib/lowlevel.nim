@@ -30,7 +30,7 @@ else:
     let
       root = 
         when defined(ios):
-          getAppDir()
+          getAppDir()/"static"
         elif defined(android):
           getAppDir()
         elif defined(macosx):
