@@ -1,5 +1,5 @@
 ## Hello, World Wiish App
-import wiishpkg/desktop except Rect
+import wiishpkg/desktop
 import sdl2/sdl except log
 # import sdl2/sdl_gfx
 import sdl2/sdl_ttf as ttf
