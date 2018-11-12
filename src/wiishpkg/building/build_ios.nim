@@ -172,7 +172,6 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     "-d:ios",
     "-d:iPhone",
     "--dynlibOverride:SDL2",
-    "--dynlibOverride:SDL2_ttf",
     &"-d:appBundleIdentifier={config.bundle_identifier}",
   ])
   if simulator:
@@ -192,7 +191,6 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   
   nimFlags.add(["--threads:on"])
   linkerFlags.add("-lSDL2")
-  linkerFlags.add("-lSDL2_ttf")
   nimFlags.add([
     "--warning[LockLevel]:off",
     "--verbosity:0",
