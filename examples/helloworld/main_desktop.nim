@@ -1,7 +1,6 @@
 ## Hello, World Wiish App
 import wiishpkg/desktop
 import sdl2, sdl2/gfx, sdl2/ttf
-import ospaths
 
 app.launched.handle:
   log "App launched"
@@ -15,7 +14,7 @@ app.launched.handle:
   
   # Open the font file
   let fontsize = (32.0).cint
-  let fontfile = currentSourcePath.parentDir/"Lato-Regular.ttf"
+  let fontfile = app.resourcePath("Lato-Regular.ttf")
   log "Trying to open font: ", fontfile.repr
   let font:FontPtr = openFont(fontfile, fontsize)
   var rectangle = rect(50, 50, 50, 50)
