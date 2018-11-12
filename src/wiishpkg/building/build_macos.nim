@@ -4,10 +4,10 @@ import ospaths
 import strformat
 import parsetoml
 import posix
+import logging
 
 import ./config
 import ./buildutil
-import ./buildlogging
 
 const
   default_icon = DATADIR/"default.png"
@@ -67,7 +67,7 @@ proc doMacBuild*(directory:string, configPath:string) =
   run(args)
 
   # Generate icons
-  log "Generating .icns file ..."
+  debug "Generating .icns file ..."
   var iconSrcPath:string
   if config.icon == "":
     iconSrcPath = default_icon
@@ -116,8 +116,8 @@ proc doMacBuild*(directory:string, configPath:string) =
 
   # Contents/Resources/resources
   if srcResources.dirExists:
-    log &"Copying resources from {srcResources} to {dstResources} ..."
+    debug &"Copying resources from {srcResources} to {dstResources} ..."
     createDir(dstResources)
     copyDir(srcResources, dstResources)
 
-  log "ok"
+  debug "ok"
