@@ -148,8 +148,8 @@ elif defined(macosx):
 proc initSDLIfNeeded() =
   var sdlInitialized {.global.} = false
   if not sdlInitialized:
-    if sdl2.init(INIT_VIDEO) != SdlSuccess:
-      echo "Error: sdl2.init(INIT_VIDEO): ", getError()
+    if sdl2.init(INIT_EVERYTHING) != SdlSuccess:
+      echo "Error: sdl2.init(INIT_EVERYTHING): ", getError()
     sdlInitialized = true
     
     if glSetAttribute(SDL_GL_STENCIL_SIZE, 8) != 0:
@@ -159,7 +159,11 @@ proc initSDLIfNeeded() =
       discard glSetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0x0004)
       discard glSetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2)
 
-proc initSdlWindow(w: Window, r: Rect)=
+proc show*(w: Window) =
+  w.sdlWindow.showWindow()
+  w.sdlWindow.raiseWindow()
+
+proc initGLWindow(w: Window, r: Rect)=
   w.sdlWindow = createWindow(nil, cint(r.x), cint(r.y), cint(r.width), cint(r.height), SDL_WINDOW_OPENGL or SDL_WINDOW_RESIZABLE or SDL_WINDOW_ALLOW_HIGHDPI or SDL_WINDOW_HIDDEN)
   if w.sdlWindow == nil:
     echo "Could not create window!"
@@ -175,29 +179,40 @@ proc initSdlWindow(w: Window, r: Rect)=
   glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
   glClear(GL_COLOR_BUFFER_BIT)
 
-proc show*(w: Window)=
-  if w.sdlWindow.isNil:
-    w.initSdlWindow(w.frame)
-    # w.setFrameOrigin zeroPoint
-
-  w.sdlWindow.showWindow()
-  w.sdlWindow.raiseWindow()
-
 proc newGLWindow*(app: Application, title:string = ""): Window =
   initSDLIfNeeded()
   result.new()
   app.windows.add(result)
-  result.initSdlWindow(newRect(100, 200, 300, 400))
+  result.initGLWindow(newRect(100, 200, 300, 400))
+  result.sdlWindow.setTitle(title)
+  result.show()
+
+proc initSDLWindow(w: Window, r: Rect) =
+  w.sdlWindow = createWindow(nil, cint(r.x), cint(r.y), cint(r.width), cint(r.height), SDL_WINDOW_RESIZABLE or SDL_WINDOW_ALLOW_HIGHDPI or SDL_WINDOW_HIDDEN)
+  if w.sdlWindow == nil:
+    echo "Could not create window!"
+    quit 1
+
+proc newSDLWindow*(app: Application, title:string = ""): Window =
+  initSDLIfNeeded()
+  result.new()
+  app.windows.add(result)
+  result.initSDLWindow(newRect(150, 250, 300, 400))
   result.sdlWindow.setTitle(title)
   result.show()
 
 proc drawWindow(w: Window) =
-  discard glMakeCurrent(w.sdlWindow, w.sdlGlContext)
-  glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
-  glClear(GL_COLOR_BUFFER_BIT)
-  glFlush()
-  w.onDraw.emit(newRect(0, 0, 0, 0))
-  w.sdlWindow.glSwapWindow()
+  if w.sdlGlContext != nil:
+    # GL window
+    discard glMakeCurrent(w.sdlWindow, w.sdlGlContext)
+    glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
+    glClear(GL_COLOR_BUFFER_BIT)
+    glFlush()
+    w.onDraw.emit(newRect(0, 0, 0, 0))
+    w.sdlWindow.glSwapWindow()
+  else:
+    # SDL window
+    w.onDraw.emit(newRect(0, 0, 0, 0))
 
 proc handleEvent(app: Application, event: ptr sdl2.Event): Bool32 =
   app.sdl_event.emit(event)
@@ -216,6 +231,7 @@ proc handleEvent(app: Application, event: ptr sdl2.Event): Bool32 =
 #     glViewport(0, 0, GLSizei(constrainedSize.width * w.pixelRatio), GLsizei(constrainedSize.height * w.pixelRatio))
 
 proc nextEvent(app: Application, evt: var sdl2.Event) =
+  var was_event = false
   when defined(ios):
     proc iPhoneSetEventPump(enabled: Bool32) {.importc: "SDL_iPhoneSetEventPump".}
     iPhoneSetEventPump(True32)
@@ -223,19 +239,22 @@ proc nextEvent(app: Application, evt: var sdl2.Event) =
     iPhoneSetEventPump(False32)
     while pollEvent(evt):
       discard handleEvent(app, addr evt)
+      was_event = true
   else:
-    var doPoll = false
+    # var doPoll = false
     if waitEvent(evt):
       discard handleEvent(app, addr evt)
-      doPoll = evt.kind != QuitEvent
-    if doPoll:
-      while pollEvent(evt):
-        discard handleEvent(app, addr evt)
-        if evt.kind == QuitEvent:
-          break
+      was_event = true
+      # doPoll = evt.kind != QuitEvent
+    # if doPoll:
+    #   while pollEvent(evt):
+    #     discard handleEvent(app, addr evt)
+    #     if evt.kind == QuitEvent:
+    #       break
   
-  for w in app.windows:
-    w.drawWindow()
+  if was_event:
+    for w in app.windows:
+      w.drawWindow()
 
 template start*(app: Application) =
   sdlMain()

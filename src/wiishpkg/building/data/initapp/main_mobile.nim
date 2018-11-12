@@ -1,35 +1,34 @@
 ## Hello, World Wiish App
-import sdl2
-import opengl
-import math
 import wiishpkg/mobile
-
-import random
-randomize()
-var
-  r = 45/255.0
-  g = 52/255.0
-  b = 54/255.0
+import sdl2, sdl2/gfx
 
 app.launched.handle:
   log "App launched"
-  var w = app.newGLWindow()
+  var w = app.newSDLWindow(title = "Hello, SDL Wiish!")
+  var renderer = createRenderer(w.sdlWindow, -1, Renderer_Accelerated or Renderer_PresentVsync or Renderer_TargetTexture)
+  if renderer.isNil:
+    destroy w.sdlWindow
+    quit(1)
+  
+  var rectangle = rect(50, 50, 50, 50)
+
+  # Perform drawing for the window.
   w.onDraw.handle(rect):
-    glClearColor(r, g, b, 0)
-    glClear(GL_COLOR_BUFFER_BIT)
+    log "onDraw"
+    # Draw background
+    renderer.setDrawColor 255,255,255,255
+    renderer.clear
+
+    # Draw rectangle
+    renderer.setDrawColor 0,0,255,255
+    renderer.fillRect(rectangle.unsafeAddr)
+
+    # Make it so!
+    renderer.present
 
 app.willExit.handle:
-  log "App exiting"
-
-app.sdl_event.handle(evt):
-  log "Event"
-  case evt.kind
-  of FingerDown:
-    r = random(255).toFloat / 255.0
-    g = random(255).toFloat / 255.0
-    b = random(255).toFloat / 255.0
-  else:
-    discard
+  # Run this code just before the application exits
+  log "App is exiting"
 
 app.start()
 

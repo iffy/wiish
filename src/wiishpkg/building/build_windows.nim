@@ -6,15 +6,9 @@ import parsetoml
 
 import ./config
 
-type
-  WindowsConfig = object of Config
-
-proc windowsConfig(config:Config):WindowsConfig =
-  result = getDesktopConfig[WindowsConfig](config, @["windows", "desktop"])
-
-proc doWindowsBuild*(directory:string, config:Config) =
+proc doWindowsBuild*(directory:string, configPath:string) =
   ## Package a Windows application
-  let config = config.windowsConfig()
+  let config = getWindowsConfig(configPath)
   let src_file = directory/config.src
   let executable_name = src_file.splitFile.name
   echo "WINDOWS IS NOT SUPPORTED YET"

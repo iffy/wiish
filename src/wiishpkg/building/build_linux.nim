@@ -8,15 +8,9 @@ import parsetoml
 import ./config
 import ./buildutil
 
-type
-  LinuxConfig = object of Config
-
-proc linuxConfig(config:Config):LinuxConfig =
-  result = getDesktopConfig[LinuxConfig](config, @["linux", "desktop"])
-
-proc doLinuxBuild*(directory:string, config:Config) =
+proc doLinuxBuild*(directory:string, configPath:string) =
   ## Package a Linux application
-  let config = config.linuxConfig()
+  let config = getLinuxConfig(configPath)
   let src_file = directory/config.src
   let executable_name = src_file.splitFile.name
   echo "LINUX IS NOT SUPPORTED YET"

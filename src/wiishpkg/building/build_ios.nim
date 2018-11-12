@@ -13,23 +13,8 @@ import ./config
 import ./buildlogging
 import ./buildutil
 
-type
-  iOSConfig = object of Config
-    bundle_identifier*: string
-    category_type*: string
-    codesign_identity*: string
-    sdk_version*: string
-
 const
   simulator_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
-
-proc getiOSConfig(config:Config):iOSConfig =
-  ## Read iOS-specific config from the config file
-  result = getMobileConfig[iOSConfig](config, @["ios", "mobile"])
-  result.bundle_identifier = config.toml.get(@["ios"], "bundle_identifier", ?"com.wiish.example").stringVal
-  result.category_type = config.toml.get(@["ios"], "category_type", ?"public.app-category.example").stringVal
-  result.codesign_identity = config.toml.get(@["ios", "mobile"], "codesign_identity", ?"unknown").stringVal
-  result.sdk_version = config.toml.get(@["ios", "mobile"], "sdk_version", ?"").stringVal
 
 type
   CodeSignIdentity = object
@@ -82,11 +67,11 @@ proc listPossibleSDKVersions(simulator: bool):seq[string] =
     if name =~ re".*?(\d+\.\d+)\.sdk":
       result.add(matches[0])
 
-proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
+proc doiOSBuild*(directory:string, configPath:string, release:bool = true):string =
   ## Build an iOS .app
   ## Returns the path to the packaged .app
   let
-    config = config.getiOSConfig()
+    config = getiOSConfig(configPath)
     buildDir = directory/config.dst/"ios"
     appSrc = directory/config.src
     simulator = true
@@ -95,6 +80,8 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
     appDir = buildDir/config.name & ".app"
     appInfoPlistPath = appDir/"Info.plist"
     executablePath = appDir/"executable"
+    srcResources = directory/config.resourceDir
+    dstResources = appDir/"static"
   var
     nimFlags, linkerFlags, compilerFlags: seq[string]
     sdk_version = config.sdk_version
@@ -164,6 +151,11 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   </plist>
   """)
 
+  if srcResources.dirExists:
+    log &"Copying resources from {srcResources} to {dstResources} ..."
+    createDir(dstResources)
+    copyDir(srcResources, dstResources)
+
   # log "Choosing signing identity ..."
   # let signing_identity = identities[0].fullname
 
@@ -219,7 +211,7 @@ proc doiOSBuild*(directory:string, config:Config, release:bool = true):string =
   var args = @["nim", "c"]
   args.add(nimFlags)
   args.add(appSrc)
-  log args.join(" ")
+  # log args.join(" ")
   run(args)
 
 proc doiOSRun*(directory:string = ".") =
@@ -227,11 +219,13 @@ proc doiOSRun*(directory:string = ".") =
   var
     args: seq[string]
     p: Process
-  let config = getiOSConfig(getMobileConfig(directory/"wiish.toml"))
+  let
+    configPath = directory/"wiish.toml"
+    config = getiOSConfig(configPath)
 
   # compile the app
   log("Compiling app...")
-  let apppath = doiOSBuild(directory, config, release = false)
+  let apppath = doiOSBuild(directory, configPath, release = false)
   
   # open the simulator
   log("Opening simulator...")
