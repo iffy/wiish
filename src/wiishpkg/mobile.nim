@@ -5,7 +5,6 @@ import ./lib/wiishtypes
 export wiishtypes
 import ./lib/lowlevel
 export lowlevel
-import ./lib/logging
-export logging
+import ./lib/logsetup
 
 var app* = createApplication()
