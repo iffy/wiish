@@ -8,9 +8,9 @@ import strutils
 import parsetoml
 import posix
 import re
+import logging
 
 import ./config
-import ./buildlogging
 import ./buildutil
 
 const
@@ -41,7 +41,7 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
     xcodeProjPath = DATADIR/"sdl2src/Xcode-iOS/SDL"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2.a"
   if not fileExists(result):
-    log &"Building {result.basename}..."
+    debug &"Building {result.basename}..."
     var args = @[
       "xcodebuild",
       "-project", xcodeProjPath/"SDL.xcodeproj",
@@ -55,7 +55,7 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
       args.add("ARCHS=arm64 armv7")
     run(args)
   else:
-    log &"Using existing {result.basename}"
+    debug &"Using existing {result.basename}"
   
   if not fileExists(result):
     raise newException(CatchableError, "Failed to build libSDL2.a")
@@ -87,9 +87,9 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     sdk_version = config.sdk_version
   
   if sdk_version == "":
-    log &"Choosing sdk version ..."
+    debug &"Choosing sdk version ..."
     sdk_version = listPossibleSDKVersions(simulator)[^1]
-    log &"Chose SDK version: {sdk_version}"
+    debug &"Chose SDK version: {sdk_version}"
 
   var sdkPath:string
   if simulator:
@@ -99,10 +99,10 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
 
   result = appDir
   
-  log &"Creating .app structure in {appDir} ..."
+  debug &"Creating .app structure in {appDir} ..."
   createDir(appDir)
 
-  log &"Compiling LaunchScreen storyboard ..."
+  debug &"Compiling LaunchScreen storyboard ..."
   # https://gist.github.com/fabiopelosin/4560417
   run("ibtool",
     "--output-format", "human-readable-text",
@@ -111,7 +111,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     "--sdk", sdkPath,
   )
 
-  log &"Creating icons ..."
+  debug &"Creating icons ..."
   var iconSrcPath:string
   if config.icon == "":
     iconSrcPath = DATADIR/"default_square.png"
@@ -119,7 +119,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     iconSrcPath = directory/config.icon
   iconSrcPath.resizePNG(appDir/"Icon.png", 180, 180)
 
-  log &"Creating Info.plist ..."
+  debug &"Creating Info.plist ..."
   appInfoPlistPath.writeFile(&"""
   <?xml version="1.0" encoding="UTF-8" ?>
   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -152,17 +152,17 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   """)
 
   if srcResources.dirExists:
-    log &"Copying resources from {srcResources} to {dstResources} ..."
+    debug &"Copying resources from {srcResources} to {dstResources} ..."
     createDir(dstResources)
     copyDir(srcResources, dstResources)
 
-  # log "Choosing signing identity ..."
+  # debug "Choosing signing identity ..."
   # let signing_identity = identities[0].fullname
 
-  log "Obtaining SDL2 library ..."
+  debug "Obtaining SDL2 library ..."
   let sdllibSrc = buildSDLlib(sdk_version, simulator)
   
-  log "Configuring build ..."
+  debug "Configuring build ..."
   template linkAndCompile(flag:untyped) =
     linkerFlags.add(flag)
     compilerFlags.add(flag)
@@ -207,11 +207,11 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   for flag in compilerFlags:
     nimFlags.add("--passC:" & flag)
   
-  log "Doing build ..."
+  debug "Doing build ..."
   var args = @["nim", "c"]
   args.add(nimFlags)
   args.add(appSrc)
-  # log args.join(" ")
+  # debug args.join(" ")
   run(args)
 
 proc doiOSRun*(directory:string = ".") =
@@ -224,17 +224,17 @@ proc doiOSRun*(directory:string = ".") =
     config = getiOSConfig(configPath)
 
   # compile the app
-  log("Compiling app...")
+  debug "Compiling app..."
   let apppath = doiOSBuild(directory, configPath, release = false)
   
   # open the simulator
-  log("Opening simulator...")
+  debug "Opening simulator..."
   p = startProcess(command="open", args = @["-a", "Simulator"], options = {poUsePath, poParentStreams})
   if p.waitForExit() != 0:
     raise newException(CatchableError, "Error starting simulator")
   
   # wait for the simulator
-  log("Waiting for the simulator to start...")
+  debug "Waiting for the simulator to start..."
   var booted = false
   for i in 0..20:
     let output = execProcess(command="xcrun", args = @[
@@ -248,7 +248,7 @@ proc doiOSRun*(directory:string = ".") =
     raise newException(CatchableError, "Timed out waiting for simulator to start")
 
   # install the app
-  log("Installing app...")
+  debug "Installing app..."
   p = startProcess(command="xcrun", args = @[
     "simctl", "install", "booted", apppath,
   ], options = {poUsePath, poParentStreams})
@@ -256,7 +256,7 @@ proc doiOSRun*(directory:string = ".") =
     raise newException(CatchableError, "Error installing application")
 
   # start the app
-  log(&"Starting app {config.bundle_identifier}...")
+  debug &"Starting app {config.bundle_identifier}..."
   let startmessage = runoutput("xcrun", "simctl", "launch", "booted", config.bundle_identifier)
   let childPid = startmessage.strip.split(" ")[1]
 

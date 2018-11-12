@@ -4,6 +4,7 @@ import parseopt
 import tables
 import macros
 import os
+import logging
 import parsetoml
 import wiishpkg/building/build
 import argparse
@@ -56,6 +57,7 @@ let p = newParser("wiish"):
         doDesktopRun(directory = opts.directory)
 
 if isMainModule:
+  addHandler(newConsoleLogger())
   p.run()
 
 
