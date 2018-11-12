@@ -38,13 +38,39 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2.a, creating it if necessary
   let
     platform = if simulator: "iphonesimulator" else: "iphoneos"
-    xcodeProjPath = DATADIR/"sdl2src/Xcode-iOS/SDL"
+    xcodeProjPath = DATADIR/"SDL/Xcode-iOS/SDL"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2.a"
   if not fileExists(result):
     log &"Building {result.basename}..."
     var args = @[
       "xcodebuild",
       "-project", xcodeProjPath/"SDL.xcodeproj",
+      "-configuration", "Release",
+      "-sdk", platform & sdk_version,
+      "SYMROOT=build",
+    ]
+    if simulator:
+      args.add("ARCHS=i386 x86_64")
+    else:
+      args.add("ARCHS=arm64 armv7")
+    run(args)
+  else:
+    log &"Using existing {result.basename}"
+  
+  if not fileExists(result):
+    raise newException(CatchableError, "Failed to build libSDL2.a")
+
+proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
+  ## Returns the path to libSDL2
+  let
+    platform = if simulator: "iphonesimulator" else: "iphoneos"
+    xcodeProjPath = DATADIR/"SDL_TTF/Xcode-iOS"
+  result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2_ttf.a"
+  if not fileExists(result):
+    log &"Building {result.basename}..."
+    var args = @[
+      "xcodebuild",
+      "-project", xcodeProjPath/"SDL_ttf.xcodeproj",
       "-configuration", "Release",
       "-sdk", platform & sdk_version,
       "SYMROOT=build",
@@ -161,6 +187,9 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
 
   log "Obtaining SDL2 library ..."
   let sdllibSrc = buildSDLlib(sdk_version, simulator)
+
+  log "Obtaining SDL2_ttf library ..."
+  let sdlttflibSrc = buildSDLTTFlib(sdk_version, simulator)
   
   log "Configuring build ..."
   template linkAndCompile(flag:untyped) =
@@ -172,6 +201,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     "-d:ios",
     "-d:iPhone",
     "--dynlibOverride:SDL2",
+    "--dynlibOverride:SDL2_ttf",
     &"-d:appBundleIdentifier={config.bundle_identifier}",
   ])
   if simulator:
@@ -186,11 +216,13 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   linkerFlags.add([
     "-fobjc-link-runtime",
     "-L", sdllibSrc.parentDir,
+    "-L", sdlttflibSrc.parentDir,
   ])
   linkAndCompile(["-isysroot", sdkPath])
   
   nimFlags.add(["--threads:on"])
   linkerFlags.add("-lSDL2")
+  linkerFlags.add("-lSDL2_ttf")
   nimFlags.add([
     "--warning[LockLevel]:off",
     "--verbosity:0",
