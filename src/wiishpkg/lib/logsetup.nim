@@ -1,7 +1,8 @@
 ## Logging for Wiish applications
 ##
-import times
-import strformat
+import logging
+
+const fmtString = "$levelname [$datetime] "
 
 when defined(ios):
   const appBundleIdentifier {.strdefine.}: string = ""
@@ -28,14 +29,25 @@ when defined(ios):
     {.emit: """
     os_log(logtype, "%s", message);
     """ .}
+  
+  type
+    IOSLogger* = ref object of Logger
+  
+  method log*(logger: IOSLogger, level: Level, args: varargs[string, `$`]) =
+    ## Logs to the iOS system log
+    if level >= logger.levelThreshold:
+      let ln = substituteLog(logger.fmtStr, level, args)
+      try:
+        systemLog(ln)
+      except IOError:
+        discard
+  
+  var ios_logger = new IOSLogger
+  ios_logger.fmtStr = "$levelname "
+  ios_logger.levelThreshold = lvlAll
+  addHandler(ios_logger)
 else:
-  proc systemLog(msg: string) =
-    let ts = now()
-    write(stderr, &"{ts} {msg}\L")
+  # Use a console logger
+  var console_logger = newConsoleLogger(fmtStr = fmtString)
+  addHandler(console_logger)
 
-
-proc log*(a: varargs[string]) =
-  var message:string
-  for s in items(a):
-    message.add(" " & s)
-  systemLog(message)

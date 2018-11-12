@@ -5,13 +5,13 @@ import parsetoml
 import sequtils
 import strformat
 import tables
+import logging
 import ./build_macos
 import ./build_ios
 import ./build_windows
 import ./build_linux
 import ./build_android
 import ./config
-import ./buildlogging
 import ./buildutil
 import ../defs
 
@@ -50,19 +50,19 @@ proc doBuild*(directory:string = ".", macos,ios,android,windows,linux:bool = fal
       linux = true
   
   if macos:
-    log("Building macOS desktop...")
+    info "Building macOS desktop..."
     doMacBuild(directory, configPath)
   if ios:
-    log("Building iOS mobile...")
+    info "Building iOS mobile..."
     discard doiOSBuild(directory, configPath)
   if android:
     log("Building Android mobile ...")
     discard doAndroidBuild(directory, configPath)
   if windows:
-    log("Building Windows desktop...")
+    info "Building Windows desktop..."
     doWindowsBuild(directory, configPath)
   if linux:
-    log("Building Linux desktop...")
+    info "Building Linux desktop..."
     doLinuxBuild(directory, configPath)
 
 proc doDesktopRun*(directory:string = ".") =

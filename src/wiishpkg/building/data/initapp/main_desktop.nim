@@ -1,10 +1,10 @@
 ## Hello, World Wiish App
 import wiishpkg/desktop
+import logging
 import sdl2, sdl2/gfx, sdl2/ttf
-import ospaths
 
 app.launched.handle:
-  log "App launched"
+  debug "App launched"
   ttfInit()
 
   var w = app.newSDLWindow(title = "Hello, SDL Wiish!")
@@ -15,8 +15,8 @@ app.launched.handle:
   
   # Open the font file
   let fontsize = (32.0).cint
-  let fontfile = currentSourcePath.parentDir/"Lato-Regular.ttf"
-  log "Trying to open font: ", fontfile.repr
+  let fontfile = app.resourcePath("Lato-Regular.ttf")
+  debug "Trying to open font: ", fontfile.repr
   let font:FontPtr = openFont(fontfile, fontsize)
   var rectangle = rect(50, 50, 50, 50)
 
@@ -28,7 +28,7 @@ app.launched.handle:
 
   # Perform drawing for the window.
   w.onDraw.handle(rect):
-    log "onDraw"
+    debug "onDraw"
     # Draw background
     renderer.setDrawColor 255,255,255,255
     renderer.clear
@@ -45,7 +45,7 @@ app.launched.handle:
 
 app.willExit.handle:
   # Run this code just before the application exits
-  log "App is exiting"
+  debug "App is exiting"
 
 app.start()
 
