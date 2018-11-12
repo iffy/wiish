@@ -4,8 +4,6 @@ import sdl2
 import sdl2/gfx
 import sdl2/ttf
 
-ttfInit()
-
 log "Pre launch..."
 
 app.launched.handle:
