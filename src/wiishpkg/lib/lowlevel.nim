@@ -23,7 +23,7 @@ when defined(wiishDev):
       appdir = getAppDir()
       configPath = appdir/"wiish.toml"
       config = getMyOSConfig(configPath)
-    result = joinPath(config.resourceDir, filename) # XXX this is not safe from going above resourcePath
+    result = joinPath(appdir, config.resourceDir, filename) # XXX this is not safe from going above resourcePath
 else:
   proc resourcePath*(app: Application, filename: string): string =
     ## Return the path to a static resource included in the application

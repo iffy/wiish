@@ -30,7 +30,7 @@ Wiish provides 2 main things:
 | App icon               |         |   Y   |       |  Y  |         |
 | File associations      |         |       |       |  -  |    -    |
 | OpenGL windows         |         |   Y   |   Y   |  Y  |         |
-| SDL2 windows           |         |   Y   |       |     |         |
+| SDL2 windows           |         |   Y   |   Y   |     |         |
 | Included widget lib    |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable
@@ -47,9 +47,9 @@ nimble install https://github.com/iffy/wiish.git
 
 ### Linux
 
-On Linux, you must also install `libsdl2-dev`.
+On Linux, you must also install `libsdl2-dev` and optionally `libsdl2-ttf-dev`
 
-**Ubuntu**: `apt-get install libsdl2-dev`
+**Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev`
 
 ## Make a project
 
