@@ -22,12 +22,6 @@ type
     contents: string,
   ]
 
-# const basepath = currentSourcePath.parentDir.joinPath("data/initapp")
-# const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
-#   return (x[basepath.len+1..^1], slurp(x))
-# )
-
-
 proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
   let
     configPath = directory/"wiish.toml"
