@@ -30,7 +30,7 @@ Wiish provides 2 main things:
 | App icon               |         |   Y   |       |  Y  |         |
 | File associations      |         |       |       |  -  |    -    |
 | OpenGL windows         |         |   Y   |   Y   |  Y  |         |
-| SDL2 windows           |         |   Y   |   Y   |     |         |
+| SDL2 windows           |         |   Y   |   Y   |  Y  |         |
 | Included widget lib    |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable

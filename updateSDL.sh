@@ -1,26 +1,36 @@
 #!/bin/bash
-# This script gets the latest SDL XCode project and places it where it needs to be within the wiish source
-SDL_NAME="SDL2-2.0.9"
-TARNAME="${SDL_NAME}.tar.gz"
-FETCH_URL="https://www.libsdl.org/release/${TARNAME}"
-DST="src/wiishpkg/building/data/sdl2src"
+# This script puts the latest SDL2 and SDL2_ttf code into this project
 
-mkdir -p tmp
-pushd tmp
+function getit() {
+    mkdir -p tmp
+    pushd tmp
+    
+    NAME="$1"
+    TARNAME="${NAME}.tar.gz"
+    FETCH_URL="$2/${TARNAME}"
+    DST="src/wiishpkg/building/data/$3"
 
-if ! [ -e "$SDL_NAME" ]; then
-    if ! [ -e "$TARNAME" ]; then
-        echo "Downloading from $FETCH_URL"
-        curl "$FETCH_URL" -o "$TARNAME"
+    if ! [ -e "$SDL_NAME" ]; then
+        if ! [ -e "$TARNAME" ]; then
+            echo "Downloading from $FETCH_URL"
+            curl "$FETCH_URL" -o "$TARNAME"
+        fi
+        echo "Unpacking..."
+        tar xf "$TARNAME"
     fi
-    echo "Unpacking..."
-    tar xf "$TARNAME"
-fi
-popd
+    popd
 
-[ -e "${DST}" ] && rm -r "${DST}"
-cp -R "tmp/$SDL_NAME" "$DST"
+    [ -e "${DST}" ] && rm -r "${DST}"
+    cp -R "tmp/$NAME" "$DST"
 
-# remove unneeded files
-rm -r "${DST}/test"
-rm -r "${DST}/docs"
+    # remove unneeded files
+    rm -r "${DST}/test"
+    rm -r "${DST}/docs"
+}
+
+## SDL2
+getit "SDL2-2.0.9" "https://www.libsdl.org/release/" "SDL"
+
+## SDL2_ttf
+getit "SDL2_ttf-2.0.14" "https://www.libsdl.org/projects/SDL_ttf/release/" "SDL_TTF"
+
