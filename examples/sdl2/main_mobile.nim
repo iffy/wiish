@@ -16,13 +16,13 @@ app.launched.handle:
   
   # Open the font file
   let fontsize = (32.0).cint
-  let fontfile = app.resourcePath("Lato-Regular.ttf")
+  let fontfile = app.resourcePath("NotoSans-Regular.ttf")
   debug "Trying to open font: ", fontfile.repr
   let font = openFont(fontfile, fontsize)
   var rectangle = sdl.Rect(x: 50, y: 50, w: 50, h: 50)
 
   # Create the text
-  var textSurface = font.renderTextBlended("Hello, World!", tupleToColor((50, 100, 50, 255)))
+  var textSurface = font.renderUTF8_Blended("Hello, мир!", tupleToColor((50, 100, 50, 255)))
   var textRect = sdl.Rect(x: 20, y: 20, w: textSurface.w, h: textSurface.h)
   var texture = renderer.createTextureFromSurface(textSurface)
   textSurface.freeSurface()
