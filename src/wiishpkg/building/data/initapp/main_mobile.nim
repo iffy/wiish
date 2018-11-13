@@ -1,11 +1,11 @@
 ## Hello, World Wiish App
 import wiishpkg/mobile
-import sdl2/sdl except log
-# import sdl2/sdl_gfx
+import logging
+import sdl2/sdl
 import sdl2/sdl_ttf as ttf
 
 app.launched.handle:
-  log "App launched"
+  debug "App launched"
   discard ttf.init()
 
   var w = app.newSDLWindow(title = "Hello, SDL Wiish!")
@@ -17,7 +17,7 @@ app.launched.handle:
   # Open the font file
   let fontsize = (32.0).cint
   let fontfile = app.resourcePath("Lato-Regular.ttf")
-  log "Trying to open font: ", fontfile.repr
+  debug "Trying to open font: ", fontfile.repr
   let font = openFont(fontfile, fontsize)
   var rectangle = sdl.Rect(x: 50, y: 50, w: 50, h: 50)
 
@@ -27,9 +27,15 @@ app.launched.handle:
   var texture = renderer.createTextureFromSurface(textSurface)
   textSurface.freeSurface()
 
+  # Create the text
+  # var textSurface:SurfacePtr = font.renderTextBlended("Hello, World!", color(50, 100, 50, 255))
+  # var textRect = rect(20, 20, textSurface.w, textSurface.h)
+  # var texture:TexturePtr = renderer.createTextureFromSurface(textSurface)
+  # textSurface.freeSurface()
+
   # Perform drawing for the window.
   w.onDraw.handle(rect):
-    log "onDraw"
+    debug "onDraw"
     # Draw background
     discard renderer.setRenderDrawColor(255,255,255,255)
     discard renderer.renderClear()
@@ -41,12 +47,15 @@ app.launched.handle:
     # Render the text
     discard renderer.renderCopy(texture, nil, textRect.unsafeAddr)
 
+    # Render the text
+    # renderer.copy(texture, nil, textRect.unsafeAddr)
+
     # Make it so!
     renderer.renderPresent()
 
 app.willExit.handle:
   # Run this code just before the application exits
-  log "App is exiting"
+  debug "App is exiting"
 
 app.start()
 

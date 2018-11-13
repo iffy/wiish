@@ -99,7 +99,6 @@ template sdlMain*() =
      cmdLine = args;
      cmdCount = argc;
      gEnv = NULL;
-     //`setupLogger`();
      NimMain();
      return nim_program_result;
  }
