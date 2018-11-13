@@ -149,6 +149,7 @@ This is where I'm currently recording what I've learned about GUI development.
 ### To research
 
 - [bgfx](https://bkaradzic.github.io/bgfx/index.html)
+- [FTGL](http://ftgl.sourceforge.net/docs/html/index.html) for font rendering
 
 ### Glossary
 
