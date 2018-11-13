@@ -16,19 +16,11 @@ import ../defs
 
 export doiOSRun
 
-const default_icon = slurp"./data/default.png"
-
 type
   PackedFile = tuple[
     name: string,
     contents: string,
   ]
-
-const basepath = currentSourcePath.parentDir.joinPath("data/initapp")
-const samples = toSeq(walkDirRec(basepath)).map(proc(x:string):PackedFile =
-  return (x[basepath.len+1..^1], slurp(x))
-)
-
 
 proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
   let
@@ -94,9 +86,7 @@ proc doDesktopRun*(directory:string = ".") =
 
 proc doInit*(directory:string = ".") =
   directory.createDir()
-  for sample in samples:
-    writeFile(directory/sample.name, sample.contents)
-    echo &"wrote {sample.name}"
+  copyDir(DATADIR/"initapp", directory)
   echo &"""Initialized a new wiish app in {directory}
 
 Run:    wiish run {directory}
