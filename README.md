@@ -150,6 +150,7 @@ This is where I'm currently recording what I've learned about GUI development.
 
 - [bgfx](https://bkaradzic.github.io/bgfx/index.html)
 - [FTGL](http://ftgl.sourceforge.net/docs/html/index.html) for font rendering
+- Building Nim for Android: <https://forum.nim-lang.org/t/3575>
 
 ### Glossary
 

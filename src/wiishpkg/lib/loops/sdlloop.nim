@@ -9,7 +9,7 @@ import ../wiishtypes
 import ../../events
 
 template sdlMain*() =
-  when defined(ios) or defined(android):
+  when defined(ios):
     when not compileOption("noMain"):
       {.error: "Please run Nim with --noMain flag.".}
     

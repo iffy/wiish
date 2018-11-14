@@ -55,7 +55,7 @@ proc getConfig*(filename: string, sections:seq[string]):Config =
   # ios
   result.sdk_version = toml.get(sections, "sdk_version", ?"").stringVal
   # android
-  result.java_package_name = toml.get(sections, "java_package_name", ?"com.example.WiishApp").stringVal
+  result.java_package_name = toml.get(sections, "java_package_name", ?"com.example.wiishapp").stringVal
 
 template getMacosConfig*(filename: string): Config =
   getConfig(filename, @["macos", "desktop", "main"])

@@ -1,8 +1,15 @@
+import os
 import ospaths
 import osproc
 
 const
   DATADIR* = currentSourcePath.parentDir.joinPath("data")
+
+template withDir*(dir: string, body: untyped): untyped =
+  let origDir = getCurrentDir()
+  setCurrentDir(dir)
+  body
+  setCurrentDir(origDir)
 
 proc run*(args:varargs[string, `$`]) =
   ## Run a process, failing the program if it fails
@@ -22,6 +29,17 @@ template basename*(path:string):string =
   ## Return a file's basename
   let split = path.splitFile
   split.name & split.ext
+
+proc getNimLibPath*(): string =
+  ## Return the path to Nim's lib if it can be found
+  let nimPath = findExe("nim")
+  if nimPath == "":
+    # Nim isn't installed or isn't in the PATH
+    return ""
+  let libDir = nimPath.splitPath().head.parentDir/"lib"
+  if libDir.existsDir:
+    return libDir
+  return ""
 
 proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
   ## Resize a PNG image
