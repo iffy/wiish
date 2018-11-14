@@ -64,6 +64,9 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
   debug nimFlags.join(" ")
   run(nimFlags)
 
+  if true:
+    raise newException(CatchableError, "Need to copy in nimbase.h")
+
   replaceInFile(projectDir/"app/jni/src/Android.mk", {
     # XXX This is hard-coded to wiish_main_mobile.c right now, but should
     # instead be based on the actual c code
