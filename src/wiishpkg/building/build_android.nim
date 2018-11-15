@@ -102,17 +102,11 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
 # include $(PREBUILT_SHARED_LIBRARY)
 # """)
 
-  debug "Listing c files ..."
-  var cfiles : seq[string]
-  for item in walkDir(projectDir/"app/jni/src"):
-    if item.kind == pcFile and item.path.endsWith(".c"):
-      cfiles.add(item.path.basename)
-
   debug "Create Activity ..."
   let
     activity_prefix = config.java_package_name.split({'.'})[^1]
     activity_name = activity_prefix & "Activity"
-    activity_java_path = projectDir/config.java_package_name.replace(".", "/")/activity_name&".java"
+    activity_java_path = projectDir/"app/src/main/java"/config.java_package_name.replace(".", "/")/activity_name&".java"
   activity_java_path.parentDir.createDir()
   debug activity_java_path
   writeFile(activity_java_path, &"""
@@ -125,12 +119,19 @@ public class {activity_name} extends SDLActivity
 }}
 """)
 
+  replaceInFile(projectDir/"app/src/main/AndroidManifest.xml", {
+    "SDLActivity": activity_name,
+  }.toTable)
+
   replaceInFile(projectDir/"app/build.gradle", {
     "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
   }.toTable)
   
-  # if true:
-  #   raise newException(CatchableError, "Need to copy in nimbase.h")
+  var cfiles : seq[string]
+  debug "Listing c files ..."
+  for item in walkDir(projectDir/"app/jni/src/x86"):
+    if item.kind == pcFile and item.path.endsWith(".c"):
+      cfiles.add(&"$(TARGET_ARCH_ABI)/{item.path.basename}")
   
   let nimlib = getNimLibPath()
   debug &"nimlib: {nimlib}"
@@ -150,20 +151,24 @@ include $(BUILD_SHARED_LIBRARY)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
-    run("./gradlew", "installDebug")
-  
-  # debug "Doing NDK build ..."
-  # ndkArgs.add(androidNDKPath/"ndk-build")
-  # ndkArgs.add(@[
-  #   "--directory=" & buildPackageDir,
-  #   "V=1", # Verbose
-  #   "NDK_DEBUG=1", # Debug
-  #   "APP_OPTIM=debug", # Debug
-  # ])
-  # debug ndkArgs.join(" ")
-  # run(ndkArgs)
-
-  echo "Android IS NOT SUPPORTED YET"
+    run("./gradlew", "bundleDebug")
 
 proc doAndroidRun*(directory: string) =
+  ## Run the application in the Android emulator
+  let
+    configPath = directory/"wiish.toml"
+    config = getAndroidConfig(configPath)
+
+  debug "Building app ..."
+  discard doAndroidBuild(directory, configPath)
+
+  debug "Opening emulator ..."
+  let device_list = runoutput("adb", "devices").strip.splitLines[1..^1]
+  echo "devices: ", device_list
+  if device_list.len == 0:
+    let possible_avds = runoutput("emulator", "-list-avds").strip.splitLines
+    if possible_avds.len == 0:
+      raise newException(CatchableError, "No emulators installed. XXX provide instructions to get them installed.")
+    # var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]])
+    START HERE, MATT
   discard

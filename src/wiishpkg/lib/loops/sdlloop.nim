@@ -9,12 +9,14 @@ import ../wiishtypes
 import ../../events
 
 template sdlMain*() =
-  when defined(ios):
+  when defined(ios) or defined(android):
     when not compileOption("noMain"):
       {.error: "Please run Nim with --noMain flag.".}
     
     when defined(ios):
-      {.emit: "#define __IPHONEOS__".}
+      {.emit: "#define __IPHONEOS__" .}
+    when defined(android):
+      {.emit: "#define __ANDROID__" .}
 
     {.emit: """
 // The following piece of code is a copy-paste from SDL/SDL_main.h
