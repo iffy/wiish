@@ -16,6 +16,8 @@ Wiish provides 2 main things:
 
 # Features
 
+Library
+
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | Run                    |         |   Y   |   Y   |  Y  |         |
@@ -29,9 +31,14 @@ Wiish provides 2 main things:
 | Automatic updates      |         |       |       |  -  |    -    |
 | App icon               |         |   Y   |       |  Y  |         |
 | File associations      |         |       |       |  -  |    -    |
+
+GUI
+
+| Feature                | Windows | macOS | Linux | iOS | Android |
+|------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | OpenGL windows         |         |   Y   |   Y   |  Y  |         |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| Included widget lib    |         |       |       |     |         |
+| SDL/OpenGL widget lib  |         |       |       |     |         |
 | Webview                |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable
