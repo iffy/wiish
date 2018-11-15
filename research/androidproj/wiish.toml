@@ -1,0 +1,20 @@
+[main]
+version     = "0.1.0"
+dst         = "dist"
+resourceDir = "resources"
+
+[mobile]
+name        = "WiishAndroid"
+src         = "main_mobile.nim"
+icon        = ""
+
+[macos]
+bundle_identifier = "com.wiish.sdl"
+category_type = "public.app-category.example"
+
+[ios]
+bundle_identifier = "com.wiish.sdl"
+sdk_version = "" # If blank, auto-detect the latest installed version
+
+[android]
+java_package_name = "org.wiish.andexample"

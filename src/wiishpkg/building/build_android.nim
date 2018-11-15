@@ -37,10 +37,10 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     projectDir = directory/config.dst/"android"/"project"/config.java_package_name
     appSrc = directory/config.src
     sdlSrc = DATADIR/"SDL"
+    appProject = projectDir/"app/jni/app"
     # androidNDKPath = getEnvOrFail("ANDROID_NDK", "Set to your local Android NDK path.  Download from https://developer.android.com/ndk/downloads/")
     # androidSDKPath = getEnvOrFail("ANDROID_SDK", "Set to your local Android SDK path.  Download from https://developer.android.com/studio/#downloads")
   var
-    nimFlags: seq[string]
     ndkArgs: seq[string]
   
   if not projectDir.existsDir():
@@ -63,20 +63,40 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     }.toTable)
 
   debug "Compiling Nim portion ..."
-  nimFlags.add(["nim", "c"])
-  nimFlags.add([
-    "--os:android",
-    "-d:android",
-    "--compileOnly",
-    "--cpu:arm64",
-    "--dynlibOverride:SDL2",
-    "--noMain",
-    "--header",
-    "--nimcache:" & projectDir/"app/jni/src",
-    appSrc,
-  ])
-  debug nimFlags.join(" ")
-  run(nimFlags)
+  proc buildFor(android_abi:string, cpu:string) =
+    var nimFlags:seq[string]
+    nimFlags.add(["nim", "c"])
+    nimFlags.add([
+      "--os:android",
+      "-d:android",
+      &"--cpu:{cpu}",
+      # "--dynlibOverride:SDL2",
+      "--noMain",
+      "--header",
+      "--compileOnly",
+      # "--app:lib",
+      # "--passL:-lGLESv1_CM",
+      # "--passL:-lGLESv2",
+      "--nimcache:" & projectDir/"app/jni/src"/android_abi,
+      # "--out:" & appProject/arch_abi/"libmain.so",
+      appSrc,
+    ])
+    debug nimFlags.join(" ")
+    run(nimFlags)
+
+  buildFor("armeabi-v7a", "arm")
+  buildFor("arm64-v8a", "arm64")
+  buildFor("x86", "i386")
+  buildFor("x86_64", "amd64")
+#   debug "Create application code Android.mk ..."
+#   writeFile(appProject/"Android.mk", """
+# LOCAL_PATH := $(call my-dir)
+
+# include $(CLEAR_VARS)
+# LOCAL_MODULE := main
+# LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/libmain.so
+# include $(PREBUILT_SHARED_LIBRARY)
+# """)
 
   debug "Listing c files ..."
   var cfiles : seq[string]
@@ -102,7 +122,7 @@ public class {activity_name} extends SDLActivity
 """)
 
   replaceInFile(projectDir/"app/build.gradle", {
-    "abiFilters.*?\n": "abiFilters 'arm64-v8a'\n",
+    "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
   }.toTable)
   
   # if true:
@@ -110,27 +130,19 @@ public class {activity_name} extends SDLActivity
   
   let nimlib = getNimLibPath()
   debug &"nimlib: {nimlib}"
-  writeFile(projectDir/"app/jni/src/Android.mk", &"""
+  writeFile(projectDir/"app/jni/src/Android.mk",
+&"""
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := main
-
-SDL_PATH := ../SDL
-
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include {nimlib}
-
-# Add your application source files here...
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../SDL/include {nimlib}
 LOCAL_SRC_FILES := {cfiles.join(" ")}
-
 LOCAL_SHARED_LIBRARIES := SDL2
-
 LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
 
 include $(BUILD_SHARED_LIBRARY)
-  
-  """)
+""")
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
