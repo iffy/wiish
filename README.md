@@ -32,6 +32,7 @@ Wiish provides 2 main things:
 | OpenGL windows         |         |   Y   |   Y   |  Y  |         |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
 | Included widget lib    |         |       |       |     |         |
+| Webview                |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable
 
