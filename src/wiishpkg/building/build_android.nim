@@ -84,10 +84,14 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     debug nimFlags.join(" ")
     run(nimFlags)
 
+  # Android ABIs: https://developer.android.com/ndk/guides/android_mk#taa
+  # nim --cpus: https://github.com/nim-lang/Nim/blob/devel/lib/system/platforms.nim#L14
   buildFor("armeabi-v7a", "arm")
   buildFor("arm64-v8a", "arm64")
   buildFor("x86", "i386")
   buildFor("x86_64", "amd64")
+
+# # https://developer.android.com/ndk/guides/prebuilts
 #   debug "Create application code Android.mk ..."
 #   writeFile(appProject/"Android.mk", """
 # LOCAL_PATH := $(call my-dir)
