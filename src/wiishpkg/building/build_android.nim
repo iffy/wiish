@@ -25,6 +25,13 @@ proc replaceInFile(filename: string, replacements: Table[string, string]) =
     guts = guts.replace(re(pattern), replacement)
   filename.writeFile(guts)
 
+template activityName(config:Config):string =
+  config.java_package_name.split({'.'})[^1] & "Activity"
+
+template fullActivityName(config:Config):string =
+  ## Return the java.style.activity.name of an app
+  config.java_package_name & "." & config.activityName()
+
 proc doAndroidBuild*(directory:string, configPath:string): string =
   ## Package an Android app
   ## Returns the path to the app
@@ -104,8 +111,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
 
   debug "Create Activity ..."
   let
-    activity_prefix = config.java_package_name.split({'.'})[^1]
-    activity_name = activity_prefix & "Activity"
+    activity_name = config.activityName()
     activity_java_path = projectDir/"app/src/main/java"/config.java_package_name.replace(".", "/")/activity_name&".java"
   activity_java_path.parentDir.createDir()
   debug activity_java_path
@@ -152,6 +158,12 @@ include $(BUILD_SHARED_LIBRARY)
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
     run("./gradlew", "bundleDebug")
+  
+  result = projectDir/"app/build/outputs/apk/debug/app-debug.apk"
+
+template runningDevices() : seq[string] = 
+  ## List all currently running Android devices
+  runoutput("adb", "devices").strip.splitLines[1..^1]
 
 proc doAndroidRun*(directory: string) =
   ## Run the application in the Android emulator
@@ -160,15 +172,34 @@ proc doAndroidRun*(directory: string) =
     config = getAndroidConfig(configPath)
 
   debug "Building app ..."
-  discard doAndroidBuild(directory, configPath)
+  let apkPath = doAndroidBuild(directory, configPath)
 
   debug "Opening emulator ..."
-  let device_list = runoutput("adb", "devices").strip.splitLines[1..^1]
+  let device_list = runningDevices()
   echo "devices: ", device_list
   if device_list.len == 0:
     let possible_avds = runoutput("emulator", "-list-avds").strip.splitLines
     if possible_avds.len == 0:
       raise newException(CatchableError, "No emulators installed. XXX provide instructions to get them installed.")
-    # var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]])
-    START HERE, MATT
-  discard
+    let avd = possible_avds[0]
+    debug &"Launching {avd} ..."
+    var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]], options = {poUsePath})
+    # XXX it would maybe be nice to leave this running...
+    debug "Waiting for device to boot ..."
+    run("adb", "wait-for-local-device")
+  
+  debug &"Installing apk {apkPath} ..."
+  run("adb", "install", "-r", "-t", apkPath)
+
+  debug &"Watching logs ..."
+  var logp = startProcess(command="adb", args = @["logcat", "-T", "0"], options = {poUsePath, poParentStreams})
+
+  let
+    fullActivityName = config.fullActivityName()
+    fullAppName = fullActivityName.split({'.'})[0..^2].join(".") & "/" & fullActivityName
+  debug &"Starting app ({fullActivityName}) on device ..."
+  debug fullAppName
+  run("adb", "shell", "am", "start", "-a", "android.intent.action.MAIN", "-n", fullAppName)
+
+  discard logp.waitForExit()
+

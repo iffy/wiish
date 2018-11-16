@@ -18,7 +18,7 @@ Wiish provides 2 main things:
 
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| Run                    |         |   Y   |   Y   |  Y  |         |
+| Run                    |         |   Y   |   Y   |  Y  |    Y    |
 | Create "app"           |         |   Y   |       |  Y  |    Y    |
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
