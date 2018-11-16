@@ -10,11 +10,13 @@ import ./build_macos
 import ./build_ios
 import ./build_windows
 import ./build_linux
+import ./build_android
 import ./config
 import ./buildutil
 import ../defs
 
 export doiOSRun
+export doAndroidRun
 
 type
   PackedFile = tuple[
@@ -22,15 +24,16 @@ type
     contents: string,
   ]
 
-proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, windows:bool = false, linux:bool = false) =
+proc doBuild*(directory:string = ".", macos,ios,android,windows,linux:bool = false) =
   let
     configPath = directory/"wiish.toml"
   var
     macos = macos
     ios = ios
+    android = android
     linux = linux
     windows = windows
-  if not macos and not windows and not linux and not ios:
+  if not macos and not windows and not linux and not ios and not android:
     when macDesktop:
       macos = true
     elif defined(windows):
@@ -42,8 +45,11 @@ proc doBuild*(directory:string = ".", macos:bool = false, ios:bool = false, wind
     info "Building macOS desktop..."
     doMacBuild(directory, configPath)
   if ios:
-    info "Building iOS mobile..."
+    info "Building iOS app ..."
     discard doiOSBuild(directory, configPath)
+  if android:
+    info "Building Android app ..."
+    discard doAndroidBuild(directory, configPath)
   if windows:
     info "Building Windows desktop..."
     doWindowsBuild(directory, configPath)

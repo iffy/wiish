@@ -31,6 +31,7 @@ let p = newParser("wiish"):
     flag("--win", help="Build Windows desktop app")
     flag("--linux", help="Build Linux desktop app")
     flag("--ios", help="Build iOS mobile app")
+    flag("--android", help="Build Android mobile app")
     arg("directory", default=".")
     run:
       if opts.help:
@@ -40,12 +41,14 @@ let p = newParser("wiish"):
         directory = opts.directory,
         macos = opts.mac,
         ios = opts.ios,
+        android = opts.android,
         windows = opts.win,
         linux = opts.linux)
   command "run":
     help("Run an application (from the current dir)")
     flag("-h", "--help", help="Display help")
     flag("--ios", help="Run app in the iOS Simulator")
+    flag("--android", help="Run app in the Android Emulator")
     arg("directory", default=".")
     run:
       if opts.help:
@@ -53,6 +56,8 @@ let p = newParser("wiish"):
         quit(0)
       if opts.ios:
         doiOSRun(directory = opts.directory)
+      elif opts.android:
+        doAndroidRun(directory = opts.directory)
       else:
         doDesktopRun(directory = opts.directory)
 

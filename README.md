@@ -20,8 +20,8 @@ Library
 
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| Run                    |         |   Y   |   Y   |  Y  |         |
-| Create "app"           |         |   Y   |       |  Y  |         |
+| Run                    |         |   Y   |   Y   |  Y  |    Y    |
+| Create "app"           |         |   Y   |       |  Y  |    Y    |
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |       |       |     |         |
@@ -36,7 +36,7 @@ GUI
 
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| OpenGL windows         |         |   Y   |   Y   |  Y  |         |
+| OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
 | SDL/OpenGL widget lib  |         |       |       |     |         |
 | Webview                |         |       |       |     |         |
@@ -158,6 +158,7 @@ This is where I'm currently recording what I've learned about GUI development.
 
 - [bgfx](https://bkaradzic.github.io/bgfx/index.html)
 - [FTGL](http://ftgl.sourceforge.net/docs/html/index.html) for font rendering
+- Building Nim for Android: <https://forum.nim-lang.org/t/3575>
 
 ### Glossary
 

@@ -14,7 +14,9 @@ template sdlMain*() =
       {.error: "Please run Nim with --noMain flag.".}
     
     when defined(ios):
-      {.emit: "#define __IPHONEOS__".}
+      {.emit: "#define __IPHONEOS__" .}
+    when defined(android):
+      {.emit: "#define __ANDROID__" .}
 
     {.emit: """
 // The following piece of code is a copy-paste from SDL/SDL_main.h
@@ -170,7 +172,7 @@ proc initGLWindow(w: Window, r: Rectangle)=
 
   discard glSetAttribute(sdl.GL_SHARE_WITH_CURRENT_CONTEXT, 1)
   w.sdlGlContext = w.sdlWindow.glCreateContext()
-  when not defined(ios):
+  when not defined(ios) and not defined(android):
     loadExtensions()
   if w.sdlGlContext == nil:
     echo "Could not create context!"
