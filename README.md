@@ -36,7 +36,7 @@ GUI
 
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| OpenGL windows         |         |   Y   |   Y   |  Y  |         |
+| OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
 | SDL/OpenGL widget lib  |         |       |       |     |         |
 | Webview                |         |       |       |     |         |
