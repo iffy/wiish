@@ -4,7 +4,7 @@ import logging
 
 app.launched.handle:
   debug "App launched"
-  # var w = app.newWebviewWindow(title = "Wiish Webview Demo")
+  var w = app.newWindow(title = "Wiish Webview Demo", url = "https://www.google.com")
 
 app.willExit.handle:
   debug "App is exiting"

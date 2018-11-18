@@ -38,7 +38,7 @@ GUI
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| Webview                |         |       |       |     |         |
+| Webview                |         |   Y   |       |     |         |
 
 **Y** = complete, **-** = not applicable
 
