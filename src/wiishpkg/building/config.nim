@@ -1,8 +1,14 @@
 ## Wiish config file parsing
 import parsetoml
 import strutils
+import strformat
+import logging
 
 type
+  WindowFormat* = enum
+    Webview,
+    SDL,
+
   ## Config is a project's configuration
   Config* = object of RootObj
     name*: string
@@ -12,6 +18,7 @@ type
     icon*: string
     resourceDir*: string
     nimflags*: seq[string]
+    windowFormat*: WindowFormat
     # macos/ios
     codesign_identity*: string
     bundle_identifier*: string
@@ -21,7 +28,6 @@ type
     sdk_version*: string
     # android
     java_package_name*: string
-
 
 
 proc get*[T](maintoml: TomlValueRef, sections:seq[string], key: string, default: T): TomlValueRef =
@@ -47,6 +53,15 @@ proc getConfig*(filename: string, sections:seq[string]):Config =
   result.nimflags = @[]
   for flag in toml.get(sections, "nimflags", ?(@[])).arrayVal:
     result.nimflags.add(flag.stringVal)
+  let windowFormatString = toml.get(sections, "windowFormat", ?"webview").stringVal
+  case windowFormatString
+  of "", "webview":
+    result.windowFormat = Webview
+  of "sdl":
+    result.windowFormat = SDL
+  else:
+    warn &"Unknown windowFormat: {windowFormatString.repr}"
+    result.windowFormat = Webview
   # macos/ios
   result.codesign_identity = toml.get(sections, "codesign_identity", ?"").stringVal
   result.bundle_identifier = toml.get(sections, "bundle_identifier", ?"com.example.wiishdemo").stringVal

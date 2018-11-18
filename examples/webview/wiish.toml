@@ -1,11 +1,10 @@
 [main]
 version      = "0.1.0"
 dst          = "dist"
-resourceDir  = "resources"
-windowFormat = "sdl"
+windowFormat = "webview"
 
 [desktop]
-name        = "Wiish SDL Demo"
+name        = "Wiish Webview Demo"
 src         = "main_desktop.nim"
 # Path to an image file to use for the application icon.
 # The file will automatically be converted to the correct
@@ -13,14 +12,14 @@ src         = "main_desktop.nim"
 icon        = ""
 
 [mobile]
-name        = "WiishSDL"
+name        = "WiishWebview"
 src         = "main_mobile.nim"
 icon        = ""
 
 [macos]
-bundle_identifier = "com.wiish.sdl"
+bundle_identifier = "com.wiish.webview"
 category_type = "public.app-category.example"
 
 [ios]
-bundle_identifier = "com.wiish.sdl"
+bundle_identifier = "com.wiish.webview"
 sdk_version = "" # If blank, auto-detect the latest installed version

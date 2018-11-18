@@ -1,10 +1,8 @@
 ## Desktop application utilities
 import ./events
 export events
-import ./lib/wiishtypes
-export wiishtypes
-import ./lib/lowlevel
-export lowlevel
 import ./lib/logsetup
+import ./lib/app_sdl
+export app_sdl
 
 var app* = createApplication()

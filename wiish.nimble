@@ -18,6 +18,7 @@ requires "https://github.com/iffy/nim-argparse.git"
 
 # Graphics dependencies
 requires "opengl"
+requires "webview"
 # requires "glfw >= 0.1.0"
 requires "https://github.com/Vladar4/sdl2_nim.git#master" # nimble install https://github.com/Vladar4/sdl2_nim.git@#master
 # requires "nanovg >= 0.1"

@@ -1,7 +1,8 @@
 [main]
-version     = "0.1.0"
-dst         = "dist"
-resourceDir = "resources"
+version      = "0.1.0"
+dst          = "dist"
+resourceDir  = "resources"
+windowFormat = "sdl"
 
 [desktop]
 name        = "Wiish SDL Demo"

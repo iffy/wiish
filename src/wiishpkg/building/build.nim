@@ -13,7 +13,6 @@ import ./build_linux
 import ./build_android
 import ./config
 import ./buildutil
-import ../defs
 
 export doiOSRun
 export doAndroidRun
@@ -34,7 +33,7 @@ proc doBuild*(directory:string = ".", macos,ios,android,windows,linux:bool = fal
     linux = linux
     windows = windows
   if not macos and not windows and not linux and not ios and not android:
-    when macDesktop:
+    when defined(macosx):
       macos = true
     elif defined(windows):
       windows = true
@@ -65,7 +64,7 @@ proc doDesktopRun*(directory:string = ".") =
     config: Config
   let
     configPath = directory/"wiish.toml"
-  when macDesktop:
+  when defined(macosx):
     args.add("nim")
     config = getMacosConfig(configPath)
   elif defined(windows):

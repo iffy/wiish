@@ -11,8 +11,8 @@ Wiish provides 2 main things:
 
 1. `wiish` - A command line tool for running, building and packaging apps.
 2. `wiishpkg` - A Nim library for making apps.  This is further divided into:
-    - `wiishpkg/desktop` - Library for making desktop apps.
-    - `wiishpkg/mobile` - Library  for making mobile apps.
+    - `wiishpkg/webviewapp` - Library for making Webview-based apps.
+    - `wiishpkg/sdlapp` - Library for making SDL and/or OpenGL apps.
 
 # Features
 
@@ -38,7 +38,6 @@ GUI
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| SDL/OpenGL widget lib  |         |       |       |     |         |
 | Webview                |         |       |       |     |         |
 
 **Y** = complete, **-** = not applicable

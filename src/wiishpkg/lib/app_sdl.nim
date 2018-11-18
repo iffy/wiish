@@ -1,12 +1,43 @@
-## This module provides functions for creating SDL windows
+## SDL2 Application (for OpenGL or SDL)
+##
 ## A good chunk of this code is based heavily on
 ## https://github.com/yglukhov/nimx
-import sdl2/sdl except Window, Rect
+import sdl2/sdl
 import opengl
 import macros
 import times
-import ../wiishtypes
-import ../../events
+
+import ./app_common
+export app_common
+import ../events
+
+type
+  Rectangle* = tuple[x, y, width, height: float32]
+  
+  SDLApp* = ref object of BaseApplication
+    windows*: seq[Window]
+    # A stream of SDL events
+    sdl_event*: EventSource[ptr sdl.Event]
+  
+  Window* = ref object of BaseWindow
+    # events
+    onDraw*: EventSource[Rectangle]
+    # attributes/properties
+    sdlWindow*: sdl.Window
+    sdlGlContext*: sdl.GLContext
+    frame*: Rect
+
+proc newRectangle*(x, y, width, height: float32 = 0):Rectangle =
+  result = (x, y, width, height)
+
+template newRectangle*(x, y, width, height: int32 = 0):Rectangle =
+  newRectangle(x.toFloat, y.toFloat, width.toFloat, height.toFloat)
+
+proc createApplication*(): SDLApp =
+  new(result)
+  result.launched = newEventSource[bool]()
+  result.willExit = newEventSource[bool]()
+  result.sdl_event = newEventSource[ptr sdl.Event]()
 
 template sdlMain*() =
   when defined(ios) or defined(android):
@@ -180,7 +211,7 @@ proc initGLWindow(w: Window, r: Rectangle)=
   glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
   glClear(GL_COLOR_BUFFER_BIT)
 
-proc newGLWindow*(app: Application, title:string = ""): Window =
+proc newGLWindow*(app: SDLApp, title:string = ""): Window =
   initSDLIfNeeded()
   result.new()
   app.windows.add(result)
@@ -194,7 +225,7 @@ proc initSDLWindow(w: Window, r: Rectangle) =
     echo "Could not create window!"
     quit 1
 
-proc newSDLWindow*(app: Application, title:string = ""): Window =
+proc newSDLWindow*(app: SDLApp, title:string = ""): Window =
   initSDLIfNeeded()
   result.new()
   app.windows.add(result)
@@ -215,7 +246,7 @@ proc drawWindow(w: Window) =
     # SDL window
     w.onDraw.emit(newRectangle(0, 0, 0, 0))
 
-proc handleEvent(app: Application, event: ptr sdl.Event): cint =
+proc handleEvent(app: SDLApp, event: ptr sdl.Event): cint =
   app.sdl_event.emit(event)
   result = 1
 
@@ -231,7 +262,7 @@ proc handleEvent(app: Application, event: ptr sdl.Event): cint =
 #         w.pixelRatio = screenScaleFactor()
 #     glViewport(0, 0, GLSizei(constrainedSize.width * w.pixelRatio), GLsizei(constrainedSize.height * w.pixelRatio))
 
-proc nextEvent(app: Application, evt: var sdl.Event) =
+proc nextEvent(app: SDLApp, evt: var sdl.Event) =
   var was_event = false
   when defined(ios):
     proc iPhoneSetEventPump(enabled: cint) {.importc: "SDL_iPhoneSetEventPump".}
@@ -257,7 +288,7 @@ proc nextEvent(app: Application, evt: var sdl.Event) =
     for w in app.windows:
       w.drawWindow()
 
-template start*(app: Application) =
+template start*(app: SDLApp) =
   sdlMain()
   var evt: sdl.Event
   # var evt = sdl.Event(kind: UserEvent1)
@@ -274,6 +305,6 @@ template start*(app: Application) =
   sdl.quit()
   quit(0)
 
-proc quit*(app: Application) =
+proc quit*(app: SDLApp) =
   echo "NOT IMPLEMENTED"
 
