@@ -2,6 +2,7 @@
 import webview
 import macros
 import times
+import logging
 
 import ./app_common
 export app_common
@@ -20,10 +21,13 @@ proc createApplication*(): WebviewApp =
   result.willExit = newEventSource[bool]()
 
 proc newWindow*(app: WebviewApp, title:string = "", url:string = ""): WebviewWindow =
+  ## Create a new webview-based window
   var
     window: WebviewWindow
   new(window)
   window.webview = newWebView(title = title, url = url)
+  window.webview.externalInvokeCB = proc(wv: Webview, data: string) =
+    logging.debug "hi: " & data.repr
   app.windows.add(window)
 
 template start*(app: WebviewApp) =
@@ -36,4 +40,4 @@ template start*(app: WebviewApp) =
   app.willExit.emit(true)
 
 proc quit*(app: WebviewApp) =
-  echo "NOT IMPLEMENTED"
+  warn "quit NOT IMPLEMENTED"

@@ -2,10 +2,9 @@
 version      = "0.1.0"
 dst          = "dist"
 windowFormat = "webview"
-resourceDir  = "resources"
 
 [desktop]
-name        = "Wiish Webview Demo"
+name        = "Webview Demo"
 src         = "main_desktop.nim"
 # Path to an image file to use for the application icon.
 # The file will automatically be converted to the correct
@@ -13,7 +12,7 @@ src         = "main_desktop.nim"
 icon        = ""
 
 [mobile]
-name        = "WiishWebview"
+name        = "Webview"
 src         = "main_mobile.nim"
 icon        = ""
 

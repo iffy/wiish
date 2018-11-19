@@ -24,8 +24,8 @@ Library
 | Create "app"           |         |   Y   |       |  Y  |    Y    |
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
-| Log to file            |         |       |       |     |         |
-| Log to console w/ run  |         |       |       |  Y  |         |
+| Log to file            |         |   Y   |       |     |         |
+| Log to console w/ run  |         |   Y   |       |  Y  |         |
 | Package resources      |         |   Y   |       |     |         |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |

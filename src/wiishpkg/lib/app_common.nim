@@ -29,7 +29,7 @@ else:
         elif defined(android):
           getAppDir()
         elif defined(macosx):
-          getAppDir()/"../Resources/resources"
+          normalizedPath(getAppDir()/"../Resources/resources").absolutePath()
         else:
           getAppDir()
     result = joinPath(root, filename) # XXX this is not safe from going above resourcePath
