@@ -1,6 +1,6 @@
 ## Hello, World Mobile Wiish App
 import sdl2/sdl except log
-import wiishpkg/mobile
+import wiishpkg/sdlapp
 import logging
 import opengl
 

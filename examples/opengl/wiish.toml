@@ -1,14 +1,15 @@
+[main]
+version      = "0.1.0"
+dst          = "./dist"
+windowFormat = "sdl"
+
 [desktop]
 name     = "Wiish OpenGL Demo"
-version  = "0.1.0"
 src      = "main_desktop.nim"
-dst      = "./dist"
 
 [mobile]
 name     = "WiishOpenGL"
-version  = "0.1.0"
 src      = "main_mobile.nim"
-dst      = "./dist"
 
 [macos]
 bundle_identifier = "com.example.wiish.opengl"

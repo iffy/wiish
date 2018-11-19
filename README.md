@@ -11,8 +11,8 @@ Wiish provides 2 main things:
 
 1. `wiish` - A command line tool for running, building and packaging apps.
 2. `wiishpkg` - A Nim library for making apps.  This is further divided into:
-    - `wiishpkg/desktop` - Library for making desktop apps.
-    - `wiishpkg/mobile` - Library  for making mobile apps.
+    - `wiishpkg/webviewapp` - Library for making Webview-based apps.
+    - `wiishpkg/sdlapp` - Library for making SDL and/or OpenGL apps.
 
 # Features
 
@@ -24,8 +24,8 @@ Library
 | Create "app"           |         |   Y   |       |  Y  |    Y    |
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
-| Log to file            |         |       |       |     |         |
-| Log to console w/ run  |         |       |       |  Y  |         |
+| Log to file            |         |   Y   |       |     |         |
+| Log to console w/ run  |         |   Y   |   Y   |  Y  |         |
 | Package resources      |         |   Y   |       |     |         |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |
@@ -38,8 +38,7 @@ GUI
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| SDL/OpenGL widget lib  |         |       |       |     |         |
-| Webview                |         |       |       |     |         |
+| Webview                |         |   Y   |       |     |         |
 
 **Y** = complete, **-** = not applicable
 
@@ -55,9 +54,22 @@ nimble install https://github.com/iffy/wiish.git
 
 ### Linux
 
-On Linux, you must also install `libsdl2-dev` and optionally `libsdl2-ttf-dev`
+On Linux, you must also install some of these libraries:
 
-**Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev`
+#### SDL2
+
+~~~
+libsdl2-dev
+libsdl2-ttf-dev
+~~~
+
+#### webview
+
+~~~
+libgtk-3-dev
+libwebkit2gtk-4.0-dev
+~~~
+
 
 ## Make a project
 

@@ -1,8 +1,11 @@
 ## Logging for Wiish applications
 ##
 import logging
+import strformat
+import os
 
 const fmtString = "$levelname [$datetime] "
+const appName {.strdefine.}: string = ""
 
 when defined(ios):
   const appBundleIdentifier {.strdefine.}: string = ""
@@ -46,8 +49,18 @@ when defined(ios):
   ios_logger.fmtStr = "$levelname "
   ios_logger.levelThreshold = lvlAll
   addHandler(ios_logger)
-else:
+elif defined(wiishDev):
   # Use a console logger
   var console_logger = newConsoleLogger(fmtStr = fmtString)
   addHandler(console_logger)
-
+else:
+  # Built, desktop app
+  if appName != "":
+    var
+      logfilename:string
+    when defined(macosx):
+      logfilename = expandTilde(&"~/Library/Logs/{appName}/log.log")
+    if logfilename != "":
+      logfilename.parentDir.createDir()
+      let rolling_logger = newRollingFileLogger(logfilename, fmtStr = fmtString, bufSize = 0)
+      addHandler(rolling_logger)

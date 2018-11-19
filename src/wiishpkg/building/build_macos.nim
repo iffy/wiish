@@ -59,6 +59,7 @@ proc doMacBuild*(directory:string, configPath:string) =
     "nim",
     "c",
     "-d:release",
+    &"-d:appName={config.name}",
   ]
   for flag in config.nimflags:
     args.add(flag)
