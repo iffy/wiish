@@ -42,8 +42,49 @@ template start*(app: WebviewApp) =
       debug "applicationWillTerminate"
 
     {.passL: "-framework UIKit" .}
+    {.passL: "-framework WebKit" .}
     {.emit: """
 #import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
+
+// Our iOS view controller
+@interface ViewController : UIViewController
+  // WKWebView webview;
+@end
+@implementation ViewController {
+}
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.view = [[UIView alloc] initWithFrame:self.view.frame];
+    self.view.backgroundColor = [UIColor greenColor];
+    WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
+    WKWebView *webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
+    webView.navigationDelegate = self;
+    NSURL *nsurl=[NSURL URLWithString:@"http://www.apple.com"];
+    NSURLRequest *nsrequest=[NSURLRequest requestWithURL:nsurl];
+    [webView loadRequest:nsrequest];
+    [self.view addSubview:webView];
+    return;
+}
+@end
+
+// class ViewController: UIViewController, WKUIDelegate {
+//     
+//     var webView: WKWebView!
+//     
+//     override func loadView() {
+//         let webConfiguration = WKWebViewConfiguration()
+//         webView = WKWebView(frame: .zero, configuration: webConfiguration)
+//         webView.uiDelegate = self
+//         view = webView
+//     }
+//     override func viewDidLoad() {
+//         super.viewDidLoad()
+//         
+//         let myURL = URL(string:"https://www.apple.com")
+//         let myRequest = URLRequest(url: myURL!)
+//         webView.load(myRequest)
+//     }}
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 @property (strong, nonatomic) UIWindow *window;
@@ -53,7 +94,7 @@ template start*(app: WebviewApp) =
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    self.window.rootViewController = [[UIViewController alloc] init];
+    self.window.rootViewController = [[ViewController alloc] init];
     self.window.backgroundColor = [UIColor blueColor];
     [self.window makeKeyAndVisible];
     nim_didFinishLaunching();
