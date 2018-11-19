@@ -25,7 +25,7 @@ Library
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
-| Log to console w/ run  |         |   Y   |       |  Y  |         |
+| Log to console w/ run  |         |   Y   |   Y   |  Y  |         |
 | Package resources      |         |   Y   |       |     |         |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |
@@ -54,9 +54,22 @@ nimble install https://github.com/iffy/wiish.git
 
 ### Linux
 
-On Linux, you must also install `libsdl2-dev` and optionally `libsdl2-ttf-dev`
+On Linux, you must also install some of these libraries:
 
-**Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev`
+#### SDL2
+
+~~~
+libsdl2-dev
+libsdl2-ttf-dev
+~~~
+
+#### webview
+
+~~~
+libgtk-3-dev
+libwebkit2gtk-4.0-dev
+~~~
+
 
 ## Make a project
 
