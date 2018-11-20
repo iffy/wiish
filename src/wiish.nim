@@ -1,5 +1,4 @@
 ## wiish command line interface
-{.passC: "-d:wiishbinary" .}
 import strformat
 import parseopt
 import tables
