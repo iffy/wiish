@@ -3,6 +3,7 @@ import osproc
 import ospaths
 import parsetoml
 import sequtils
+import strutils
 import strformat
 import tables
 import logging
@@ -89,9 +90,13 @@ proc doDesktopRun*(directory:string = ".") =
   run(args)
   quit(0)
 
-proc doInit*(directory:string = ".") =
+proc doInit*(directory:string, example:string) =
   let
-    src = DATADIR()/"initapp"
+    examples_dir = getWiishPackageRoot() / "examples"
+    src = examples_dir / example
+  if not src.dirExists:
+    let possibles = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.basename).join(", ")
+    raise newException(CatchableError, &"""Unknown project template: {example}.  Acceptable values: {possibles}""")
   directory.createDir()
   
   echo &"Copying from {src} to {directory}"
