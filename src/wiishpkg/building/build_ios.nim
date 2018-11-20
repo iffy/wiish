@@ -111,6 +111,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   var
     nimFlags, linkerFlags, compilerFlags: seq[string]
     sdk_version = config.sdk_version
+    sdllibSrc, sdlttflibSrc: string
   
   if sdk_version == "":
     debug &"Choosing sdk version ..."
@@ -185,11 +186,12 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   # debug "Choosing signing identity ..."
   # let signing_identity = identities[0].fullname
 
-  debug "Obtaining SDL2 library ..."
-  let sdllibSrc = buildSDLlib(sdk_version, simulator)
+  if config.windowFormat == SDL:
+    debug "Obtaining SDL2 library ..."
+    sdllibSrc = buildSDLlib(sdk_version, simulator)
 
-  debug "Obtaining SDL2_ttf library ..."
-  let sdlttflibSrc = buildSDLTTFlib(sdk_version, simulator)
+    debug "Obtaining SDL2_ttf library ..."
+    sdlttflibSrc = buildSDLTTFlib(sdk_version, simulator)
   
   debug "Configuring build ..."
   template linkAndCompile(flag:untyped) =
@@ -200,10 +202,13 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     "--os:macosx",
     "-d:ios",
     "-d:iPhone",
-    "--dynlibOverride:SDL2",
-    "--dynlibOverride:SDL2_ttf",
     &"-d:appBundleIdentifier={config.bundle_identifier}",
   ])
+  if config.windowFormat == SDL:
+    nimFlags.add([
+      "--dynlibOverride:SDL2",
+      "--dynlibOverride:SDL2_ttf",
+    ])
   if simulator:
     nimFlags.add([
       "--cpu:amd64",
@@ -213,16 +218,20 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     raise newException(CatchableError, "Non-simulator not yet supported")
   
   linkAndCompile(&"-mios-simulator-version-min={sdk_version}")
-  linkerFlags.add([
-    "-fobjc-link-runtime",
-    "-L", sdllibSrc.parentDir,
-    "-L", sdlttflibSrc.parentDir,
-  ])
+  if config.windowFormat == SDL:
+    linkerFlags.add([
+      "-fobjc-link-runtime",
+    ])
+    linkerFlags.add([
+      "-L", sdllibSrc.parentDir,
+      "-L", sdlttflibSrc.parentDir,
+    ])
   linkAndCompile(["-isysroot", sdkPath])
   
-  nimFlags.add(["--threads:on"])
-  linkerFlags.add("-lSDL2")
-  linkerFlags.add("-lSDL2_ttf")
+  if config.windowFormat == SDL:
+    nimFlags.add(["--threads:on"])
+    linkerFlags.add("-lSDL2")
+    linkerFlags.add("-lSDL2_ttf")
   nimFlags.add([
     "--warning[LockLevel]:off",
     "--verbosity:0",
@@ -240,7 +249,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     nimFlags.add("--passC:" & flag)
   
   debug "Doing build ..."
-  var args = @["nim", "c"]
+  var args = @["nim", "objc"]
   args.add(nimFlags)
   args.add(appSrc)
   # debug args.join(" ")
