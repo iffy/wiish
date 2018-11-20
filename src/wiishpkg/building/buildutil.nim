@@ -34,7 +34,7 @@ proc DATADIR*():string =
       wiishPackagePath = currentSourcePath.parentDir.parentDir.parentDir
     else:
       wiishPackagePath = path
-  return wiishPackagePath/"wiishpkg/building/data"
+  return wiishPackagePath/"wiishpkg"/"building"/"data"
 
 template basename*(path:string):string =
   ## Return a file's basename
