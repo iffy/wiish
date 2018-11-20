@@ -23,15 +23,18 @@ proc runoutput*(args:varargs[string, `$`]):string =
     args = args[1..^1],
     options = {poUsePath})
 
-when defined(wiishbinary):
-  # Running from the wiish binary
-  proc DATADIR*():string =
-    runoutput("nimble", "path", "wiish").strip()/"src/wiishpkg/building/data"
-else:
-  # Using wiish as a nimble package
-  proc DATADIR*():string =
-    currentSourcePath.parentDir.joinPath("data")
+# Running from the wiish binary
+var
+  wiishPackagePath = ""
 
+proc DATADIR*():string =
+  if wiishPackagePath == "":
+    var path = runoutput("nimble", "path", "wiish").strip()
+    if "Error:" in path:
+      wiishPackagePath = currentSourcePath.parentDir.parentDir.parentDir
+    else:
+      wiishPackagePath = path
+  return wiishPackagePath/"wiishpkg/building/data"
 
 template basename*(path:string):string =
   ## Return a file's basename
