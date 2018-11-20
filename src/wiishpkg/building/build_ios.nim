@@ -38,7 +38,7 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2.a, creating it if necessary
   let
     platform = if simulator: "iphonesimulator" else: "iphoneos"
-    xcodeProjPath = DATADIR/"SDL/Xcode-iOS/SDL"
+    xcodeProjPath = DATADIR()/"SDL/Xcode-iOS/SDL"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2.a"
   if not fileExists(result):
     debug &"Building {result.basename}..."
@@ -64,7 +64,7 @@ proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2
   let
     platform = if simulator: "iphonesimulator" else: "iphoneos"
-    xcodeProjPath = DATADIR/"SDL_TTF/Xcode-iOS"
+    xcodeProjPath = DATADIR()/"SDL_TTF/Xcode-iOS"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2_ttf.a"
   if not fileExists(result):
     debug &"Building {result.basename}..."
@@ -134,14 +134,14 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   run("ibtool",
     "--output-format", "human-readable-text",
     "--compile", appDir/"LaunchScreen.storyboardc",
-    DATADIR/"ios-util"/"LaunchScreen.storyboard",
+    DATADIR()/"ios-util"/"LaunchScreen.storyboard",
     "--sdk", sdkPath,
   )
 
   debug &"Creating icons ..."
   var iconSrcPath:string
   if config.icon == "":
-    iconSrcPath = DATADIR/"default_square.png"
+    iconSrcPath = DATADIR()/"default_square.png"
   else:
     iconSrcPath = directory/config.icon
   iconSrcPath.resizePNG(appDir/"Icon.png", 180, 180)

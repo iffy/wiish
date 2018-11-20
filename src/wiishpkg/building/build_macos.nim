@@ -10,7 +10,7 @@ import ./config
 import ./buildutil
 
 const
-  default_icon = DATADIR/"default.png"
+  default_icon = "default.png"
 
 proc createICNS*(srcfile:string, output:string) =
   ## Create an ICNS icon pack from a source image
@@ -71,7 +71,7 @@ proc doMacBuild*(directory:string, configPath:string) =
   debug "Generating .icns file ..."
   var iconSrcPath:string
   if config.icon == "":
-    iconSrcPath = default_icon
+    iconSrcPath = DATADIR()/default_icon
   else:
     iconSrcPath = directory/config.icon
   let iconDstPath = contentsDir/"Resources"/appSrc.splitFile.name & ".icns"

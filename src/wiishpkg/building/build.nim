@@ -91,7 +91,7 @@ proc doDesktopRun*(directory:string = ".") =
 
 proc doInit*(directory:string = ".") =
   let
-    src = DATADIR/"initapp"
+    src = DATADIR()/"initapp"
   directory.createDir()
   
   echo &"Copying from {src} to {directory}"

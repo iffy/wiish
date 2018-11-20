@@ -1,9 +1,7 @@
 import os
 import ospaths
 import osproc
-
-const
-  DATADIR* = currentSourcePath.parentDir.joinPath("data")
+import strutils
 
 template withDir*(dir: string, body: untyped): untyped =
   let origDir = getCurrentDir()
@@ -24,6 +22,16 @@ proc runoutput*(args:varargs[string, `$`]):string =
   result = execProcess(command = args[0],
     args = args[1..^1],
     options = {poUsePath})
+
+when defined(wiishbinary):
+  # Running from the wiish binary
+  proc DATADIR*():string =
+    runoutput("nimble", "path", "wiish").strip()/"src/wiishpkg/building/data"
+else:
+  # Using wiish as a nimble package
+  proc DATADIR*():string =
+    currentSourcePath.parentDir.joinPath("data")
+
 
 template basename*(path:string):string =
   ## Return a file's basename
