@@ -8,8 +8,11 @@ import wiishpkg/building/buildutil
 
 randomize()
 
-proc tmpDir():string =
+proc tmpDir(): string {.used.} =
   os.getTempDir() / &"wiishtest{random.rand(10000000)}"
+
+proc pathToWiishRoot(): string =
+  currentSourcePath.absolutePath.parentDir.parentDir
 
 suite "build":
   # Build all the examples/
@@ -27,8 +30,8 @@ suite "build":
     echo &"Testing inside: {tmpdir}"
     doInit(tmpdir)
     # hack the path
-    let path_to_wiish_src = currentSourcePath.absolutePath.parentDir.parentDir/"src"
-    writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiish_src}")""")
+    let path_to_wiishroot = pathToWiishRoot()
+    writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
     doBuild(tmpdir)
     
   when defined(macosx):
@@ -37,6 +40,6 @@ suite "build":
       echo &"Testing inside: {tmpdir}"
       doInit(tmpdir)
       # hack the path
-      let path_to_wiish_src = currentSourcePath.absolutePath.parentDir.parentDir/"src"
-      writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiish_src}")""")
+      let path_to_wiishroot = pathToWiishRoot()
+      writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
       doBuild(tmpdir, ios = true)
