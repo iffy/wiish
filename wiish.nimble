@@ -5,7 +5,7 @@ author        = "Matt Haggard"
 description   = "Why Is It So Hard to make a cross platform app?"
 license       = "MIT"
 srcDir        = "src"
-installExt    = @["nim"]
+# installExt    = @["nim"]
 bin           = @["wiish"]
 
 # Dependencies
