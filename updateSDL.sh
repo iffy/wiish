@@ -33,4 +33,5 @@ getit "SDL2-2.0.9" "https://www.libsdl.org/release/" "SDL"
 
 ## SDL2_ttf
 getit "SDL2_ttf-2.0.14" "https://www.libsdl.org/projects/SDL_ttf/release/" "SDL_TTF"
+rm -r "src/wiishpkg/building/data/SDL_TTF/Xcode"
 
