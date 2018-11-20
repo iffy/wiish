@@ -90,8 +90,12 @@ proc doDesktopRun*(directory:string = ".") =
   quit(0)
 
 proc doInit*(directory:string = ".") =
+  let
+    src = DATADIR/"initapp"
   directory.createDir()
-  copyDir(DATADIR/"initapp", directory)
+  
+  echo &"Copying from {src} to {directory}"
+  copyDir(src, directory)
   echo &"""Initialized a new wiish app in {directory}
 
 Run:    wiish run {directory}
