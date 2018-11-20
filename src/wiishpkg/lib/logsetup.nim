@@ -56,10 +56,12 @@ elif defined(wiishDev):
 else:
   # Built, desktop app
   if appName != "":
-    var
-      logfilename:string
+    var logfilename:string
     when defined(macosx):
       logfilename = expandTilde(&"~/Library/Logs/{appName}/log.log")
+    elif defined(linux):
+      logfilename = expandTilde(&"~/.config/{appName}/log.log")
+
     if logfilename != "":
       logfilename.parentDir.createDir()
       let rolling_logger = newRollingFileLogger(logfilename, fmtStr = fmtString, bufSize = 0)
