@@ -1,4 +1,4 @@
-import ../events
+import ./events
 import os
 import ospaths
 
@@ -11,7 +11,7 @@ type
 
 
 when defined(wiishDev):
-  import ../building/config
+  import ./building/config
   proc resourcePath*(app: BaseApplication, filename: string): string =
     ## Return the path to a static resource included in the application
     let

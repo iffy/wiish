@@ -80,7 +80,7 @@ See the [`examples`](./examples) directory for more examples of how to use this 
 
 # Documentation
 
-[Currently crummy docs](https://www.iffycan.com/wiish/)
+[Module docs](https://www.iffycan.com/wiish/)
 
 # Developing wiish
 

@@ -1,4 +1,17 @@
-## Logging for Wiish applications
+## Logging for Wiish applications.  By importing this module,
+## the Nim stdlib ``logging`` module will be configured to log
+## somewhere helpful.
+##
+## When running applications in dev mode (i.e. ``wiish run ...``)
+## logs will be printed to the console.
+##
+## For built applications, logs will be written to the following files:
+##
+##  - **macOS**: ``~/Library/Logs/{appName}/log.log``
+##  - **Linux**: not yet implemented
+##  - **Windows**: not yet implemented
+##  - **iOS**: not yet implemented
+##  - **Android**: not yet implemented
 ##
 import logging
 import strformat

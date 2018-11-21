@@ -6,9 +6,7 @@ import logging
 
 info "Start"
 
-let index = app.resourcePath("index.html").replace(" ", "%20")
-# debug &"index path: {index}"
-app.url = "file://" & index
+let index_html = app.resourcePath("index.html").replace(" ", "%20")
 
 app.launched.handle:
   debug "App launched"
@@ -16,6 +14,5 @@ app.launched.handle:
 app.willExit.handle:
   debug "App is exiting"
 
-app.start()
-
+app.start(url = "file://" & index_html)
 
