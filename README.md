@@ -61,7 +61,7 @@ Here is what's currently supported:
 | Package resources      |         |   Y   |       |     |         |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |
-| App icon               |         |   Y   |       |  Y  |         |
+| App icon               |         |   Y   |       |  Y  |    Y    |
 | File associations      |         |       |       |  -  |    -    |
 
 **GUI**

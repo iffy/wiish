@@ -199,9 +199,23 @@ LOCAL_LDLIBS := -llog
 include $(BUILD_SHARED_LIBRARY)
     """)
   
+  debug &"Naming app ..."
   replaceInFile(projectDir/"app"/"src"/"main"/"res"/"values"/"strings.xml", {
     "<string name=\"app_name\">.*?</string>": &"""<string name="app_name">{config.name}</string>""",
   }.toTable)
+
+  debug &"Creating icons ..."
+  var iconSrcPath:string
+  if config.icon == "":
+    iconSrcPath = DATADIR()/"default.png"
+  else:
+    iconSrcPath = directory/config.icon
+  
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-mdpi"/"ic_launcher.png", 48, 48)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-hdpi"/"ic_launcher.png", 72, 72)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xhdpi"/"ic_launcher.png", 96, 96)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxhdpi"/"ic_launcher.png", 144, 144)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxxhdpi"/"ic_launcher.png", 192, 192)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
