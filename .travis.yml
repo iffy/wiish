@@ -52,6 +52,7 @@ script:
   - nimble refresh
   - nimble test
   - tests/dochecks.sh
+  - ./builddocs.sh
 
 branches:
   except:

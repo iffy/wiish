@@ -1277,7 +1277,20 @@ function main() {
   </div>
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
-  <p class="module-desc"></p>
+  <p class="module-desc">This module implements <tt class="docutils literal"><span class="pre">EventSource</span></tt>, which lets you register event handlers and then emit events.
+<p><strong class="examples_text">Examples:</strong></p>
+<pre class="listing"><span class="Keyword">var</span>
+  <span class="Identifier">es</span> <span class="Other">=</span> <span class="Identifier">newEventSource</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">(</span><span class="Other">)</span>
+  <span class="Identifier">messages</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span>
+  <span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">int</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">handle</span><span class="Other">(</span><span class="Identifier">msg</span><span class="Other">)</span><span class="Other">:</span>
+  <span class="Identifier">messages</span><span class="Other">.</span><span class="Identifier">add</span><span class="Other">(</span><span class="Identifier">msg</span><span class="Other">)</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">handle</span><span class="Other">:</span>
+  <span class="Identifier">inc</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">)</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">emit</span><span class="Other">(</span><span class="StringLit">&quot;foo&quot;</span><span class="Other">)</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">emit</span><span class="Other">(</span><span class="StringLit">&quot;bar&quot;</span><span class="Other">)</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">messages</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Other">[</span><span class="StringLit">&quot;foo&quot;</span><span class="Other">,</span> <span class="StringLit">&quot;bar&quot;</span><span class="Other">]</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">count</span> <span class="Operator">==</span> <span class="DecNumber">2</span></pre></p>
   <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
@@ -1303,13 +1316,13 @@ function main() {
 <a id="addListener,EventSource[T],proc(T)"></a>
 <dt><pre><span class="Keyword">proc</span> <span class="Identifier">addListener</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">es</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="events.html#EventSource"><span class="Identifier">EventSource</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">listener</span><span class="Other">:</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">message</span><span class="Other">:</span> <span class="Identifier">T</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span><span class="Other">)</span></pre></dt>
 <dd>
-
+Add a proc to handle events.  Proc will be called once for each event emit.  See the <tt class="docutils literal"><span class="pre">handle</span></tt> template for a nicer syntax.
 
 </dd>
 <a id="removeListener,EventSource[T],proc(T)"></a>
 <dt><pre><span class="Keyword">proc</span> <span class="Identifier">removeListener</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">es</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="events.html#EventSource"><span class="Identifier">EventSource</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">listener</span><span class="Other">:</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">message</span><span class="Other">:</span> <span class="Identifier">T</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span><span class="Other">)</span></pre></dt>
 <dd>
-
+Remove a proc from receiving any more events.
 
 </dd>
 <a id="emit,EventSource[T],T"></a>
@@ -1326,14 +1339,23 @@ Emit an event to all event listeners
 <a id="handle.t,EventSource[T],untyped,untyped"></a>
 <dt><pre><span class="Keyword">template</span> <span class="Identifier">handle</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">es</span><span class="Other">:</span> <a href="events.html#EventSource"><span class="Identifier">EventSource</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">varname</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">fnbody</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
 <dd>
-Convient syntax for addListener<pre class="listing"><span class="Identifier">eventsource</span><span class="Operator">.</span><span class="Identifier">handle</span><span class="Punctuation">(</span><span class="Identifier">message</span><span class="Punctuation">)</span><span class="Punctuation">:</span>
-  <span class="Identifier">echo</span> <span class="StringLit">&quot;got the message: &quot;</span><span class="Punctuation">,</span> <span class="Identifier">message</span></pre>
+Convient syntax for addListener
+<p><strong class="examples_text">Examples:</strong></p>
+<pre class="listing"><span class="Keyword">var</span> <span class="Identifier">es</span> <span class="Other">=</span> <span class="Identifier">newEventSource</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">(</span><span class="Other">)</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">handle</span><span class="Other">(</span><span class="Identifier">thestring</span><span class="Other">)</span><span class="Other">:</span>
+  <span class="Identifier">echo</span> <span class="StringLit">&quot;Got thestring: &quot;</span> <span class="Operator">&amp;</span> <span class="Identifier">thestring</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">emit</span><span class="Other">(</span><span class="StringLit">&quot;some string&quot;</span><span class="Other">)</span></pre>
 
 </dd>
 <a id="handle.t,EventSource[T],untyped"></a>
 <dt><pre><span class="Keyword">template</span> <span class="Identifier">handle</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">es</span><span class="Other">:</span> <a href="events.html#EventSource"><span class="Identifier">EventSource</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">fnbody</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
 <dd>
 Convient syntax for when you don't care about the event's message
+<p><strong class="examples_text">Examples:</strong></p>
+<pre class="listing"><span class="Keyword">var</span> <span class="Identifier">es</span> <span class="Other">=</span> <span class="Identifier">newEventSource</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">(</span><span class="Other">)</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">handle</span><span class="Other">:</span>
+  <span class="Identifier">echo</span> <span class="StringLit">&quot;Got a message, but I don\'t care what it is&quot;</span>
+<span class="Identifier">es</span><span class="Other">.</span><span class="Identifier">emit</span><span class="Other">(</span><span class="StringLit">&quot;some string&quot;</span><span class="Other">)</span></pre>
 
 </dd>
 
@@ -1346,7 +1368,7 @@ Convient syntax for when you don't care about the event's message
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2018-11-21 17:47:59 UTC</small>
+        <small>Made with Nim. Generated: 2018-11-21 18:30:37 UTC</small>
       </div>
     </div>
   </div>
