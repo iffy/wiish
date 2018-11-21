@@ -210,7 +210,6 @@ include $(BUILD_SHARED_LIBRARY)
     iconSrcPath = DATADIR()/"default.png"
   else:
     iconSrcPath = directory/config.icon
-  
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-mdpi"/"ic_launcher.png", 48, 48)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-hdpi"/"ic_launcher.png", 72, 72)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xhdpi"/"ic_launcher.png", 96, 96)

@@ -12,9 +12,12 @@ name     = "WiishOpenGL"
 src      = "main_mobile.nim"
 
 [macos]
-bundle_identifier = "com.example.wiish.opengl"
+bundle_identifier = "org.wiish.openglexample"
 category_type = "public.app-category.example"
 
 [ios]
-bundle_identifier = "com.example.wiish.opengl"
+bundle_identifier = "org.wiish.openglexample"
 sdk_version = ""
+
+[android]
+java_package_name = "org.wiish.openglexample"
