@@ -1,7 +1,7 @@
 #!/bin/bash
 
+[ -e docs ]; rm -rf docs
 mkdir -p docs
-rm docs/index.html
 
 cat <<EOF > docs/index.html
 <html>
