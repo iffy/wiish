@@ -27,14 +27,17 @@ proc runoutput*(args:varargs[string, `$`]):string =
 var
   wiishPackagePath = ""
 
-proc DATADIR*():string =
+proc getWiishPackageRoot*():string =
   if wiishPackagePath == "":
     var path = runoutput("nimble", "path", "wiish").strip()
     if "Error:" in path:
       wiishPackagePath = currentSourcePath.parentDir.parentDir.parentDir
     else:
       wiishPackagePath = path
-  return wiishPackagePath/"wiishpkg"/"building"/"data"
+  return wiishPackagePath
+
+proc DATADIR*():string =
+  return getWiishPackageRoot()/"wiishpkg"/"building"/"data"
 
 template basename*(path:string):string =
   ## Return a file's basename

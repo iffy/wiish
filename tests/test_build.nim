@@ -28,7 +28,7 @@ suite "build":
   test "init and build":
     let tmpdir = tmpDir()
     echo &"Testing inside: {tmpdir}"
-    doInit(tmpdir)
+    doInit(tmpdir, "sdl2")
     # hack the path
     let path_to_wiishroot = pathToWiishRoot()
     writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
@@ -38,7 +38,7 @@ suite "build":
     test "init and build iOS":
       let tmpdir = tmpDir()
       echo &"Testing inside: {tmpdir}"
-      doInit(tmpdir)
+      doInit(tmpdir, "sdl2")
       # hack the path
       let path_to_wiishroot = pathToWiishRoot()
       writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")

@@ -5,7 +5,8 @@ description   = "Why Is It So Hard to make a cross platform app?"
 license       = "MIT"
 # binDir        = "bin"
 # srcDir        = "src"
-installDirs   = @["wiishpkg"]
+skipDirs      = @["dist"]
+installDirs   = @["wiishpkg", "examples"]
 bin           = @["wiish"]
 
 # Dependencies

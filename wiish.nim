@@ -19,11 +19,12 @@ let p = newParser("wiish"):
     help("Create a new wiish application")
     flag("-h", "--help", help="Display help")
     arg("directory", default=".")
+    option("-b", "--base-template", help="Template to use", default="webview")
     run:
       if opts.help:
         echo p.help
         quit(0)
-      doInit(directory = opts.directory)
+      doInit(directory = opts.directory, example = opts.base_template)
   command "build":
     help("Build a single-file app/binary")
     flag("-h", "--help", help="Display help")
