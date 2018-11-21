@@ -73,6 +73,7 @@ template start*(app: WebviewApp) =
       WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
       WKWebView *webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
       webView.navigationDelegate = self;
+      webView.scrollView.bounces = false;
       NSURL *nsurl=[NSURL URLWithString: [NSString stringWithUTF8String:getInitURL()]];
       NSURLRequest *nsrequest=[NSURLRequest requestWithURL:nsurl];
       [webView loadRequest:nsrequest];

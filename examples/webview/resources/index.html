@@ -2,16 +2,32 @@
 <html>
   <head>
     <title>Test</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
-
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      section {
+        padding: 1rem;
+      }
     </style>
   </head>
   <body>
-    This is the body
-    <input id="foo">
-    <button onclick="window.external.invoke('hey' + document.getElementById('foo').value);">
+    <section>
+      This is the body
+      <input id="foo">
+      <button onclick="window.external.invoke('hey' + document.getElementById('foo').value);">
         Click me, hey?
-    </button>
+      </button>
+    </section>
+    <div style="background-color: #fe0; height: 150vh;">
+    </div>
+    <section>
+      The end.
+    </section>
   </body>
 </html>
