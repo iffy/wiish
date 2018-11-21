@@ -14,20 +14,30 @@
       section {
         padding: 1rem;
       }
+      .buttongrid {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .button {
+        height: 25vh;
+        width: 50vw;
+        text-align: center;
+        font-size: 1rem;
+        font-family: sans-serif;
+        padding: 1rem;
+      }
     </style>
   </head>
   <body>
-    <section>
-      This is the body
-      <input id="foo">
-      <button onclick="window.external.invoke('hey' + document.getElementById('foo').value);">
-        Click me, hey?
-      </button>
-    </section>
-    <div style="background-color: #fe0; height: 150vh;">
+    <div class="buttongrid">
+      <div class="button" style="background-color: green;">green</div>
+      <div class="button" style="background-color: blue;">blue</div>
+      <div class="button" style="background-color: purple;">purple</div>
+      <div class="button" style="background-color: red;">red</div>
+      <div class="button" style="background-color: yellow;">yellow</div>
+      <div class="button" style="background-color: orange;">orange</div>
+      <div class="button" style="background-color: mediumspringgreen;">mint</div>
+      <div class="button" style="background-color: black; color: white;">black</div>
     </div>
-    <section>
-      The end.
-    </section>
   </body>
 </html>
