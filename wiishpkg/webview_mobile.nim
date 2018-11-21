@@ -29,6 +29,8 @@ proc newWebviewApp(): WebviewApp =
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
   when defined(ios):
+    when not compileOption("noMain"):
+      {.error: "Please run Nim with --noMain flag.".}
     proc doLog(x:cstring) {.exportc.} =
       debug(x)
     proc nim_didFinishLaunching() {.exportc.} =
@@ -127,7 +129,21 @@ template start*(app: WebviewApp, url: string) =
     """ .}
     
   elif defined(android):
-    discard
+    when not compileOption("noMain"):
+      {.error: "Please run Nim with --noMain flag.".}
+    {.emit: """
+    extern int cmdCount;
+    extern char** cmdLine;
+    extern char** gEnv;
+    N_CDECL(void, NimMain)(void);
+    int main(int argc, char** args) {
+      cmdLine = args;
+      cmdCount = argc;
+      gEnv = NULL;
+      NimMain();
+      return nim_program_result;
+    }
+    """.}
   # app.willExit.emit(true)
 
 
