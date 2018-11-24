@@ -39,12 +39,18 @@ android {
                 path 'jni/Android.mk'
             }
         }
-       
     }
     lintOptions {
         abortOnError false
     }
-    
+    applicationVariants.all { variant ->
+        variant.mergeResources.doLast {
+            copy {
+                from (["./assets"])
+                into ("$outputDir/assets")
+            }
+        }
+    }
     if (buildAsLibrary) {
         libraryVariants.all { variant ->
             variant.outputs.each { output ->

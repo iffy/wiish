@@ -1,6 +1,7 @@
 ## Module for making mobile Webview applications.
 import macros
 import times
+import strformat
 import darwin/app_kit
 import darwin/objc/runtime
 import darwin/foundation
@@ -133,6 +134,9 @@ template start*(app: WebviewApp, url: string) =
       {.error: "Please run Nim with --noMain flag.".}
     
     proc wiish_getInitURL(): cstring {.cdecl, exportc.} =
+      # debug "wiish_getInitURL and the url is: " & url
+      echo "Hello?"
+      debug "Helloooooo"
       return "https://www.weather.com"
 
     {.emit: """

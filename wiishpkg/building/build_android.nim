@@ -46,6 +46,8 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     sdlSrc = DATADIR()/"SDL"
     webviewSrc = DATADIR()/"android-webview"
     appProject = projectDir/"app"/"jni"/"app"
+    srcResources = directory/config.resourceDir
+    dstResources = projectDir/"app"/"assets"
     # androidNDKPath = getEnvOrFail("ANDROID_NDK", "Set to your local Android NDK path.  Download from https://developer.android.com/ndk/downloads/")
     # androidSDKPath = getEnvOrFail("ANDROID_SDK", "Set to your local Android SDK path.  Download from https://developer.android.com/studio/#downloads")
   
@@ -95,6 +97,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
       "--os:android",
       "-d:android",
       &"--cpu:{cpu}",
+      &"-d:appJavaPackageName={config.java_package_name}",
       "--noMain",
       "--header",
       "--compileOnly",
@@ -215,6 +218,12 @@ include $(BUILD_SHARED_LIBRARY)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xhdpi"/"ic_launcher.png", 96, 96)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxhdpi"/"ic_launcher.png", 144, 144)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxxhdpi"/"ic_launcher.png", 192, 192)
+
+  
+  if srcResources.dirExists:
+    debug &"Copying in resources ..."
+    createDir(dstResources)
+    copyDir(srcResources, dstResources)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
