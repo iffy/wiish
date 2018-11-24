@@ -232,6 +232,13 @@ proc doAndroidRun*(directory: string) =
     configPath = directory/"wiish.toml"
     config = getAndroidConfig(configPath)
 
+  let adb_bin = findExe("adb")
+  if adb_bin == "":
+    raise newException(CatchableError, "Could not find 'adb'.  Are the Android SDK tools in PATH?")
+  
+  let android_home = adb_bin.parentDir.parentDir
+  debug &"Android SDK path = {android_home}"
+
   debug "Building app ..."
   let apkPath = doAndroidBuild(directory, configPath)
 
@@ -244,10 +251,11 @@ proc doAndroidRun*(directory: string) =
       raise newException(CatchableError, "No emulators installed. XXX provide instructions to get them installed.")
     let avd = possible_avds[0]
     debug &"Launching {avd} ..."
-    var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]], options = {poUsePath})
-    # XXX it would maybe be nice to leave this running...
-    debug "Waiting for device to boot ..."
-    run("adb", "wait-for-local-device")
+    withDir android_home/"tools":
+      var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]], options = {poUsePath})
+      # XXX it would maybe be nice to leave this running...
+      debug "Waiting for device to boot ..."
+      run("adb", "wait-for-local-device")
   
   debug &"Installing apk {apkPath} ..."
   run("adb", "install", "-r", "-t", apkPath)
