@@ -131,6 +131,18 @@ template start*(app: WebviewApp, url: string) =
   elif defined(android):
     when not compileOption("noMain"):
       {.error: "Please run Nim with --noMain flag.".}
+    
+    proc wiish_getInitURL(): cstring {.cdecl, exportc.} =
+      return "https://www.weather.com"
+
+    {.emit: """
+    #include <mainjni.h>
+    JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
+  (JNIEnv * env, jobject obj) {
+      return (*env)->NewStringUTF(env, wiish_getInitURL());
+    }
+    """.}
+
     {.emit: """
     extern int cmdCount;
     extern char** cmdLine;
