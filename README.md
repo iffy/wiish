@@ -57,7 +57,7 @@ Here is what's currently supported:
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
-| Log to console w/ run  |         |   Y   |   Y   |  Y  |         |
+| Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
 | Package resources      |         |   Y   |       |     |         |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |

@@ -141,17 +141,21 @@ template start*(app: WebviewApp, url: string) =
 
     {.emit: """
     #include <mainjni.h>
+    N_CDECL(void, NimMain)(void);
+
+    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
+  (JNIEnv * env, jobject obj) {
+      NimMain();
+    }
+
     JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
   (JNIEnv * env, jobject obj) {
       return (*env)->NewStringUTF(env, wiish_getInitURL());
     }
-    """.}
-
-    {.emit: """
     extern int cmdCount;
     extern char** cmdLine;
     extern char** gEnv;
-    N_CDECL(void, NimMain)(void);
+    
     int main(int argc, char** args) {
       cmdLine = args;
       cmdCount = argc;

@@ -270,7 +270,12 @@ proc doAndroidRun*(directory: string) =
   run("adb", "install", "-r", "-t", apkPath)
 
   debug &"Watching logs ..."
-  var logp = startProcess(command="adb", args = @["logcat", "-T", "0"], options = {poUsePath, poParentStreams})
+  var logp = startProcess(command="adb", args = @[
+    "logcat", "-s",
+    "-T", "1",
+    # "ActivityManager",
+    config.java_package_name,
+  ], options = {poUsePath, poParentStreams})
 
   let
     fullActivityName = config.fullActivityName()

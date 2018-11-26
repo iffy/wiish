@@ -72,9 +72,9 @@ elif defined(android):
   proc systemLog(msg: cstring) =
     var
       message {.exportc.} : cstring = msg
-      tag {.exportc.} : cstring = "WIISHTEST"
+      tag {.exportc.} : cstring = appJavaPackageName
     {.emit: """
-    __android_log_write(4, "WIISH_TEST", "hey");
+    __android_log_write(ANDROID_LOG_INFO, tag, message);
     """.}
     # ANDROID_LOG_INFO, tag, message
 

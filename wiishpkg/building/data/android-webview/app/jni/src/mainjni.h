@@ -9,6 +9,14 @@ extern "C" {
 #endif
 /*
  * Class:     org_wiish_exampleapp_WiishActivity
+ * Method:    wiish_init
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_wiish_exampleapp_WiishActivity
  * Method:    wiish_getInitURL
  * Signature: ()Ljava/lang/String;
  */
