@@ -47,7 +47,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     webviewSrc = DATADIR()/"android-webview"
     appProject = projectDir/"app"/"jni"/"app"
     srcResources = directory/config.resourceDir
-    dstResources = projectDir/"app"/"assets"
+    dstResources = projectDir/"app"/"src"/"main"/"assets"
     # androidNDKPath = getEnvOrFail("ANDROID_NDK", "Set to your local Android NDK path.  Download from https://developer.android.com/ndk/downloads/")
     # androidSDKPath = getEnvOrFail("ANDROID_SDK", "Set to your local Android SDK path.  Download from https://developer.android.com/studio/#downloads")
   

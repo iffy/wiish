@@ -135,9 +135,8 @@ template start*(app: WebviewApp, url: string) =
     
     proc wiish_getInitURL(): cstring {.cdecl, exportc.} =
       # debug "wiish_getInitURL and the url is: " & url
-      echo "Hello?"
-      debug "Helloooooo"
-      return "https://www.weather.com"
+      debug "Initializing with URL: " & url
+      return url
 
     {.emit: """
     #include <mainjni.h>

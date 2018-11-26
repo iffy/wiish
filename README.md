@@ -58,7 +58,7 @@ Here is what's currently supported:
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
 | Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
-| Package resources      |         |   Y   |       |     |         |
+| Package resources      |         |   Y   |       |  Y  |    Y    |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |
 | App icon               |         |   Y   |       |  Y  |    Y    |
@@ -70,7 +70,7 @@ Here is what's currently supported:
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| Webview                |         |   Y   |   Y   |  Y  |         |
+| Webview                |         |   Y   |   Y   |  Y  |    Y    |
 
 **Y** = complete, **-** = not applicable
 
