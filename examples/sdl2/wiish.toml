@@ -18,9 +18,12 @@ src         = "main_mobile.nim"
 icon        = ""
 
 [macos]
-bundle_identifier = "com.wiish.sdl"
+bundle_identifier = "org.wiish.sdlexample"
 category_type = "public.app-category.example"
 
 [ios]
-bundle_identifier = "com.wiish.sdl"
+bundle_identifier = "org.wiish.sdlexample"
 sdk_version = "" # If blank, auto-detect the latest installed version
+
+[android]
+java_package_name = "org.wiish.sdlexample"

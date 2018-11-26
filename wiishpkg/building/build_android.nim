@@ -44,30 +44,50 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     projectDir = directory/config.dst/"android"/"project"/config.java_package_name
     appSrc = directory/config.src
     sdlSrc = DATADIR()/"SDL"
-    appProject = projectDir/"app/jni/app"
+    webviewSrc = DATADIR()/"android-webview"
+    appProject = projectDir/"app"/"jni"/"app"
+    srcResources = directory/config.resourceDir
+    dstResources = projectDir/"app"/"src"/"main"/"assets"
     # androidNDKPath = getEnvOrFail("ANDROID_NDK", "Set to your local Android NDK path.  Download from https://developer.android.com/ndk/downloads/")
     # androidSDKPath = getEnvOrFail("ANDROID_SDK", "Set to your local Android SDK path.  Download from https://developer.android.com/studio/#downloads")
-  var
-    ndkArgs: seq[string]
   
-  if not projectDir.existsDir():
-    debug &"Copying SDL android project to {projectDir}"
-    createDir(projectDir)
-    copyDirWithPermissions(sdlSrc/"android-project", projectDir)
+  if config.windowFormat == SDL:
+    if not projectDir.existsDir():
+      debug &"Copying SDL android project to {projectDir}"
+      createDir(projectDir)
+      copyDirWithPermissions(sdlSrc/"android-project", projectDir)
 
-    # Copy in SDL source
-    copyDirWithPermissions(sdlSrc/"src", projectDir/"app/jni/SDL/src")
-    copyDirWithPermissions(sdlSrc/"include", projectDir/"app/jni/SDL/include")
-    
-    # Android.mk
-    let android_mk = projectDir/"app/jni/SDL/Android.mk"
-    copyFile(sdlSrc/"Android.mk", android_mk)
-    replaceInFile(projectDir/"app/build.gradle", {
-      "org.libsdl.app": config.java_package_name,
-    }.toTable)
-    replaceInFile(projectDir/"app/src/main/AndroidManifest.xml", {
-      "org.libsdl.app": config.java_package_name,
-    }.toTable)
+      # Copy in SDL source
+      copyDirWithPermissions(sdlSrc/"src", projectDir/"app"/"jni"/"SDL"/"src")
+      copyDirWithPermissions(sdlSrc/"include", projectDir/"app"/"jni"/"SDL"/"include")
+      let android_mk = projectDir/"app"/"jni"/"SDL"/"Android.mk"
+      copyFile(sdlSrc/"Android.mk", android_mk)
+
+      # build.gradle
+      replaceInFile(projectDir/"app"/"build.gradle", {
+        "org.libsdl.app": config.java_package_name,
+      }.toTable)
+
+      # AndroidManifest.xml
+      replaceInFile(projectDir/"app"/"src"/"main"/"AndroidManifest.xml", {
+        "org.libsdl.app": config.java_package_name,
+      }.toTable)
+
+  elif config.windowFormat == Webview:
+    if not projectDir.existsDir():
+      debug &"Copying Android template project to {projectDir}"
+      createDir(projectDir)
+      copyDirWithPermissions(webviewSrc, projectDir)
+
+      # build.gradle
+      replaceInFile(projectDir/"app"/"build.gradle", {
+        "org.wiish.exampleapp": config.java_package_name,
+      }.toTable)
+
+      # AndroidManifest.xml
+      replaceInFile(projectDir/"app"/"src"/"main"/"AndroidManifest.xml", {
+        "org.wiish.exampleapp": config.java_package_name,
+      }.toTable)
 
   debug "Compiling Nim portion ..."
   proc buildFor(android_abi:string, cpu:string) =
@@ -77,15 +97,11 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
       "--os:android",
       "-d:android",
       &"--cpu:{cpu}",
-      # "--dynlibOverride:SDL2",
+      &"-d:appJavaPackageName={config.java_package_name}",
       "--noMain",
       "--header",
       "--compileOnly",
-      # "--app:lib",
-      # "--passL:-lGLESv1_CM",
-      # "--passL:-lGLESv2",
-      "--nimcache:" & projectDir/"app/jni/src"/android_abi,
-      # "--out:" & appProject/arch_abi/"libmain.so",
+      "--nimcache:" & projectDir/"app"/"jni"/"src"/android_abi,
       appSrc,
     ])
     debug nimFlags.join(" ")
@@ -112,10 +128,27 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
   debug "Create Activity ..."
   let
     activity_name = config.activityName()
-    activity_java_path = projectDir/"app/src/main/java"/config.java_package_name.replace(".", "/")/activity_name&".java"
+    activity_java_path = projectDir/"app"/"src"/"main"/"java"/config.java_package_name.replace(".", "/")/activity_name&".java"
   activity_java_path.parentDir.createDir()
-  debug activity_java_path
-  writeFile(activity_java_path, &"""
+  
+  var cfiles : seq[string]
+  debug "Listing c files ..."
+  for item in walkDir(projectDir/"app"/"jni"/"src"/"x86"):
+    if item.kind == pcFile and item.path.endsWith(".c"):
+      cfiles.add("$(TARGET_ARCH_ABI)"/(&"{item.path.basename}"))
+  
+  let nimlib = getNimLibPath()
+  debug &"nimlib: {nimlib}"
+
+  replaceInFile(projectDir/"app"/"build.gradle", {
+    "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
+  }.toTable)
+
+  if config.windowFormat == SDL:
+    #---------------------------------------
+    # SDL
+    #---------------------------------------
+    writeFile(activity_java_path, &"""
 package {config.java_package_name};
 
 import org.libsdl.app.SDLActivity;
@@ -124,24 +157,10 @@ public class {activity_name} extends SDLActivity
 {{
 }}
 """)
-
-  replaceInFile(projectDir/"app/src/main/AndroidManifest.xml", {
-    "SDLActivity": activity_name,
-  }.toTable)
-
-  replaceInFile(projectDir/"app/build.gradle", {
-    "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
-  }.toTable)
-  
-  var cfiles : seq[string]
-  debug "Listing c files ..."
-  for item in walkDir(projectDir/"app/jni/src/x86"):
-    if item.kind == pcFile and item.path.endsWith(".c"):
-      cfiles.add(&"$(TARGET_ARCH_ABI)/{item.path.basename}")
-  
-  let nimlib = getNimLibPath()
-  debug &"nimlib: {nimlib}"
-  writeFile(projectDir/"app/jni/src/Android.mk",
+    replaceInFile(projectDir/"app"/"src"/"main"/"AndroidManifest.xml", {
+      "SDLActivity": activity_name,
+    }.toTable)
+    writeFile(projectDir/"app"/"jni"/"src"/"Android.mk",
 &"""
 LOCAL_PATH := $(call my-dir)
 
@@ -154,12 +173,63 @@ LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
 
 include $(BUILD_SHARED_LIBRARY)
 """)
+  elif config.windowFormat == Webview:
+    #---------------------------------------
+    # Webview
+    #---------------------------------------
+    writeFile(activity_java_path, &"""
+package {config.java_package_name};
+
+import org.wiish.exampleapp.WiishActivity;
+
+public class {activity_name} extends WiishActivity
+{{
+}}
+    """)
+    replaceInFile(projectDir/"app"/"src"/"main"/"AndroidManifest.xml", {
+      "WiishActivity": activity_name,
+    }.toTable)
+    writeFile(projectDir/"app"/"jni"/"src"/"Android.mk",
+&"""
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := main
+LOCAL_C_INCLUDES := {nimlib}
+LOCAL_SRC_FILES := {cfiles.join(" ")}
+LOCAL_LDLIBS := -llog
+
+include $(BUILD_SHARED_LIBRARY)
+    """)
+  
+  debug &"Naming app ..."
+  replaceInFile(projectDir/"app"/"src"/"main"/"res"/"values"/"strings.xml", {
+    "<string name=\"app_name\">.*?</string>": &"""<string name="app_name">{config.name}</string>""",
+  }.toTable)
+
+  debug &"Creating icons ..."
+  var iconSrcPath:string
+  if config.icon == "":
+    iconSrcPath = DATADIR()/"default.png"
+  else:
+    iconSrcPath = directory/config.icon
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-mdpi"/"ic_launcher.png", 48, 48)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-hdpi"/"ic_launcher.png", 72, 72)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xhdpi"/"ic_launcher.png", 96, 96)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxhdpi"/"ic_launcher.png", 144, 144)
+  iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxxhdpi"/"ic_launcher.png", 192, 192)
+
+  
+  if srcResources.dirExists:
+    debug &"Copying in resources ..."
+    createDir(dstResources)
+    copyDir(srcResources, dstResources)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
-    run("./gradlew", "bundleDebug")
+    run("./gradlew", "assembleDebug")
   
-  result = projectDir/"app/build/outputs/apk/debug/app-debug.apk"
+  result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
 
 template runningDevices() : seq[string] = 
   ## List all currently running Android devices
@@ -171,28 +241,41 @@ proc doAndroidRun*(directory: string) =
     configPath = directory/"wiish.toml"
     config = getAndroidConfig(configPath)
 
+  let adb_bin = findExe("adb")
+  if adb_bin == "":
+    raise newException(CatchableError, "Could not find 'adb'.  Are the Android SDK tools in PATH?")
+  
+  let android_home = adb_bin.parentDir.parentDir
+  debug &"Android SDK path = {android_home}"
+
   debug "Building app ..."
   let apkPath = doAndroidBuild(directory, configPath)
 
   debug "Opening emulator ..."
   let device_list = runningDevices()
-  echo "devices: ", device_list
+  debug &"devices: {device_list.repr}"
   if device_list.len == 0:
     let possible_avds = runoutput("emulator", "-list-avds").strip.splitLines
     if possible_avds.len == 0:
       raise newException(CatchableError, "No emulators installed. XXX provide instructions to get them installed.")
     let avd = possible_avds[0]
     debug &"Launching {avd} ..."
-    var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]], options = {poUsePath})
-    # XXX it would maybe be nice to leave this running...
-    debug "Waiting for device to boot ..."
-    run("adb", "wait-for-local-device")
+    withDir android_home/"tools":
+      var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]], options = {poUsePath})
+      # XXX it would maybe be nice to leave this running...
+      debug "Waiting for device to boot ..."
+      run("adb", "wait-for-local-device")
   
   debug &"Installing apk {apkPath} ..."
   run("adb", "install", "-r", "-t", apkPath)
 
   debug &"Watching logs ..."
-  var logp = startProcess(command="adb", args = @["logcat", "-T", "0"], options = {poUsePath, poParentStreams})
+  var logp = startProcess(command="adb", args = @[
+    "logcat", "-s",
+    "-T", "1",
+    # "ActivityManager",
+    config.java_package_name,
+  ], options = {poUsePath, poParentStreams})
 
   let
     fullActivityName = config.fullActivityName()

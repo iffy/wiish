@@ -1,6 +1,7 @@
 ## Module for making mobile Webview applications.
 import macros
 import times
+import strformat
 import darwin/app_kit
 import darwin/objc/runtime
 import darwin/foundation
@@ -29,6 +30,8 @@ proc newWebviewApp(): WebviewApp =
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
   when defined(ios):
+    when not compileOption("noMain"):
+      {.error: "Please run Nim with --noMain flag.".}
     proc doLog(x:cstring) {.exportc.} =
       debug(x)
     proc nim_didFinishLaunching() {.exportc.} =
@@ -127,7 +130,39 @@ template start*(app: WebviewApp, url: string) =
     """ .}
     
   elif defined(android):
-    discard
+    when not compileOption("noMain"):
+      {.error: "Please run Nim with --noMain flag.".}
+    
+    proc wiish_getInitURL(): cstring {.cdecl, exportc.} =
+      # debug "wiish_getInitURL and the url is: " & url
+      debug "Initializing with URL: " & url
+      return url
+
+    {.emit: """
+    #include <mainjni.h>
+    N_CDECL(void, NimMain)(void);
+
+    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
+  (JNIEnv * env, jobject obj) {
+      NimMain();
+    }
+
+    JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
+  (JNIEnv * env, jobject obj) {
+      return (*env)->NewStringUTF(env, wiish_getInitURL());
+    }
+    extern int cmdCount;
+    extern char** cmdLine;
+    extern char** gEnv;
+    
+    int main(int argc, char** args) {
+      cmdLine = args;
+      cmdCount = argc;
+      gEnv = NULL;
+      NimMain();
+      return nim_program_result;
+    }
+    """.}
   # app.willExit.emit(true)
 
 

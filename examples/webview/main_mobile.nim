@@ -1,10 +1,9 @@
 ## Hello, World Wiish App
 import wiishpkg/webview_mobile
+import os
 import strformat
 import strutils
 import logging
-
-info "Start"
 
 let index_html = app.resourcePath("index.html").replace(" ", "%20")
 

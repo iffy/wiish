@@ -57,11 +57,11 @@ Here is what's currently supported:
 | Create installer       |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
-| Log to console w/ run  |         |   Y   |   Y   |  Y  |         |
-| Package resources      |         |   Y   |       |     |         |
+| Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
+| Package resources      |         |   Y   |       |  Y  |    Y    |
 | Menu bar               |         |       |       |  -  |    -    |
 | Automatic updates      |         |       |       |  -  |    -    |
-| App icon               |         |   Y   |       |  Y  |         |
+| App icon               |         |   Y   |       |  Y  |    Y    |
 | File associations      |         |       |       |  -  |    -    |
 
 **GUI**
@@ -70,7 +70,7 @@ Here is what's currently supported:
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
 | SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| Webview                |         |   Y   |   Y   |  Y  |         |
+| Webview                |         |   Y   |   Y   |  Y  |    Y    |
 
 **Y** = complete, **-** = not applicable
 

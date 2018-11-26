@@ -5,3 +5,4 @@ wiish
 tmp
 libSDL2.a
 bin
+.project

@@ -27,7 +27,7 @@ else:
         when defined(ios):
           getAppDir()/"static"
         elif defined(android):
-          getAppDir()
+          "/android_asset"
         elif defined(macosx):
           normalizedPath(getAppDir()/"../Resources/resources").absolutePath()
         else:
