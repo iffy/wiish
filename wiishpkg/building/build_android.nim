@@ -261,7 +261,8 @@ proc doAndroidRun*(directory: string) =
     let avd = possible_avds[0]
     debug &"Launching {avd} ..."
     withDir android_home/"tools":
-      var p = startProcess(command="emulator", args = @["-avd", possible_avds[0]], options = {poUsePath})
+      var p = startProcess(command="emulator",
+        args = @["-avd", possible_avds[0], "-no-snapshot-save"], options = {poUsePath})
       # XXX it would maybe be nice to leave this running...
       debug "Waiting for device to boot ..."
       run("adb", "wait-for-local-device")

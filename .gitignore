@@ -1,8 +1,9 @@
 dist
 .DS_Store
 nimcache/
-wiish
 tmp
+/wiish
 libSDL2.a
 bin
 .project
+.settings
