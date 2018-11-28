@@ -1,5 +1,5 @@
 # Package
-version       = "0.1.0"
+version       = "0.1.0-dev"
 author        = "Matt Haggard"
 description   = "Why Is It So Hard to make a cross platform app?"
 license       = "MIT"
@@ -13,7 +13,7 @@ bin           = @["wiish"]
 
 requires "nim >= 0.19.0"
 requires "parsetoml >= 0.3.2"
-# requires "argparse >= 0.1.0"
+# requires "argparse >= 0.2.0"
 requires "https://github.com/iffy/nim-argparse.git"
 # requires "https://github.com/mjendrusch/objc.git"
 

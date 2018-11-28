@@ -7,3 +7,4 @@ libSDL2.a
 bin
 .project
 .settings
+nakefile
