@@ -1,5 +1,5 @@
 # Package
-version       = "0.2.0"
+version       = "0.1.0"
 author        = "Matt Haggard"
 description   = "Why Is It So Hard to make a cross platform app?"
 license       = "MIT"
