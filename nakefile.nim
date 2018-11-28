@@ -7,6 +7,7 @@ import ospaths
 import strformat
 import strutils
 import sequtils
+import wiishpkg/building/buildutil
 
 proc basename(x:string):string =
   let split = x.splitFile
@@ -127,11 +128,11 @@ task "release", "Bump the version and update the CHANGELOG":
 
   updateVersion(nextVersion)
   updateChangelog()
-  shell("git", "status")
+  run("git", "status")
   if not prompt(dontForcePrompt, "Proceed with git commit and tag?"):
     echo "Revert with:"
     echo "git checkout -- wiish.nimble changes CHANGELOG.md"
 
-  direShell(@["git", "add", "wiish.nimble", "changes", "CHANGELOG.md"])
-  direShell(@["git", "commit", "-m", &"Bump to v{nextVersion}"])
-  direShell(@["git", "tag", gitTag])
+  run(@["git", "add", "wiish.nimble", "changes", "CHANGELOG.md"])
+  run(@["git", "commit", "-m", &"Bump to v{nextVersion}"])
+  run(@["git", "tag", gitTag])
