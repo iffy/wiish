@@ -3,6 +3,8 @@
 
 <div style="text-align:center;"><img src="./logo.png"></div>
 
+[Docs](https://www.iffycan.com/wiish/) | [Changelog](./CHANGELOG.md)
+
 Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
 **Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
@@ -77,10 +79,6 @@ Here is what's currently supported:
 # Examples
 
 See the [`examples`](./examples) directory for more examples of how to use this library.  You can also initialize a project using these examples with `wiish init`.  See `wiish init --help` for information.
-
-# Documentation
-
-[Module docs](https://www.iffycan.com/wiish/)
 
 # Developing wiish
 
