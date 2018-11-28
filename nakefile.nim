@@ -7,6 +7,7 @@ import ospaths
 import strformat
 import strutils
 import sequtils
+import algorithm
 import wiishpkg/building/buildutil
 
 proc basename(x:string):string =
@@ -98,12 +99,14 @@ proc removeChanges() =
         removeFile(thing.path)
         echo "rm " & thing.path
 
-proc updateChangelog() =
+proc updateChangelog(version:string) =
   echo "Updating CHANGELOG.md ..."
   let oldlog = readFile("CHANGELOG.md")
   let newchanges = combineChanges()
+  let header = changelogHeader(version)
+  echo header
   echo newchanges
-  writeFile("CHANGELOG.md", newchanges & "\L\L" & oldlog)
+  writeFile("CHANGELOG.md", header & "\L" & newchanges & "\L\L" & oldlog)
   echo "Wrote to CHANGELOG.md"
   removeChanges()
 
@@ -112,10 +115,14 @@ task "chlog-echo", "Print the combined CHANGELOG changes to stdout":
   echo changelogHeader(nextVersion)
   echo combineChanges()
 
-task "chlog", "Update CHANGELOG.md to include the newest changes":
-  updateChangelog()
-
 task "release", "Bump the version and update the CHANGELOG":
+  var revert:seq[string]
+  defer:
+    if revert.len > 0:
+      echo "To revert, run the following:\L"
+    for item in reversed(revert):
+      echo &"  {item}"
+
   let lastVersion = getLatestVersion()
   echo "Last version: ", lastVersion
   
@@ -127,12 +134,16 @@ task "release", "Bump the version and update the CHANGELOG":
   let gitTag = "v" & nextVersion
 
   updateVersion(nextVersion)
-  updateChangelog()
+  revert.add("git checkout -- wiish.nimble")
+  
+  updateChangelog(nextVersion)
+  revert.add("git checkout -- CHANGELOG.md changes")
+
   run("git", "status")
-  if not prompt(dontForcePrompt, "Proceed with git commit and tag?"):
-    echo "Revert with:"
-    echo "git checkout -- wiish.nimble changes CHANGELOG.md"
 
   run(@["git", "add", "wiish.nimble", "changes", "CHANGELOG.md"])
+  revert.add("git reset HEAD -- wiish.nimble changes CHANGELOG.md")
   run(@["git", "commit", "-m", &"Bump to v{nextVersion}"])
+  revert.add("git reset --soft HEAD~1")
   run(@["git", "tag", gitTag])
+  revert.add(&"git tag -d {gitTag}")
