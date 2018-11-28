@@ -1,15 +1,19 @@
 import nake
 import os
+import nimblepkg/cli
 import times
 import re
 import ospaths
 import strformat
+import strutils
+import sequtils
 
 proc basename(x:string):string =
   let split = x.splitFile
   result = split.name & split.ext
 
-proc getNextVersion():string =
+proc getLatestVersion():string =
+  ## Return the latest released version
   let guts = readFile("wiish.nimble")
   if guts =~ re(".*?version\\s*=\\s*\"(.*?)\"", {reMultiLine, reDotAll}):
     var version = matches[0]
@@ -19,11 +23,44 @@ proc getNextVersion():string =
   else:
     raise newException(CatchableError, "Version not detected")
 
+proc updateVersion(newversion:string) =
+  ## Write the new version to the nimble package
+  let guts = readFile("wiish.nimble")
+  let newguts = guts.replacef(re("(.*?version\\s*=\\s*)\"(.*?)\"", {reMultiLine, reDotAll}), "$1\"" & newversion & "\"")
+  writeFile("wiish.nimble", newguts)
+
+proc possibleNextVersions(baseversion:string, has_new:bool, has_break:bool):seq[string] =
+  ## Suggest three possible next versions
+  let
+    parts = baseversion.split(".")
+    major = &"{parts[0].parseInt+1}.0.0"
+    minor = &"{parts[0]}.{parts[1].parseInt+1}.0"
+    fix = &"{parts[0]}.{parts[1]}.{parts[2].parseInt+1}"
+  if has_break:
+    if parts[0] != "0":
+      # still in the 0 series
+      result.add(@[minor, fix, major])
+    else:
+      result.add(@[major, minor, fix])
+  elif has_new:
+    result.add(@[minor, fix, major])
+  else:
+    result.add(@[fix, minor, major])
+
+template possibleNextVersions(baseversion:string):seq[string] =
+  possibleNextVersions(baseversion, has_new = hasChangesOfType("new"), has_break = hasChangesOfType("break"))
+
 template currentDate():string =
   format(now(), "YYYY-MM-dd")
 
+proc hasChangesOfType(kind:string):bool =
+  toSeq(walkFiles(&"changes/{kind}-*.md")).len > 0
+
+proc changelogHeader(version:string = ""):string = 
+  var version = if version.len == 0: getLatestVersion() else: version
+  result.add(&"# v{version} - {currentDate()}\L")
+
 proc combineChanges():string =
-  result.add(&"# v{getNextVersion()} - {currentDate()}\L\L")
   var
     news: seq[string]
     fixes: seq[string]
@@ -58,14 +95,31 @@ proc removeChanges() =
     if thing.kind == pcFile:
       if thing.path.endsWith(".md"):
         removeFile(thing.path)
+        echo "rm " & thing.path
 
-task "chlog-echo", "Print the combined CHANGELOG changes to stdout":
-  echo combineChanges()
-
-task "chlog", "Update CHANGELOG.md to include the newest changes":
+proc updateChangelog() =
   echo "Updating CHANGELOG.md ..."
   let oldlog = readFile("CHANGELOG.md")
   let newchanges = combineChanges()
   echo newchanges
   writeFile("CHANGELOG.md", newchanges & "\L\L" & oldlog)
+  echo "Wrote to CHANGELOG.md"
   removeChanges()
+
+task "chlog-echo", "Print the combined CHANGELOG changes to stdout":
+  let nextVersion = possibleNextVersions(getLatestVersion())[0]
+  echo changelogHeader(nextVersion)
+  echo combineChanges()
+
+task "chlog", "Update CHANGELOG.md to include the newest changes":
+  updateChangelog()
+
+task "release", "Bump the version and update the CHANGELOG":
+  let lastVersion = getLatestVersion()
+  echo "Last version: ", lastVersion
+  
+  echo "Unreleased changes:\L"
+  echo combineChanges()
+
+  let nextVersion = promptList(dontForcePrompt, "Next version?", possibleNextVersions(lastVersion))
+  echo "Updating to: ", nextVersion
