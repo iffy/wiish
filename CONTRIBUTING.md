@@ -1,3 +1,24 @@
+## Changelog
+
+When you make a change, include a description of the change as one or more new markdown files in the `changes/` directory. When new versions are released, the changes in the directory will be added to CHANGELOG.md and then deleted.
+
+The filenames should follow this format:
+
+```
+changes/TYPE-TITLE.md
+```
+
+where `TYPE` is one of:
+
+- `fix` = for bug fixes
+- `new` = for new features
+- `break` = for breaking changes
+- `misc` = for every other kind of change
+
+and `TITLE` is a unique name for your change (the purpose is just to avoid conflicts).  It could include an issue number.
+
+If the change fixes a GitHub issue, include that in the change file like this: `(#103)`
+
 ## Design Plan
 
 Wiish components are meant to be replaceable and expendable.  For instance:

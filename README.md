@@ -84,5 +84,5 @@ See the [`examples`](./examples) directory for more examples of how to use this 
 
 # Developing wiish
 
-See [DEV.md](./DEV.md) for information about contributing to Wiish development.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to Wiish development.
 
