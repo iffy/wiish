@@ -120,8 +120,9 @@ task "release", "Bump the version and update the CHANGELOG":
   defer:
     if revert.len > 0:
       echo "To revert, run the following:\L"
-    for item in reversed(revert):
-      echo &"  {item}"
+      for item in reversed(revert):
+        echo &"{item}"
+      echo ""
 
   let lastVersion = getLatestVersion()
   echo "Last version: ", lastVersion
@@ -139,11 +140,12 @@ task "release", "Bump the version and update the CHANGELOG":
   updateChangelog(nextVersion)
   revert.add("git checkout -- CHANGELOG.md changes")
 
-  run("git", "status")
-
   run(@["git", "add", "wiish.nimble", "changes", "CHANGELOG.md"])
+  run("git", "status")
   revert.add("git reset HEAD -- wiish.nimble changes CHANGELOG.md")
+
   run(@["git", "commit", "-m", &"Bump to v{nextVersion}"])
   revert.add("git reset --soft HEAD~1")
+
   run(@["git", "tag", gitTag])
   revert.add(&"git tag -d {gitTag}")
