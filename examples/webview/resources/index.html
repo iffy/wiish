@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Test</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <style>
       * {
         box-sizing: border-box;
@@ -10,6 +10,7 @@
       body {
         margin: 0;
         padding: 0;
+        min-height: 100vh;
       }
       section {
         padding: 1rem;
@@ -40,14 +41,37 @@
       <div class="button" style="background-color: mediumspringgreen;">mint</div>
       <div class="button" style="background-color: black; color: white;">black</div>
     </div>
-    <script defer>
-      wiish.sendMessage("Hello from JavaScript!");
-      wiish.onMessage(msg => {
-        document.getElementById("messages").innerText = msg;
+    <script>
+      // Because Android doesn't provide a reliable way to
+      // inject JavaScript that runs before anything else,
+      // we have to poll for the existence of window.wiish.
+      // On iOS this should happen immediately.
+      function onWiish() {
+        return new Promise(function(resolve, reject) {
+          if (window.wiish !== undefined) {
+            resolve(true);
+          } else {
+            var interval = setInterval(function() {
+              if (window.wiish !== undefined) {
+                clearInterval(interval);
+                resolve(true);
+              }
+            }, 10);
+          }
+        })
+      }
+      onWiish().then(function() {
+        const div = document.getElementById('messages');
+        div.innerText = "start";
+        wiish.sendMessage("Hello from JavaScript!");
+        wiish.onMessage(function(msg) {
+          div.innerText = msg;
+        });
+        setInterval(function() {
+          wiish.sendMessage("still working")
+        }, 5000);  
       })
-      setInterval(() => {
-        wiish.sendMessage("still working")
-      }, 5000);
+      
     </script>
   </body>
 </html>

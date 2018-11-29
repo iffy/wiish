@@ -210,6 +210,8 @@ template start*(app: WebviewApp, url: string) =
       {.error: "Please run Nim with --noMain flag.".}
     
     proc wiish_getInitURL(): cstring {.cdecl, exportc.} = url
+    proc wiish_sendMessage(message:cstring) {.cdecl, exportc.} =
+      debug "sendMessage: " & $message
 
     {.emit: """
     #include <mainjni.h>
@@ -224,6 +226,15 @@ template start*(app: WebviewApp, url: string) =
   (JNIEnv * env, jobject obj) {
       return (*env)->NewStringUTF(env, wiish_getInitURL());
     }
+
+    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessage
+  (JNIEnv * env, jobject obj, jstring str) {
+      const char *nativeString = (*env)->GetStringUTFChars(env, str, 0);
+      wiish_sendMessage(nativeString);
+      (*env)->ReleaseStringUTFChars(env, str, nativeString);
+    }
+
+
     extern int cmdCount;
     extern char** cmdLine;
     extern char** gEnv;
