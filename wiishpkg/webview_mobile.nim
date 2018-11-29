@@ -6,6 +6,7 @@ import darwin/app_kit
 import darwin/objc/runtime
 import darwin/foundation
 import logging
+import json
 
 import ./events
 export events
@@ -13,29 +14,87 @@ import ./logsetup
 import ./baseapp
 export baseapp
 
+when defined(ios):
+  {.passL: "-framework UIKit" .}
+  {.passL: "-framework WebKit" .}
+  {.emit: """
+  #include <UIKit/UIKit.h>
+  #include <WebKit/WebKit.h>
+  """.}
+
 
 type
   WebviewApp* = ref object of BaseApplication
-    windows: seq[WebviewWindow]
+    window*: WebviewWindow
   
   WebviewWindow = ref object of BaseWindow
-    nativeWindow: pointer
-    wkwebview: pointer # Wiish
+    # app*: WebviewApp
+    onMessage*: EventSource[string]
+    when defined(ios):
+      wiishController: pointer
+    # nativeWindow: pointer
+    # wkwebview: pointer # Wiish
 
 proc newWebviewApp(): WebviewApp =
   new(result)
   result.launched = newEventSource[bool]()
   result.willExit = newEventSource[bool]()
+  new(result.window)
+  result.window.onMessage = newEventSource[string]()
+
+proc sendMessage*(win:WebviewWindow, message:string) =
+  when defined(ios):
+    var
+      controller = win.wiishController
+      javascript:cstring = &"wiish._handleMessage({%message});"
+    {.emit: """
+    [controller evalJavaScript:[NSString stringWithUTF8String:javascript]];
+    """.}
+  else:
+    discard
 
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
   when defined(ios):
     when not compileOption("noMain"):
       {.error: "Please run Nim with --noMain flag.".}
+    
+    proc nimwin() : WebviewWindow {.exportc.} = app.window
+
+    proc jsbridgecode() : cstring {.exportc.} =
+      """
+      window.wiish = {};
+      window.wiish.handlers = [];
+      /**
+       * Called by Nim code to transmit a message to JS.
+       */
+      window.wiish._handleMessage = function(message) {
+        for (let i = 0; i < wiish.handlers.length; i++) {
+          wiish.handlers[i](message);
+        }
+      };
+
+      /**
+       *  Called by JS application code to watch for messages
+       *  from Nim
+       */
+      window.wiish.onMessage = function(handler) {
+        wiish.handlers.push(handler);
+      };
+      
+      /**
+       *  Called by JS application code to send messages to Nim
+       */
+      window.wiish.sendMessage = function(message) {
+        window.webkit.messageHandlers.wiish.postMessage(message);
+      };
+      """
+
     proc doLog(x:cstring) {.exportc.} =
       debug(x)
     proc nim_didFinishLaunching() {.exportc.} =
       debug "didFinishLaunching"
+      app.launched.emit(true)
     proc nim_applicationWillResignActive() {.exportc.} =
       debug "applicationWillResignActive"
     proc nim_applicationDidEnterBackground() {.exportc.} =
@@ -47,29 +106,48 @@ template start*(app: WebviewApp, url: string) =
     proc nim_applicationWillTerminate() {.exportc.} =
       debug "applicationWillTerminate"
     
-    proc getInitURL(): cstring {.exportc.} =
-      result = url
-      # result = "https://www.apple.com"
-      debug "Getting init url: " & result.repr
+    proc nim_gotMessage(x:cstring) {.exportc.} =
+      app.window.onMessage.emit($x)
+    
+    proc getInitURL(): cstring {.exportc.} = url
 
-    {.passL: "-framework UIKit" .}
-    {.passL: "-framework WebKit" .}
     {.emit: """
     #include <UIKit/UIKit.h>
     #include <WebKit/WebKit.h>
 
     // WiishController
     @interface WiishController : UIViewController <WKNavigationDelegate, WKScriptMessageHandler> {
+      WKWebView* webView;
     }
+    - (void)evalJavaScript:(NSString *)jscript;
     @end
     @implementation WiishController {
     }
+    - (void)evalJavaScript:(NSString *)jscript {
+      [webView evaluateJavaScript:jscript completionHandler:nil];
+    }
+    - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
+      nim_gotMessage([message.body UTF8String]);
+    }
     - (void)viewDidLoad {
       [super viewDidLoad];
+      nimwin()->wiishController = self;
+
+      // Prepare JS/Nim bridge
+      NSString *javascript = [NSString stringWithUTF8String:jsbridgecode()];
+      WKUserScript *userScript = [[WKUserScript alloc]
+        initWithSource:javascript
+        injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+        forMainFrameOnly:NO
+      ];
+
       self.view = [[UIView alloc] initWithFrame:self.view.frame];
       self.view.backgroundColor = [UIColor greenColor];
       WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
-      WKWebView *webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
+      [theConfiguration.userContentController addScriptMessageHandler:self name:@"wiish"];
+      [theConfiguration.userContentController addUserScript:userScript];
+
+      webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
       webView.navigationDelegate = self;
       webView.scrollView.bounces = false;
       NSURL *nsurl=[NSURL URLWithString: [NSString stringWithUTF8String:getInitURL()]];
@@ -121,8 +199,6 @@ template start*(app: WebviewApp, url: string) =
     N_CDECL(void, NimMain)(void);
     int main(int argc, char * argv[]) {
         @autoreleasepool {
-            // argc == 1
-            // argv[1] == executable being executed
             NimMain();
             return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
         }
@@ -133,10 +209,7 @@ template start*(app: WebviewApp, url: string) =
     when not compileOption("noMain"):
       {.error: "Please run Nim with --noMain flag.".}
     
-    proc wiish_getInitURL(): cstring {.cdecl, exportc.} =
-      # debug "wiish_getInitURL and the url is: " & url
-      debug "Initializing with URL: " & url
-      return url
+    proc wiish_getInitURL(): cstring {.cdecl, exportc.} = url
 
     {.emit: """
     #include <mainjni.h>

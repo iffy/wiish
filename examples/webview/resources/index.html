@@ -29,6 +29,7 @@
     </style>
   </head>
   <body>
+    <div id="messages">message?</div>
     <div class="buttongrid">
       <div class="button" style="background-color: green;">green</div>
       <div class="button" style="background-color: blue;">blue</div>
@@ -39,5 +40,14 @@
       <div class="button" style="background-color: mediumspringgreen;">mint</div>
       <div class="button" style="background-color: black; color: white;">black</div>
     </div>
+    <script defer>
+      wiish.sendMessage("Hello from JavaScript!");
+      wiish.onMessage(msg => {
+        document.getElementById("messages").innerText = msg;
+      })
+      setInterval(() => {
+        wiish.sendMessage("still working")
+      }, 5000);
+    </script>
   </body>
 </html>
