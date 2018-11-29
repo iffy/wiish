@@ -21,7 +21,6 @@ class WiishJsBridge {
 
 	public WiishJsBridge(WiishActivity initActivity) {
 		activity = initActivity;
-		initActivity.wiish_sendMessage("Another test");
 	}
 
 	@JavascriptInterface
