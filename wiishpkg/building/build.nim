@@ -95,7 +95,7 @@ proc doInit*(directory:string, example:string) =
     examples_dir = getWiishPackageRoot() / "examples"
     src = examples_dir / example
   if not src.dirExists:
-    let possibles = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.basename).join(", ")
+    let possibles = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename).join(", ")
     raise newException(CatchableError, &"""Unknown project template: {example}.  Acceptable values: {possibles}""")
   directory.createDir()
   

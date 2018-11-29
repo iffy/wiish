@@ -33,8 +33,14 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
     wiish run
     ```
 
-See `wiish --help` for how to build executables and apps.
+See `wiish --help` for how to build executables and apps.  For example:
 
+```
+wiish run --ios
+wiish run --android
+wiish build
+wiish init --base-template opengl my_opengl_app
+```
 
 # Features
 
@@ -68,11 +74,11 @@ Here is what's currently supported:
 
 **GUI**
 
-| Feature                | Windows | macOS | Linux | iOS | Android |
-|------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| OpenGL windows         |         |   Y   |   Y   |  Y  |    Y    |
-| SDL2 windows           |         |   Y   |   Y   |  Y  |         |
-| Webview                |         |   Y   |   Y   |  Y  |    Y    |
+| Feature | Windows | macOS | Linux | iOS | Android |
+|---------|:-------:|:-----:|:-----:|:---:|:-------:|
+| OpenGL  |         |   Y   |   Y   |  Y  |    Y    |
+| SDL2    |         |   Y   |   Y   |  Y  |         |
+| Webview |         |   Y   |   Y   |  Y  |    Y    |
 
 **Y** = complete, **-** = not applicable
 

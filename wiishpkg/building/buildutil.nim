@@ -39,11 +39,6 @@ proc getWiishPackageRoot*():string =
 proc DATADIR*():string =
   return getWiishPackageRoot()/"wiishpkg"/"building"/"data"
 
-template basename*(path:string):string =
-  ## Return a file's basename
-  let split = path.splitFile
-  split.name & split.ext
-
 proc getNimLibPath*(): string =
   ## Return the path to Nim's lib if it can be found
   let nimPath = findExe("nim")

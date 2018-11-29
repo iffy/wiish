@@ -13,8 +13,7 @@ bin           = @["wiish"]
 
 requires "nim >= 0.19.0"
 requires "parsetoml >= 0.3.2"
-# requires "argparse >= 0.2.0"
-requires "https://github.com/iffy/nim-argparse.git"
+requires "argparse >= 0.3.0" # "https://github.com/iffy/nim-argparse.git"
 # requires "https://github.com/mjendrusch/objc.git"
 
 # Graphics dependencies

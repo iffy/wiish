@@ -4,16 +4,21 @@ import parseopt
 import tables
 import macros
 import os
+import ospaths
 import logging
+import sequtils
 import parsetoml
 import wiishpkg/building/build
 import argparse
+
+const examples_dir = currentSourcePath.parentDir/"examples"
+const EXAMPLE_NAMES = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
 
 let p = newParser("wiish"):
   command "init":
     help("Create a new wiish application")
     arg("directory", default=".")
-    option("-b", "--base-template", help="Template to use", default="webview")
+    option("-b", "--base-template", help="Template to use.", default="webview", choices = EXAMPLE_NAMES)
     run:
       doInit(directory = opts.directory, example = opts.base_template)
   command "build":

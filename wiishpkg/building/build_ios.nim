@@ -41,7 +41,7 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
     xcodeProjPath = DATADIR()/"SDL/Xcode-iOS/SDL"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2.a"
   if not fileExists(result):
-    debug &"Building {result.basename}..."
+    debug &"Building {result.extractFilename}..."
     var args = @[
       "xcodebuild",
       "-project", xcodeProjPath/"SDL.xcodeproj",
@@ -55,7 +55,7 @@ proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
       args.add("ARCHS=arm64 armv7")
     run(args)
   else:
-    debug &"Using existing {result.basename}"
+    debug &"Using existing {result.extractFilename}"
   
   if not fileExists(result):
     raise newException(CatchableError, "Failed to build libSDL2.a")
@@ -67,7 +67,7 @@ proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
     xcodeProjPath = DATADIR()/"SDL_TTF/Xcode-iOS"
   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2_ttf.a"
   if not fileExists(result):
-    debug &"Building {result.basename}..."
+    debug &"Building {result.extractFilename}..."
     var args = @[
       "xcodebuild",
       "-project", xcodeProjPath/"SDL_ttf.xcodeproj",
@@ -81,7 +81,7 @@ proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
       args.add("ARCHS=arm64 armv7")
     run(args)
   else:
-    debug &"Using existing {result.basename}"
+    debug &"Using existing {result.extractFilename}"
   
   if not fileExists(result):
     raise newException(CatchableError, "Failed to build libSDL2.a")
@@ -89,7 +89,7 @@ proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
 proc listPossibleSDKVersions(simulator: bool):seq[string] =
   ## List all SDK versions installed on this computer
   for kind, thing in walkDir(simulator_sdk_root):
-    let name = thing.basename
+    let name = thing.extractFilename
     if name =~ re".*?(\d+\.\d+)\.sdk":
       result.add(matches[0])
 
@@ -157,7 +157,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     <key>CFBundleIdentifier</key>
     <string>{config.bundle_identifier}</string>
     <key>CFBundleExecutable</key>
-    <string>{executablePath.basename}</string>
+    <string>{executablePath.extractFilename}</string>
     <key>CFBundleShortVersionString</key>
     <string>{config.version}</string>
     <key>CFBundleVersion</key>
