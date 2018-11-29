@@ -90,11 +90,11 @@ proc doMacBuild*(directory:string, configPath:string) =
   <key>CFBundleDevelopmentRegion</key>
   <string>English</string>
   <key>CFBundleExecutable</key>
-  <string>{executablePath.basename}</string>
+  <string>{executablePath.extractFilename}</string>
   <key>CFBundleIdentifier</key>
   <string>{config.bundle_identifier}</string>
   <key>CFBundleIconFile</key>
-  <string>{iconDstPath.basename}</string>
+  <string>{iconDstPath.extractFilename}</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
