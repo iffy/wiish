@@ -272,7 +272,8 @@ proc doAndroidRun*(directory: string) =
 
   debug &"Watching logs ..."
   var logp = startProcess(command="adb", args = @[
-    "logcat", "-s",
+    "logcat",
+    # "-s",
     "-T", "1",
     # "ActivityManager",
     config.java_package_name,

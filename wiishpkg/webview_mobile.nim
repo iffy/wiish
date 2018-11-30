@@ -21,19 +21,22 @@ when defined(ios):
   #include <UIKit/UIKit.h>
   #include <WebKit/WebKit.h>
   """.}
-
+elif defined(android):
+  import jnim
+  # import java/lang
+  jclass org.wiish.wiishexample.WiishActivity of JVMObject:
+    proc evalJavaScript(js: string)
 
 type
   WebviewApp* = ref object of BaseApplication
     window*: WebviewWindow
   
-  WebviewWindow = ref object of BaseWindow
-    # app*: WebviewApp
+  WebviewWindow* = ref object of BaseWindow
     onMessage*: EventSource[string]
     when defined(ios):
-      wiishController: pointer
-    # nativeWindow: pointer
-    # wkwebview: pointer # Wiish
+      wiishController*: pointer
+    elif defined(android):
+      wiishActivity*: WiishActivity
 
 proc newWebviewApp(): WebviewApp =
   new(result)
@@ -43,6 +46,7 @@ proc newWebviewApp(): WebviewApp =
   result.window.onMessage = newEventSource[string]()
 
 proc sendMessage*(win:WebviewWindow, message:string) =
+  ## Send a message from Nim to JS
   when defined(ios):
     var
       controller = win.wiishController
@@ -50,17 +54,28 @@ proc sendMessage*(win:WebviewWindow, message:string) =
     {.emit: """
     [controller evalJavaScript:[NSString stringWithUTF8String:javascript]];
     """.}
-  else:
-    discard
+  elif defined(android):
+    debug "Sending message to JS ..."
+    debug "win: " & win.repr
+    var
+      activity = win.wiishActivity
+      javascript = &"wiish._handleMessage({%message});"
+    
+    # {.emit: """
+    # (*jenv)->ReleaseStringUTFChars(env, str, nativeString);
+    # """.}
+    activity.evalJavaScript(javascript)
 
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
-  when defined(ios):
-    when not compileOption("noMain"):
-      {.error: "Please run Nim with --noMain flag.".}
-    
-    proc nimwin() : WebviewWindow {.exportc.} = app.window
 
+  when not compileOption("noMain"):
+    {.error: "Please run Nim with --noMain flag.".}
+
+  # Procs common to ios and android
+  proc nimwin() : WebviewWindow {.exportc.} = app.window
+
+  when defined(ios):
     proc jsbridgecode() : cstring {.exportc.} =
       """
       window.wiish = {};
@@ -206,20 +221,32 @@ template start*(app: WebviewApp, url: string) =
     """ .}
     
   elif defined(android):
-    when not compileOption("noMain"):
-      {.error: "Please run Nim with --noMain flag.".}
+    import jnim
+    proc nim_didFinishLaunching() {.exportc.} =
+      debug "didFinishLaunching"
+      app.launched.emit(true)
     
+    # JNI helpers
     proc wiish_getInitURL(): cstring {.cdecl, exportc.} = url
     proc wiish_sendMessage(message:cstring) {.cdecl, exportc.} =
-      debug "sendMessage: " & $message
+      ## message sent from js to nim
+      app.window.onMessage.emit($message)
+
+    # proc saveActivity(env: JNIEnvPtr, obj: jobject) {.exportc: "Java_org_wiish_exampleapp_WiishActivity_wiish_1init".} =
+    proc saveActivity(obj: jobject) {.exportc.} =
+      debug "Saving activity obj: " & obj.repr
+      app.window.wiishActivity = WiishActivity.fromJObject(obj)
+      debug "wiishActivity: " & app.window.repr
 
     {.emit: """
-    #include <mainjni.h>
+    #include <mainjni.h> // mainjni.h is generated from WiishActivity.java by a utility script
     N_CDECL(void, NimMain)(void);
 
     JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
   (JNIEnv * env, jobject obj) {
       NimMain();
+      saveActivity(obj);
+      nim_didFinishLaunching();
     }
 
     JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
@@ -234,7 +261,7 @@ template start*(app: WebviewApp, url: string) =
       (*env)->ReleaseStringUTFChars(env, str, nativeString);
     }
 
-
+    /*
     extern int cmdCount;
     extern char** cmdLine;
     extern char** gEnv;
@@ -246,7 +273,10 @@ template start*(app: WebviewApp, url: string) =
       NimMain();
       return nim_program_result;
     }
+    */
     """.}
+
+    
   # app.willExit.emit(true)
 
 

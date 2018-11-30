@@ -43,6 +43,14 @@ public class WiishActivity extends Activity {
 	public native String wiish_getInitURL();
 	public native void wiish_sendMessage(String message);
 
+	public void evalJavaScript(String js) {
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+			webView.evaluateJavascript(js, null);
+		} else {
+			// XXX This is untested
+			webView.loadUrl("javascript:".concat(js));
+		}
+	}
 
 	private WebView webView;
 
@@ -65,7 +73,7 @@ public class WiishActivity extends Activity {
 			// }
 		});
 
-		// This multi-line string thing is ridiculous
+		// This multi-line string syntax is ridiculous
 		final String javascript = ""
 			+ "window.wiish = {};"
 			+ "window.wiish.handlers = [];"
@@ -89,13 +97,7 @@ public class WiishActivity extends Activity {
 			@Override
 			public void onPageFinished(WebView view, String url) {
 				super.onPageFinished(view, url);
-				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-					// wiish_sendMessage("Using new evaluateJavscript method");
-					view.evaluateJavascript(javascript, null);
-				} else {
-					// wiish_sendMessage("Using old javascript: method");
-					view.loadUrl("javascript:".concat(javascript));
-				}
+				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
 		//webView.getSettings().setSupportMultipleWindows(false);
