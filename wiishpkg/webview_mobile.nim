@@ -25,7 +25,7 @@ elif defined(android):
   import jnim
   # import java/lang
   jclass org.wiish.wiishexample.WiishActivity of JVMObject:
-    proc evalJavaScript(js: string)
+    proc evalJavaScript*(js: string)
 
 type
   WebviewApp* = ref object of BaseApplication
@@ -64,7 +64,8 @@ proc sendMessage*(win:WebviewWindow, message:string) =
     # {.emit: """
     # (*jenv)->ReleaseStringUTFChars(env, str, nativeString);
     # """.}
-    activity.evalJavaScript(javascript)
+    # activity.evalJavaScript(javascript)
+    # activity.callMethod()
 
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
@@ -237,6 +238,7 @@ template start*(app: WebviewApp, url: string) =
       debug "Saving activity obj: " & obj.repr
       app.window.wiishActivity = WiishActivity.fromJObject(obj)
       debug "wiishActivity: " & app.window.repr
+      # app.window.wiishActivity.evalJavaScript("wiish._handleMessage('hello');")
 
     {.emit: """
     #include <mainjni.h> // mainjni.h is generated from WiishActivity.java by a utility script
@@ -245,8 +247,13 @@ template start*(app: WebviewApp, url: string) =
     JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
   (JNIEnv * env, jobject obj) {
       NimMain();
-      saveActivity(obj);
-      nim_didFinishLaunching();
+      //saveActivity(obj);
+      //nim_didFinishLaunching();
+
+      //jstring jstr = (*env)->NewStringUTF(env, "alert(5);");
+      //jclass cls = (*env)->FindClass(env, "org/wiish/exampleapp/WiishActivity");
+      //jmethodID jmeth = (*env)->GetMethodID(env, cls, "evalJavaScript", "(Ljava/lang/String;)V");
+      //(*env)->CallVoidMethod(env, obj, jstr, jmeth);
     }
 
     JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
