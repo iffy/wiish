@@ -56,7 +56,6 @@ proc evalJavaScript*(win:WebviewWindow, js:string) =
     [controller evalJavaScript:[NSString stringWithUTF8String:javascript]];
     """.}
   elif defined(android):
-    # clearJNI()
     var
       activity = win.wiishActivity
       javascript = js
@@ -232,7 +231,7 @@ template start*(app: WebviewApp, url: string) =
     proc wiish_getInitURL(): cstring {.cdecl, exportc.} = url
     proc wiish_sendMessageToNim(message:cstring) {.cdecl, exportc.} =
       ## message sent from js to nim
-      clearJNI()
+      theEnv = nil
       app.window.onMessage.emit($message)
 
     # proc saveActivity(env: JNIEnvPtr, obj: jobject) {.exportc: "Java_org_wiish_exampleapp_WiishActivity_wiish_1init".} =
