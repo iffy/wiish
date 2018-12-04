@@ -25,10 +25,10 @@ JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInit
 
 /*
  * Class:     org_wiish_exampleapp_WiishActivity
- * Method:    wiish_sendMessage
+ * Method:    wiish_sendMessageToNim
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessage
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessageToNim
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus

@@ -28,8 +28,8 @@ class WiishJsBridge {
 		return message;
 	}
 	@JavascriptInterface
-	public void sendMessage(String message) {
-		activity.wiish_sendMessage(message);
+	public void sendMessageToNim(String message) {
+		activity.wiish_sendMessageToNim(message);
 	}
 }
 
@@ -41,11 +41,23 @@ public class WiishActivity extends Activity {
 	// JNI stuff
 	public native void wiish_init();
 	public native String wiish_getInitURL();
-	public native void wiish_sendMessage(String message);
+	public native void wiish_sendMessageToNim(String message);
 
-	public void evalJavaScript(String js) {
+	public String echoTest() {
+		return "This is a string";
+	}
+
+	public void evalJavaScript(final String js) {
+		if (webView == null) {
+			return;
+		}
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-			webView.evaluateJavascript(js, null);
+			webView.post(new Runnable() {
+				@Override
+				public void run() {
+					WiishActivity.this.webView.evaluateJavascript(js, null);
+				}
+			});
 		} else {
 			// XXX This is untested
 			webView.loadUrl("javascript:".concat(js));
@@ -56,8 +68,6 @@ public class WiishActivity extends Activity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		wiish_init();
-		wiish_sendMessage("Test message");
 
 		LinearLayout view = new LinearLayout(this);
 		view.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
@@ -86,7 +96,7 @@ public class WiishActivity extends Activity {
 			+ "  wiish.handlers.push(handler);"
 			+ "};"
 			+ "window.wiish.sendMessage = function(message) {"
-			+ "  wiishutil.sendMessage(message);"
+			+ "  wiishutil.sendMessageToNim(message);"
 			+ "};"
 			+ "";
 		webView.setWebViewClient(new WebViewClient() {
@@ -100,12 +110,14 @@ public class WiishActivity extends Activity {
 				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
+
+		wiish_init();
+		// wiish_sendMessage("Test message");
+
 		//webView.getSettings().setSupportMultipleWindows(false);
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
-		// webView.loadData("", "text/html", null);
 		webView.loadUrl(wiish_getInitURL());
-		//webView.loadUrl("javascript:alert(wiishthing.hello())");
 		view.addView(webView);
 	}
 }

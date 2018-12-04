@@ -39,6 +39,7 @@ let p = newParser("wiish"):
         linux = opts.linux)
   command "run":
     help("Run an application (from the current dir)")
+    flag("--verbose", "-v", help="Verbose log output")
     flag("--ios", help="Run app in the iOS Simulator")
     flag("--android", help="Run app in the Android Emulator")
     arg("directory", default=".")
@@ -46,7 +47,7 @@ let p = newParser("wiish"):
       if opts.ios:
         doiOSRun(directory = opts.directory)
       elif opts.android:
-        doAndroidRun(directory = opts.directory)
+        doAndroidRun(directory = opts.directory, verbose = opts.verbose)
       else:
         doDesktopRun(directory = opts.directory)
 
