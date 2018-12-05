@@ -100,6 +100,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
       &"-d:appJavaPackageName={config.java_package_name}",
       "--noMain",
       "--header",
+      # "--threads:on",
       "--compileOnly",
       "--nimcache:" & projectDir/"app"/"jni"/"src"/android_abi,
       appSrc,
@@ -235,7 +236,7 @@ template runningDevices() : seq[string] =
   ## List all currently running Android devices
   runoutput("adb", "devices").strip.splitLines[1..^1]
 
-proc doAndroidRun*(directory: string) =
+proc doAndroidRun*(directory: string, verbose: bool = false) =
   ## Run the application in the Android emulator
   let
     configPath = directory/"wiish.toml"
@@ -271,12 +272,12 @@ proc doAndroidRun*(directory: string) =
   run("adb", "install", "-r", "-t", apkPath)
 
   debug &"Watching logs ..."
-  var logp = startProcess(command="adb", args = @[
-    "logcat", "-s",
-    "-T", "1",
-    # "ActivityManager",
-    config.java_package_name,
-  ], options = {poUsePath, poParentStreams})
+  var logargs = @["logcat"]
+  logargs.add(@["-T", "1"])
+  if not verbose:
+    logargs.add("-s")
+    logargs.add(config.java_package_name)
+  var logp = startProcess(command="adb", args = logargs, options = {poUsePath, poParentStreams})
 
   let
     fullActivityName = config.fullActivityName()
