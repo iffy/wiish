@@ -60,9 +60,9 @@ Here is what's currently supported:
 
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| Run                    |         |   Y   |   Y   |  Y  |    Y    |
-| Create "app"           |         |   Y   |       |  Y  |    Y    |
-| Create installer       |         |       |       |     |         |
+| `wiish run`            |         |   Y   |   Y   |  Y  |    Y    |
+| `wiish build`          |         |   Y   |       |  Y  |    Y    |
+| `wiish package`        |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
 | Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
