@@ -2,6 +2,7 @@ import os
 import ospaths
 import osproc
 import strutils
+import logging
 
 template withDir*(dir: string, body: untyped): untyped =
   let origDir = getCurrentDir()
@@ -59,4 +60,6 @@ proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
       "-s", "format", "png",
       srcfile)
   else:
-    raise newException(CatchableError, "PNG resizing is not supported on this platform")
+    log.warn("PNG resizing is not supported on this platform.  Using full-sized image (which may not work)")
+    copyFile(srcfile, outfile)
+    # raise newException(CatchableError, "PNG resizing is not supported on this platform")
