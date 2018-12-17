@@ -13,7 +13,7 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 1. Install [Nim](https://nim-lang.org/install.html) and `nimble`
 
-2. Install Wiish and other dependencies:
+2. Install Wiish:
 
     ```
     nimble install https://github.com/iffy/wiish.git
