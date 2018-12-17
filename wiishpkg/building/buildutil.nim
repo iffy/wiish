@@ -60,6 +60,6 @@ proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
       "-s", "format", "png",
       srcfile)
   else:
-    log.warn("PNG resizing is not supported on this platform.  Using full-sized image (which may not work)")
+    warn "PNG resizing is not supported on this platform.  Using full-sized image (which may not work)"
     copyFile(srcfile, outfile)
     # raise newException(CatchableError, "PNG resizing is not supported on this platform")
