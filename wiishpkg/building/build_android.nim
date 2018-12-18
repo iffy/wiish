@@ -101,6 +101,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
       "--noMain",
       "--header",
       # "--threads:on",
+      "--hints:off",
       "--compileOnly",
       "--nimcache:" & projectDir/"app"/"jni"/"src"/android_abi,
       appSrc,
@@ -228,7 +229,7 @@ include $(BUILD_SHARED_LIBRARY)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
-    run("./gradlew", "assembleDebug")
+    run("/bin/bash", "gradlew", "assembleDebug")
   
   result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
 

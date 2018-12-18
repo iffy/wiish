@@ -18,6 +18,20 @@ matrix:
       env: CHANNEL=devel
       compiler: gcc
 
+    # Android testing
+    - os: linux
+      env:
+      - CHANNEL=stable
+      - WIISH_BUILD_ANDROID=yes
+      compiler: gcc
+      language: android
+      android:
+        components:
+          - build-tools-26.0.2
+          - android-26
+          - sys-img-x86-android-26
+          - sys-img-armeabi-v7a-android-17
+
     # On OSX we only test against clang (gcc is mapped to clang by default)
     - os: osx
       env: CHANNEL=stable

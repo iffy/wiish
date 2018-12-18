@@ -20,10 +20,17 @@ suite "build":
     if example.kind == pcDir:
       test("build examples/" & example.path.extractFilename):
         doBuild(example.path)
-      when defined(macosx):
-        if (example.path/"main_mobile.nim").fileExists:
-          test("build --ios examples/" & example.path.extractFilename):
+      if (example.path/"main_mobile.nim").fileExists:
+        test("build --ios examples/" & example.path.extractFilename):
+          when defined(macosx):
             doBuild(example.path, ios = true)
+          else:
+            skip
+        test("build --android examples/" & example.path.extractFilename):
+          if existsEnv("WIISH_BUILD_ANDROID"):
+            doBuild(example.path, android = true)
+          else:
+            skip
 
   test "init and build":
     let tmpdir = tmpDir()
@@ -34,8 +41,8 @@ suite "build":
     writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
     doBuild(tmpdir)
     
-  when defined(macosx):
-    test "init and build iOS":
+  test "init and build iOS":
+    when defined(macosx):
       let tmpdir = tmpDir()
       echo &"Testing inside: {tmpdir}"
       doInit(tmpdir, "sdl2")
@@ -43,3 +50,17 @@ suite "build":
       let path_to_wiishroot = pathToWiishRoot()
       writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
       doBuild(tmpdir, ios = true)
+    else:
+      skip
+  
+  test "init and build android":
+    if not existsEnv("WIISH_BUILD_ANDROID"):
+      skip
+    else:
+      let tmpdir = tmpDir()
+      echo &"Testing inside: {tmpdir}"
+      doInit(tmpdir, "webview")
+      # hack the path
+      let path_to_wiishroot = pathToWiishRoot()
+      writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
+      doBuild(tmpdir, android = true)
