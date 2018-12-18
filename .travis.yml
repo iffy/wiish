@@ -60,6 +60,7 @@ addons: # This will only be executed on Linux
 ## END: Assuming you rely on external dependencies
 
 install:
+  - if [[ "$WIISH_BUILD_ANDROID" == "yes" ]]; then sdkmanager ndk-bundle fi
   - if [[ "$WIISH_BUILD_ANDROID" == "yes" ]]; then sdkmanager --update && yes | sdkmanager --licenses; fi
   - export CHOOSENIM_NO_ANALYTICS=1
   - curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
