@@ -31,6 +31,11 @@ matrix:
           - android-26
           - sys-img-x86-android-26
           - sys-img-armeabi-v7a-android-17
+        licenses:
+          - 'android-sdk-preview-license-52d11cd2'
+          - 'android-sdk-license-.+'
+          - 'google-gdk-license-.+'
+
 
     # On OSX we only test against clang (gcc is mapped to clang by default)
     - os: osx
