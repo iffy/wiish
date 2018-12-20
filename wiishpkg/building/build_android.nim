@@ -108,6 +108,11 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     ])
     debug nimFlags.join(" ")
     run(nimFlags)
+    
+    let
+      nimbase_dst = projectDir/"app"/"jni"/"src"/android_abi/"nimbase.h"
+    debug &"Writing {nimbase_dst} ..."
+    nimbase_dst.writeFile(NIMBASE_H)
 
   # Android ABIs: https://developer.android.com/ndk/guides/android_mk#taa
   # nim --cpus: https://github.com/nim-lang/Nim/blob/devel/lib/system/platforms.nim#L14
@@ -136,11 +141,10 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
   var cfiles : seq[string]
   debug "Listing c files ..."
   for item in walkDir(projectDir/"app"/"jni"/"src"/"x86"):
-    if item.kind == pcFile and item.path.endsWith(".c"):
+    if item.kind == pcFile and (item.path.endsWith(".c") or item.path.endsWith(".h")):
       cfiles.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
   
-  let nimlib = getNimLibPath()
-  debug &"nimlib: {nimlib}"
+  
 
   replaceInFile(projectDir/"app"/"build.gradle", {
     "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
@@ -168,7 +172,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := main
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../SDL/include {nimlib}
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../SDL/include
 LOCAL_SRC_FILES := {cfiles.join(" ")}
 LOCAL_SHARED_LIBRARIES := SDL2
 LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
@@ -197,7 +201,6 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := main
-LOCAL_C_INCLUDES := {nimlib}
 LOCAL_SRC_FILES := {cfiles.join(" ")}
 LOCAL_LDLIBS := -llog
 

@@ -4,6 +4,9 @@ import osproc
 import strutils
 import logging
 
+const
+  NIMBASE_H* = slurp"data/nimbase.h"
+
 template withDir*(dir: string, body: untyped): untyped =
   let origDir = getCurrentDir()
   setCurrentDir(dir)
