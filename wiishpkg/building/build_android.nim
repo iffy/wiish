@@ -232,7 +232,7 @@ include $(BUILD_SHARED_LIBRARY)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
-    run("/bin/bash", "gradlew", "assembleDebug")
+    run("/bin/bash", "gradlew", "assembleDebug", "--console=plain")
   
   result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
 
