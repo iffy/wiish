@@ -141,7 +141,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
   var cfiles : seq[string]
   debug "Listing c files ..."
   for item in walkDir(projectDir/"app"/"jni"/"src"/"x86"):
-    if item.kind == pcFile and (item.path.endsWith(".c") or item.path.endsWith(".h")):
+    if item.kind == pcFile and item.path.endsWith(".c"):
       cfiles.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
   
   
