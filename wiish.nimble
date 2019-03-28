@@ -19,7 +19,6 @@ requires "jnim >= 0.4.2"
 
 # Graphics dependencies
 requires "opengl >= 1.2.1"
-requires "x11 >= 1.1"
 requires "webview"
 # requires "glfw >= 0.1.0"
 requires "https://github.com/Vladar4/sdl2_nim.git#master" # nimble install https://github.com/Vladar4/sdl2_nim.git@#master
