@@ -157,6 +157,8 @@ template start*(app: WebviewApp, url: string) =
       ];
 
       self.view = [[UIView alloc] initWithFrame:self.view.frame];
+      self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+      self.view.autoresizesSubviews = YES;
       self.view.backgroundColor = [UIColor greenColor];
       WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
       [theConfiguration.userContentController addScriptMessageHandler:self name:@"wiish"];
@@ -164,6 +166,8 @@ template start*(app: WebviewApp, url: string) =
 
       webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
       webView.navigationDelegate = self;
+      webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+      webView.autoresizesSubviews = YES;
       webView.scrollView.bounces = false;
       NSURL *nsurl=[NSURL URLWithString: [NSString stringWithUTF8String:getInitURL()]];
       NSURLRequest *nsrequest=[NSURLRequest requestWithURL:nsurl];
