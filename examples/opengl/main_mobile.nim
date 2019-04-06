@@ -4,7 +4,7 @@ import wiishpkg/sdlapp
 import logging
 import opengl
 
-import random
+from random import randomize, rand
 randomize()
 var
   r = 45/255.0
@@ -32,9 +32,9 @@ app.sdl_event.handle(evt):
   debug "Event"
   case evt.kind
   of MouseButtonDown:
-    r = random(255).toFloat / 255.0
-    g = random(255).toFloat / 255.0
-    b = random(255).toFloat / 255.0
+    r = rand(255).toFloat / 255.0
+    g = rand(255).toFloat / 255.0
+    b = rand(255).toFloat / 255.0
   else:
     discard
 
