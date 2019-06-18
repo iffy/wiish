@@ -83,6 +83,7 @@ proc doDesktopRun*(directory:string = ".") =
   # if defined(linux):
   #   args.add("--dynlibOverride:SDL2")
   args.add("-d:wiishDev")
+  args.add("-d:ssl")
   args.add("--threads:on")
   args.add("-r")
   args.add(src_file)
