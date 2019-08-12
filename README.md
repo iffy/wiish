@@ -61,7 +61,6 @@ Here is what's currently supported:
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | `wiish run`            |         |   Y   |   Y   |  Y  |    Y    |
-| `wiish build`          |         |   Y   |       |  Y  |    Y    |
 | `wiish doctor`         |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
@@ -81,14 +80,6 @@ Here is what's currently supported:
 | `mac-dmg`              |        |      |         | No code signing |
 | `win`                  |        |      |         | No code signing |
 | `win-installer`        |        |      |         | No code signing |
-
-**GUI**
-
-| Feature | Windows | macOS | Linux | iOS | Android |
-|---------|:-------:|:-----:|:-----:|:---:|:-------:|
-| OpenGL  |         |   Y   |   Y   |  Y  |    Y    |
-| SDL2    |         |   Y   |   Y   |  Y  |         |
-| Webview |         |   Y   |   Y   |  Y  |    Y    |
 
 **Y** = complete, **-** = not applicable
 
