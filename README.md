@@ -62,7 +62,7 @@ Here is what's currently supported:
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | `wiish run`            |         |   Y   |   Y   |  Y  |    Y    |
 | `wiish build`          |         |   Y   |       |  Y  |    Y    |
-| `wiish package`        |         |       |       |     |         |
+| `wiish doctor`         |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
 | Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
@@ -71,6 +71,16 @@ Here is what's currently supported:
 | Automatic updates      |         |       |       |  -  |    -    |
 | App icon               |         |   Y   |       |  Y  |    Y    |
 | File associations      |         |       |       |  -  |    -    |
+
+| `wiish build --target` | OpenGL | SDL2 | Webview | Notes           |
+|------------------------|:------:|:----:|:-------:|-----------------|
+| `android`              |        |      |         | No code signing |
+| `ios`                  |        |      |         | No code signing |
+| `linux`                |        |      |         | No code signing |
+| `mac`                  |        |      |    Y    | No code signing |
+| `mac-dmg`              |        |      |         | No code signing |
+| `win`                  |        |      |         | No code signing |
+| `win-installer`        |        |      |         | No code signing |
 
 **GUI**
 

@@ -1,6 +1,5 @@
 import ./events
 import os
-import ospaths
 
 type  
   BaseApplication* = ref object of RootRef
