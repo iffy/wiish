@@ -1,6 +1,5 @@
 import os
 import osproc
-import ospaths
 import parsetoml
 import sequtils
 import strutils
@@ -19,41 +18,40 @@ export doiOSRun
 export doAndroidRun
 
 type
-  PackedFile = tuple[
-    name: string,
-    contents: string,
-  ]
+  BuildTarget* = enum
+    MacApp = "mac",
+    MacDmg = "mac-dmg",
+    Ios = "ios",
+    Android = "android",
+    WinExe = "win",
+    WinInstaller = "win-installer",
+    LinuxBin = "linux",
 
-proc doBuild*(directory:string = ".", macos,ios,android,windows,linux:bool = false) =
+proc doBuild*(directory:string = ".", target:seq[BuildTarget] = @[]) =
   let
     configPath = directory/"wiish.toml"
-  var
-    macos = macos
-    ios = ios
-    android = android
-    linux = linux
-    windows = windows
-  if not macos and not windows and not linux and not ios and not android:
+  var target:seq[BuildTarget] = target
+  if target.len == 0:
     when defined(macosx):
-      macos = true
+      target.add(MacApp)
     elif defined(windows):
-      windows = true
+      target.add(WinExe)
     elif defined(linux):
-      linux = true
+      target.add(LinuxBin)
   
-  if macos:
+  if MacApp in target:
     info "Building macOS desktop..."
     doMacBuild(directory, configPath)
-  if ios:
+  if Ios in target:
     info "Building iOS app ..."
     discard doiOSBuild(directory, configPath)
-  if android:
+  if Android in target:
     info "Building Android app ..."
     discard doAndroidBuild(directory, configPath)
-  if windows:
+  if WinExe in target:
     info "Building Windows desktop..."
     doWindowsBuild(directory, configPath)
-  if linux:
+  if LinuxBin in target:
     info "Building Linux desktop..."
     doLinuxBuild(directory, configPath)
 

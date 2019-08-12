@@ -10,9 +10,18 @@ import sequtils
 import parsetoml
 import wiishpkg/building/build
 import argparse
+import sugar
 
 const examples_dir = currentSourcePath.parentDir/"examples"
 const EXAMPLE_NAMES = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
+
+proc handleBuild(directory:string, target:seq[string]) =
+  doBuild(
+    directory = directory,
+    target = target.map(proc (it: string): BuildTarget =
+      return parseEnum[BuildTarget](it)
+    ),
+  )
 
 let p = newParser("wiish"):
   command "init":
@@ -22,21 +31,20 @@ let p = newParser("wiish"):
     run:
       doInit(directory = opts.directory, example = opts.base_template)
   command "build":
-    help("Build a single-file app/binary")
-    flag("--mac", help="Build macOS desktop app")
-    flag("--win", help="Build Windows desktop app")
-    flag("--linux", help="Build Linux desktop app")
-    flag("--ios", help="Build iOS mobile app")
-    flag("--android", help="Build Android mobile app")
+    help("Build an application")
+    option("-t", "--target", multiple = true, choices = @[
+      $BuildTarget.MacApp,
+      $BuildTarget.MacDmg,
+      $BuildTarget.Ios,
+      $BuildTarget.Android,
+      $BuildTarget.WinExe,
+      $BuildTarget.WinInstaller,
+      $BuildTarget.LinuxBin,
+    ])
     arg("directory", default=".")
     run:
-      doBuild(
-        directory = opts.directory,
-        macos = opts.mac,
-        ios = opts.ios,
-        android = opts.android,
-        windows = opts.win,
-        linux = opts.linux)
+      handleBuild(opts.directory, opts.target)
+
   command "run":
     help("Run an application (from the current dir)")
     flag("--verbose", "-v", help="Verbose log output")

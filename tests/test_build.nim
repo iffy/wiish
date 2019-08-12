@@ -21,14 +21,14 @@ suite "build":
       test("build examples/" & example.path.extractFilename):
         doBuild(example.path)
       if (example.path/"main_mobile.nim").fileExists:
-        test("build --ios examples/" & example.path.extractFilename):
+        test("build --target ios examples/" & example.path.extractFilename):
           when defined(macosx):
-            doBuild(example.path, ios = true)
+            doBuild(example.path, target = @[Ios])
           else:
             skip
-        test("build --android examples/" & example.path.extractFilename):
+        test("build --target android examples/" & example.path.extractFilename):
           if existsEnv("WIISH_BUILD_ANDROID"):
-            doBuild(example.path, android = true)
+            doBuild(example.path, target = @[Android])
           else:
             skip
 
@@ -49,7 +49,7 @@ suite "build":
       # hack the path
       let path_to_wiishroot = pathToWiishRoot()
       writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
-      doBuild(tmpdir, ios = true)
+      doBuild(tmpdir, target = @[Ios])
     else:
       skip
   
@@ -63,4 +63,4 @@ suite "build":
       # hack the path
       let path_to_wiishroot = pathToWiishRoot()
       writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
-      doBuild(tmpdir, android = true)
+      doBuild(tmpdir, target = @[Android])

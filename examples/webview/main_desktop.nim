@@ -10,7 +10,7 @@ app.launched.handle:
   debug "App launched"
   let index = app.resourcePath("index.html").replace(" ", "%20")
   debug &"index path: {index}"
-  var w = app.newWindow(
+  discard app.newWindow(
     title = "Wiish Webview Demo",
     url = &"file://{index}")
   
