@@ -42,15 +42,21 @@ proc doBuild*(directory:string = ".", target:seq[BuildTarget] = @[]) =
   if MacApp in target:
     info "Building macOS desktop..."
     doMacBuild(directory, configPath)
+
   if Ios in target:
     info "Building iOS app ..."
-    discard doiOSBuild(directory, configPath)
+    let outputfile = doiOSBuild(directory, configPath)
+    info "Built: " & outputfile
+
   if Android in target:
     info "Building Android app ..."
-    discard doAndroidBuild(directory, configPath)
+    let outputfile = doAndroidBuild(directory, configPath)
+    info "Built: " & outputfile
+
   if WinExe in target:
     info "Building Windows desktop..."
     doWindowsBuild(directory, configPath)
+
   if LinuxBin in target:
     info "Building Linux desktop..."
     doLinuxBuild(directory, configPath)

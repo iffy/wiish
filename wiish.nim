@@ -9,6 +9,7 @@ import logging
 import sequtils
 import parsetoml
 import wiishpkg/building/build
+import wiishpkg/building/doctor
 import argparse
 import sugar
 
@@ -30,6 +31,7 @@ let p = newParser("wiish"):
     option("-b", "--base-template", help="Template to use.", default="webview", choices = EXAMPLE_NAMES)
     run:
       doInit(directory = opts.directory, example = opts.base_template)
+  
   command "build":
     help("Build an application")
     option("-t", "--target", multiple = true, choices = @[
@@ -58,6 +60,11 @@ let p = newParser("wiish"):
         doAndroidRun(directory = opts.directory, verbose = opts.verbose)
       else:
         doDesktopRun(directory = opts.directory)
+  
+  command "doctor":
+    help("Show what needs to be installed/configured to support various features")
+    run:
+      runWiishDoctor()
 
 if isMainModule:
   addHandler(newConsoleLogger())

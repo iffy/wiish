@@ -12,11 +12,11 @@ import parsetoml
 import ./config
 import ./buildutil
 
-proc getEnvOrFail(name: string, errmessage: string = ""): string =
-  if existsEnv(name):
-    getEnv(name)
-  else:
-    raise newException(CatchableError, &"Environment variable {name} must be set.  {errmessage}")
+# proc getEnvOrFail(name: string, errmessage: string = ""): string =
+#   if existsEnv(name):
+#     getEnv(name)
+#   else:
+#     raise newException(CatchableError, &"Environment variable {name} must be set.  {errmessage}")
 
 proc replaceInFile(filename: string, replacements: Table[string, string]) =
   ## Replace lines in a file with the given replacements
@@ -45,7 +45,7 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
     appSrc = directory/config.src
     sdlSrc = DATADIR()/"SDL"
     webviewSrc = DATADIR()/"android-webview"
-    appProject = projectDir/"app"/"jni"/"app"
+    # appProject = projectDir/"app"/"jni"/"app"
     srcResources = directory/config.resourceDir
     dstResources = projectDir/"app"/"src"/"main"/"assets"
     # androidNDKPath = getEnvOrFail("ANDROID_NDK", "Set to your local Android NDK path.  Download from https://developer.android.com/ndk/downloads/")
@@ -240,6 +240,11 @@ template runningDevices() : seq[string] =
   ## List all currently running Android devices
   runoutput("adb", "devices").strip.splitLines[1..^1]
 
+proc possibleDevices(): seq[string] =
+  ## List all installed android devices
+  let emulator_bin = findExe("emulator")
+  return runoutput(emulator_bin, "-list-avds").strip.splitLines
+
 proc doAndroidRun*(directory: string, verbose: bool = false) =
   ## Run the application in the Android emulator
   let
@@ -260,17 +265,18 @@ proc doAndroidRun*(directory: string, verbose: bool = false) =
   let device_list = runningDevices()
   debug &"devices: {device_list.repr}"
   if device_list.len == 0:
-    let possible_avds = runoutput("emulator", "-list-avds").strip.splitLines
+    let emulator_bin = findExe("emulator")
+    let possible_avds = possibleDevices()
     if possible_avds.len == 0:
       raise newException(CatchableError, "No emulators installed. XXX provide instructions to get them installed.")
     let avd = possible_avds[0]
     debug &"Launching {avd} ..."
-    withDir android_home/"tools":
-      var p = startProcess(command="emulator",
-        args = @["-avd", possible_avds[0], "-no-snapshot-save"], options = {poUsePath})
-      # XXX it would maybe be nice to leave this running...
-      debug "Waiting for device to boot ..."
-      run("adb", "wait-for-local-device")
+    
+    var p = startProcess(command=emulator_bin,
+      args = @["-avd", possible_avds[0], "-no-snapshot-save"], options = {poUsePath})
+    # XXX it would maybe be nice to leave this running...
+    debug "Waiting for device to boot ..."
+    run("adb", "wait-for-local-device")
   
   debug &"Installing apk {apkPath} ..."
   run("adb", "install", "-r", "-t", apkPath)
@@ -291,4 +297,44 @@ proc doAndroidRun*(directory: string, verbose: bool = false) =
   run("adb", "shell", "am", "start", "-a", "android.intent.action.MAIN", "-n", fullAppName)
 
   discard logp.waitForExit()
+
+
+proc checkDoctor*():seq[DoctorResult] =
+  var cap:DoctorResult
+  # emulator
+  cap = DoctorResult(name: "android/emulator")
+  if findExe("emulator") == "":
+    cap.status = NotWorking
+    cap.error = "Could not find 'emulator'"
+    cap.fix = "Download the Android SDK and include sdk/emulator in the PATH"
+  else:
+    cap.status = Working
+  result.add(cap)
+
+  # adb
+  cap = DoctorResult(name: "android/sdk-platform-tools")
+  if findExe("adb") == "":
+    cap.status = NotWorking
+    cap.error = "Could not find 'adb'"
+    cap.fix = "Download the Android SDK and include sdk/platform-tools in PATH"
+  else:
+    cap.status = Working
+  result.add(cap)
+  
+  # devices
+  cap = DoctorResult(name: "android/devices")
+  try:
+    let devices = possibleDevices()
+    if devices.len == 0:
+      cap.status = NotWorking
+      cap.error = "No Android emulation devices found"
+      cap.fix = "Use Android Studio to install a device. XXX need better instructions"
+    else:
+      cap.status = Working
+  except:
+    cap.status = NotWorking
+    cap.error = "Could not find 'emulator'"
+    cap.fix = "Fix android/emulator first"
+  result.add(cap)
+  
 

@@ -20,9 +20,11 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
     ```
 
 3. Install other dependencies:
-    - Android SDK and Android NDK for Android apps
+
+    Run `wiish doctor` to see what you need installed.  It will probably be:
+
     - **Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev libgtk-3-dev libwebkit2gtk-4.0-dev`
-    - **macOS**: no other deps
+    - **macOS**: Xcode
     - **Windows**: no other deps (maybe?)
 
 4. Create a project and run it:
@@ -61,7 +63,6 @@ Here is what's currently supported:
 | Feature                | Windows | macOS | Linux | iOS | Android |
 |------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
 | `wiish run`            |         |   Y   |   Y   |  Y  |    Y    |
-| `wiish doctor`         |         |       |       |     |         |
 | Code signing           |         |       |       |     |         |
 | Log to file            |         |   Y   |       |     |         |
 | Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
@@ -73,8 +74,8 @@ Here is what's currently supported:
 
 | `wiish build --target` | OpenGL | SDL2 | Webview | Notes           |
 |------------------------|:------:|:----:|:-------:|-----------------|
-| `android`              |        |      |         | No code signing |
-| `ios`                  |        |      |         | No code signing |
+| `android`              |        |      |    Y    | No code signing |
+| `ios`                  |        |      |    Y    | No code signing |
 | `linux`                |        |      |         | No code signing |
 | `mac`                  |        |      |    Y    | No code signing |
 | `mac-dmg`              |        |      |         | No code signing |
