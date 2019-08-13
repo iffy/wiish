@@ -304,3 +304,24 @@ proc doiOSRun*(directory:string = ".") =
   # Watch the logs
   run("xcrun", "simctl", "spawn", "booted", "log", "stream",
     "--predicate", &"subsystem contains \"{config.bundle_identifier}\"")
+
+
+proc checkDoctor*():seq[DoctorResult] =
+  var cap:DoctorResult
+  when defined(macosx):
+    cap = DoctorResult(name: "ios/xcode")
+    if findExe("xcrun") == "":
+      cap.status = NotWorking
+      cap.error = "xcode not found"
+      cap.fix = "Install Xcode command line tools"
+    else:
+      cap.status = Working
+    result.add(cap)
+  else:
+    result.add(DoctorResult(
+      name: "ios",
+      error: "iOS can only be built on the macOS operating system",
+      fix: "Spend money to fix this",
+    ))
+  
+    

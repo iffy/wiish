@@ -4,6 +4,16 @@ import osproc
 import strutils
 import logging
 
+type
+  DoctorStatus* = enum
+    NotWorking,
+    Working,
+  DoctorResult* = object
+    name*: string
+    status*: DoctorStatus
+    error*: string
+    fix*: string
+
 const
   NIMBASE_H* = slurp"data/nimbase.h"
 
