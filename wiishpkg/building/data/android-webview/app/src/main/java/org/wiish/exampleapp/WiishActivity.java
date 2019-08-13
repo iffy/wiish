@@ -1,5 +1,7 @@
 package org.wiish.exampleapp;
 
+import java.lang.Thread;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.WebView;
@@ -24,15 +26,14 @@ class WiishJsBridge {
 	}
 
 	@JavascriptInterface
-	public String echo(String message) {
-		return message;
-	}
-	@JavascriptInterface
 	public void sendMessageToNim(String message) {
+		Log.d("org.wiish.webviewexample", "JAVA sendMessageToNim: " + message + " thread: " +  Thread.currentThread().getName() + " " + Thread.currentThread().getId());
 		activity.wiish_sendMessageToNim(message);
 	}
+
 	@JavascriptInterface
 	public void signalJSIsReady() {
+		Log.d("org.wiish.webviewexample", "JAVA signalJSIsReady thread: " + Thread.currentThread().getName() + " " + Thread.currentThread().getId());
 		activity.wiish_signalJSIsReady();
 	}
 }
@@ -47,10 +48,6 @@ public class WiishActivity extends Activity {
 	public native String wiish_getInitURL();
 	public native void wiish_sendMessageToNim(String message);
 	public native void wiish_signalJSIsReady();
-
-	public String echoTest() {
-		return "This is a string";
-	}
 
 	public void evalJavaScript(final String js) {
 		if (webView == null) {
@@ -121,6 +118,10 @@ public class WiishActivity extends Activity {
 			+ "if (onReadyFunc) { onReadyFunc(); }"
 			+ "wiishutil.signalJSIsReady();"
 			+ "";
+
+		wiish_init();
+		// wiish_sendMessageToNim("Test message");
+
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView webView, String url) {
@@ -129,17 +130,14 @@ public class WiishActivity extends Activity {
 			@Override
 			public void onPageFinished(WebView view, String url) {
 				super.onPageFinished(view, url);
+				Log.d("org.wiish.webviewexample", "JAVA onPageFinished " + Thread.currentThread().getName() + " " + Thread.currentThread().getId());
 				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
-
-		wiish_init();
-		// wiish_sendMessage("Test message");
-
-		//webView.getSettings().setSupportMultipleWindows(false);
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
 		webView.loadUrl(wiish_getInitURL());
 		view.addView(webView);
+		Log.d("org.wiish.webviewexample", "JAVA addView done: " + Thread.currentThread().getName() + " " + Thread.currentThread().getId());
 	}
 }

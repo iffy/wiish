@@ -50,6 +50,7 @@ proc newWebviewApp(): WebviewApp =
 
 proc evalJavaScript*(win:WebviewWindow, js:string) =
   ## Evaluate some JavaScript in the webview
+  debug "evalJavascript: " & js
   when defined(ios):
     var
       controller = win.wiishController
@@ -62,6 +63,7 @@ proc evalJavaScript*(win:WebviewWindow, js:string) =
       activity = win.wiishActivity
       javascript = js
     activity.evalJavaScript(javascript)
+  debug "js evaluated"
 
 proc sendMessage*(win:WebviewWindow, message:string) =
   ## Send a message from Nim to JS
@@ -256,29 +258,67 @@ template start*(app: WebviewApp, url: string) =
   #--------------------------------------------------------
   elif defined(android):
     import jnim
-    proc nim_didFinishLaunching() {.exportc.} =
-      debug "didFinishLaunching"
-      # debug "thread id: " & $getThreadId()
-      app.launched.emit(true)
     
+    template withJNI(body:untyped):untyped =
+      debug "withJNI: ", $getThreadId()
+      if theEnv.isNil():
+        checkInit()
+        debug "initJNI"
+        body
+        # debug "deinitJNI"
+        # deinitJNIThread()
+        # debug "deinited"
+      else:
+        debug "JNI already available"
+        body
+
     # JNI helpers
-    proc wiish_getInitURL(): cstring {.cdecl, exportc.} = url
-    proc wiish_sendMessageToNim(message:cstring) {.cdecl, exportc.} =
+    proc wiish_c_jniinit() {.exportc.} =
+      withJNI:
+        debug "c_jniinit: " & $getThreadId()
+
+    proc wiish_c_log() {.exportc.} =
+      withJNI:
+        debug "wiish_c_log: "
+
+    proc wiish_c_didFinishLaunching() {.exportc.} =
+      withJNI:
+        debug "wiish_c_didFinishLaunching"
+        # debug "thread id: " & $getThreadId()
+        app.launched.emit(true)
+    
+    proc wiish_c_getInitURL(): cstring {.exportc.} =
+      withJNI:
+        debug "wiish_c_getInitURL: ", $url
+        result = url
+
+    proc wiish_c_sendMessageToNim(message:cstring) {.exportc.} =
       ## message sent from js to nim
-      debug "message sent from js to nim"
-      theEnv = nil
-      app.window.onMessage.emit($message)
+      withJNI:
+        debug "wiish_c_sendMessageToNim"
+        # debug "thread id: " & $getThreadId()
+        # theEnv = nil
+        # let msg = $message
+        # debug "message? ", msg
+        # app.window.onMessage.emit(msg)
+        # app.window.onMessage.emit("something")
 
-    proc wiish_signalJSIsReady() {.cdecl, exportc.} =
+    proc wiish_c_signalJSIsReady() {.exportc.} =
       ## Child page is ready for messages
-      debug "JS is ready for messages"
-      theEnv = nil
-      app.window.onReady.emit(true)
+      withJNI:
+        debug "wiish_c_signalJSIsReady"
+        # debug "thread id: " & $getThreadId()
+        # theEnv = nil
+        # app.window.onReady.emit(true)
 
-    # proc saveActivity(env: JNIEnvPtr, obj: jobject) {.exportc: "Java_org_wiish_exampleapp_WiishActivity_wiish_1init".} =
-    proc saveActivity(obj: jobject) {.exportc.} =
-      # initJNIThread()
-      app.window.wiishActivity = WiishActivity.fromJObject(obj)
+    # proc wiish_c_saveActivity(env: JNIEnvPtr, obj: jobject) {.exportc: "Java_org_wiish_exampleapp_WiishActivity_wiish_1init".} =
+    proc wiish_c_saveActivity(obj: jobject) {.exportc.} =
+      ## Store the activity where Nim can get to it for sending
+      ## messages to JavaScript
+      withJNI:
+        debug "wiish_c_saveActivity"
+        # debug "thread id: " & $getThreadId()
+        app.window.wiishActivity = WiishActivity.fromJObject(obj)
 
     {.emit: """
     #include <org_wiish_exampleapp_WiishActivity.h> // This file is generated from WiishActivity.java by ./updateJNIheaders.sh
@@ -287,40 +327,36 @@ template start*(app: WebviewApp, url: string) =
     JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
   (JNIEnv * env, jobject obj) {
       NimMain();
-      saveActivity(obj);
-      nim_didFinishLaunching();
+      //wiish_c_jniinit();
+
+      wiish_c_log();
+      jobject gobj = (*env)->NewGlobalRef(env, obj);
+      wiish_c_saveActivity(gobj);
+
+      //wiish_c_saveActivity(obj);
+      wiish_c_log();
+      wiish_c_didFinishLaunching();
+      wiish_c_log();
     }
 
     JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
   (JNIEnv * env, jobject obj) {
-      return (*env)->NewStringUTF(env, wiish_getInitURL());
+      wiish_c_log();
+      return (*env)->NewStringUTF(env, wiish_c_getInitURL());
     }
 
     JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessageToNim
   (JNIEnv * env, jobject obj, jstring str) {
+      wiish_c_log();
       const char *nativeString = (*env)->GetStringUTFChars(env, str, 0);
-      wiish_sendMessageToNim(nativeString);
+      //wiish_c_sendMessageToNim(nativeString);
       (*env)->ReleaseStringUTFChars(env, str, nativeString);
     }
 
     JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIsReady
   (JNIEnv * env, jobject obj) {
-      wiish_signalJSIsReady();
+      wiish_c_signalJSIsReady();
     }
-
-    /*
-    extern int cmdCount;
-    extern char** cmdLine;
-    extern char** gEnv;
-    
-    int main(int argc, char** args) {
-      cmdLine = args;
-      cmdCount = argc;
-      gEnv = NULL;
-      NimMain();
-      return nim_program_result;
-    }
-    */
     """.}
 
     

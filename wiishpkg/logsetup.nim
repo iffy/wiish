@@ -88,7 +88,7 @@ elif defined(android):
       try:
         systemLog(ln)
       except IOError:
-        discard
+        systemLog("IOError while attempting to log")
   
   var android_logger = new AndroidLogger
   android_logger.fmtStr = "$levelname "
