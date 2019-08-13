@@ -92,3 +92,32 @@ See the [`examples`](./examples) directory for more examples of how to use this 
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to Wiish development.
 
+
+
+# Webview messaging
+
+Wiish enables you to send/receive strings between JavaScript and your Nim code.
+
+In JavaScript do this:
+
+```javascript
+window.wiish = window.wiish || {};
+wiish.onReady = () => {
+    wiish.onMessage(message => {
+        // Handle message from Nim
+    })
+    wiish.sendMessage("Hello Nim! -Sincerely JavaScript");
+}
+```
+
+In Nim do this:
+
+```nim
+import wiishpkg/webview_mobile
+
+app.launched.handle:
+    app.window.onReady.handle:
+        app.window.sendMessage("Looks like you're ready, JS!")
+    app.window.onMessage.handle(message):
+        app.window.sendMessage("Thanks for the message, JS.")
+```

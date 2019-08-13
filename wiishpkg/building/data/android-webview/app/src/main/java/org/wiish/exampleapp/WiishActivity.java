@@ -31,6 +31,10 @@ class WiishJsBridge {
 	public void sendMessageToNim(String message) {
 		activity.wiish_sendMessageToNim(message);
 	}
+	@JavascriptInterface
+	public void signalJSIsReady() {
+		activity.wiish_signalJSIsReady();
+	}
 }
 
 public class WiishActivity extends Activity {
@@ -42,6 +46,7 @@ public class WiishActivity extends Activity {
 	public native void wiish_init();
 	public native String wiish_getInitURL();
 	public native void wiish_sendMessageToNim(String message);
+	public native void wiish_signalJSIsReady();
 
 	public String echoTest() {
 		return "This is a string";
@@ -85,19 +90,36 @@ public class WiishActivity extends Activity {
 
 		// This multi-line string syntax is ridiculous
 		final String javascript = ""
-			+ "window.wiish = {};"
+			+ "const readyrunner = {"
+			+ "	set: function(obj, prop, value) {"
+			+ "   if (prop === 'onReady') { value(); }"
+			+ "   obj[prop] = value;"
+			+ "   return true;"
+			+ " }"
+			+ "};"
+			// Check to see if onReady is already installed
+			+ "let onReadyFunc;"
+			+ "if (window.wiish && window.wiish.onReady) {"
+			+ "	 onReadyFunc = window.wiish.onReady;"
+			+ "}"
+			+ "window.wiish = new Proxy({}, readyrunner);"
 			+ "window.wiish.handlers = [];"
+			// Called by Nim code to transmit a message to JS
 			+ "window.wiish._handleMessage = function(message) {"
 			+ "	 for (var i = 0; i < window.wiish.handlers.length; i++) {"
 			+ "    window.wiish.handlers[i](message);"
 			+ "  }"
 			+ "};"
+			// Called by JS application code to watch for messages from Nim
 			+ "window.wiish.onMessage = function(handler) {"
 			+ "  wiish.handlers.push(handler);"
 			+ "};"
+			// Called by JS application code to send messages to Nim
 			+ "window.wiish.sendMessage = function(message) {"
 			+ "  wiishutil.sendMessageToNim(message);"
 			+ "};"
+			+ "if (onReadyFunc) { onReadyFunc(); }"
+			+ "wiishutil.signalJSIsReady();"
 			+ "";
 		webView.setWebViewClient(new WebViewClient() {
 			@Override

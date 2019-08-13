@@ -33,6 +33,7 @@ type
     window*: WebviewWindow
   
   WebviewWindow* = ref object of BaseWindow
+    onReady*: EventSource[bool]
     onMessage*: EventSource[string]
     when defined(ios):
       wiishController*: pointer
@@ -45,6 +46,7 @@ proc newWebviewApp(): WebviewApp =
   result.willExit = newEventSource[bool]()
   new(result.window)
   result.window.onMessage = newEventSource[string]()
+  result.window.onReady = newEventSource[bool]()
 
 proc evalJavaScript*(win:WebviewWindow, js:string) =
   ## Evaluate some JavaScript in the webview
@@ -75,10 +77,24 @@ template start*(app: WebviewApp, url: string) =
   # Procs common to ios and android
   proc nimwin() : WebviewWindow {.exportc.} = app.window
 
+  #--------------------------------------------------------
+  # iOS
+  #--------------------------------------------------------
   when defined(ios):
     proc jsbridgecode() : cstring {.exportc.} =
       """
-      window.wiish = {};
+      const readyrunner = {
+        set: function(obj, prop, value) {
+          if (prop === 'onReady') { value(); }
+          obj[prop] = value;
+          return true;
+        }
+      };
+      let onReadyFunc;
+      if (window.wiish && window.wiish.onReady) {
+        onReadyFunc = window.wiish.onReady;
+      }
+      window.wiish = new Proxy({}, readyrunner);
       window.wiish.handlers = [];
       /**
        * Called by Nim code to transmit a message to JS.
@@ -103,6 +119,8 @@ template start*(app: WebviewApp, url: string) =
       window.wiish.sendMessage = function(message) {
         window.webkit.messageHandlers.wiish.postMessage(message);
       };
+      if (onReadyFunc) { onReadyFunc(); }
+      window.webkit.messageHandlers.wiish_internal_ready.postMessage('');
       """
 
     proc doLog(x:cstring) {.exportc.} =
@@ -121,7 +139,11 @@ template start*(app: WebviewApp, url: string) =
     proc nim_applicationWillTerminate() {.exportc.} =
       debug "applicationWillTerminate"
     
-    proc nim_gotMessage(x:cstring) {.exportc.} =
+    proc nim_signalJSMessagesReady() {.exportc.} =
+      debug "nim_signalJSMessagesReady"
+      app.window.onReady.emit(true)
+    proc nim_sendMessageToNim(x:cstring) {.exportc.} =
+      debug "nim_sendMessageToNim: " & $x
       app.window.onMessage.emit($x)
     
     proc getInitURL(): cstring {.exportc.} = url
@@ -142,7 +164,11 @@ template start*(app: WebviewApp, url: string) =
       [webView evaluateJavaScript:jscript completionHandler:nil];
     }
     - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-      nim_gotMessage([message.body UTF8String]);
+      if (message.name == @"wiish_internal_ready") {
+        nim_signalJSMessagesReady();
+      } else {
+        nim_sendMessageToNim([message.body UTF8String]);
+      }
     }
     - (void)viewDidLoad {
       [super viewDidLoad];
@@ -162,6 +188,7 @@ template start*(app: WebviewApp, url: string) =
       self.view.backgroundColor = [UIColor greenColor];
       WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
       [theConfiguration.userContentController addScriptMessageHandler:self name:@"wiish"];
+      [theConfiguration.userContentController addScriptMessageHandler:self name:@"wiish_internal_ready"];
       [theConfiguration.userContentController addUserScript:userScript];
 
       webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
@@ -223,7 +250,10 @@ template start*(app: WebviewApp, url: string) =
         }
     }
     """ .}
-    
+
+  #--------------------------------------------------------
+  # Android
+  #--------------------------------------------------------
   elif defined(android):
     import jnim
     proc nim_didFinishLaunching() {.exportc.} =
@@ -235,8 +265,15 @@ template start*(app: WebviewApp, url: string) =
     proc wiish_getInitURL(): cstring {.cdecl, exportc.} = url
     proc wiish_sendMessageToNim(message:cstring) {.cdecl, exportc.} =
       ## message sent from js to nim
+      debug "message sent from js to nim"
       theEnv = nil
       app.window.onMessage.emit($message)
+
+    proc wiish_signalJSIsReady() {.cdecl, exportc.} =
+      ## Child page is ready for messages
+      debug "JS is ready for messages"
+      theEnv = nil
+      app.window.onReady.emit(true)
 
     # proc saveActivity(env: JNIEnvPtr, obj: jobject) {.exportc: "Java_org_wiish_exampleapp_WiishActivity_wiish_1init".} =
     proc saveActivity(obj: jobject) {.exportc.} =
@@ -244,7 +281,7 @@ template start*(app: WebviewApp, url: string) =
       app.window.wiishActivity = WiishActivity.fromJObject(obj)
 
     {.emit: """
-    #include <mainjni.h> // mainjni.h is generated from WiishActivity.java by a utility script
+    #include <org_wiish_exampleapp_WiishActivity.h> // This file is generated from WiishActivity.java by ./updateJNIheaders.sh
     N_CDECL(void, NimMain)(void);
 
     JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
@@ -264,6 +301,11 @@ template start*(app: WebviewApp, url: string) =
       const char *nativeString = (*env)->GetStringUTFChars(env, str, 0);
       wiish_sendMessageToNim(nativeString);
       (*env)->ReleaseStringUTFChars(env, str, nativeString);
+    }
+
+    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIsReady
+  (JNIEnv * env, jobject obj) {
+      wiish_signalJSIsReady();
     }
 
     /*
