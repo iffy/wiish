@@ -26,15 +26,23 @@ class WiishJsBridge {
 	}
 
 	@JavascriptInterface
-	public void sendMessageToNim(String message) {
-		Log.d("org.wiish.webviewexample", "JAVA sendMessageToNim: " + message + " thread: " +  Thread.currentThread().getName() + " " + Thread.currentThread().getId());
-		activity.wiish_sendMessageToNim(message);
+	public void sendMessageToNim(final String message) {
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				activity.wiish_sendMessageToNim(message);
+			}
+		});
 	}
 
 	@JavascriptInterface
-	public void signalJSIsReady() {
-		Log.d("org.wiish.webviewexample", "JAVA signalJSIsReady thread: " + Thread.currentThread().getName() + " " + Thread.currentThread().getId());
-		activity.wiish_signalJSIsReady();
+	public void signalJSIsReady() {		
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				activity.wiish_signalJSIsReady();
+			}
+		});
 	}
 }
 
@@ -89,7 +97,7 @@ public class WiishActivity extends Activity {
 		final String javascript = ""
 			+ "const readyrunner = {"
 			+ "	set: function(obj, prop, value) {"
-			+ "   if (prop === 'onReady') { value(); }"
+			+ "   if (prop === 'onReady') { value(); wiishutil.signalJSIsReady(); }"
 			+ "   obj[prop] = value;"
 			+ "   return true;"
 			+ " }"
@@ -115,12 +123,11 @@ public class WiishActivity extends Activity {
 			+ "window.wiish.sendMessage = function(message) {"
 			+ "  wiishutil.sendMessageToNim(message);"
 			+ "};"
-			+ "if (onReadyFunc) { onReadyFunc(); }"
-			+ "wiishutil.signalJSIsReady();"
+			// Run any existing onReady function
+			+ "if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }"
 			+ "";
 
 		wiish_init();
-		// wiish_sendMessageToNim("Test message");
 
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
@@ -130,7 +137,6 @@ public class WiishActivity extends Activity {
 			@Override
 			public void onPageFinished(WebView view, String url) {
 				super.onPageFinished(view, url);
-				Log.d("org.wiish.webviewexample", "JAVA onPageFinished " + Thread.currentThread().getName() + " " + Thread.currentThread().getId());
 				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
@@ -138,6 +144,5 @@ public class WiishActivity extends Activity {
 		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
 		webView.loadUrl(wiish_getInitURL());
 		view.addView(webView);
-		Log.d("org.wiish.webviewexample", "JAVA addView done: " + Thread.currentThread().getName() + " " + Thread.currentThread().getId());
 	}
 }
