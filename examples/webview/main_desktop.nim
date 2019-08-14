@@ -4,19 +4,23 @@ import strformat
 import strutils
 import logging
 
-info "Start"
+let index = app.resourcePath("index.html").replace(" ", "%20")
 
 app.launched.handle:
-  debug "App launched"
-  let index = app.resourcePath("index.html").replace(" ", "%20")
-  debug &"index path: {index}"
-  discard app.newWindow(
+  debug "app: App launched"
+  let window = app.newWindow(
     title = "Wiish Webview Demo",
-    url = &"file://{index}")
+    url = &"file://{index}"
+  )
+  window.onMessage.handle(message):
+    info "app: onMessage: " & message
+    window.sendMessage("Hello from Nim! " & message)
+  window.onReady.handle:
+    info "app: onReady"
   
 
 app.willExit.handle:
-  debug "App is exiting"
+  debug "app: App is exiting"
 
 app.start()
 
