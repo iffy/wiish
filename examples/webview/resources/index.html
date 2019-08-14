@@ -42,36 +42,20 @@
       <div class="button" style="background-color: black; color: white;">black</div>
     </div>
     <script>
-      // Because Android doesn't provide a reliable way to
-      // inject JavaScript that runs before anything else,
-      // we have to poll for the existence of window.wiish.
-      // On iOS this should happen immediately.
-      function onWiish() {
-        return new Promise(function(resolve, reject) {
-          if (window.wiish !== undefined) {
-            resolve(true);
-          } else {
-            var interval = setInterval(function() {
-              if (window.wiish !== undefined) {
-                clearInterval(interval);
-                resolve(true);
-              }
-            }, 10);
-          }
-        })
-      }
-      onWiish().then(function() {
+      window.wiish = window.wiish || {};
+      window.wiish.onReady = () => {
         const div = document.getElementById('messages');
         div.innerText = "start";
-        wiish.sendMessage("Hello from JavaScript!");
-        wiish.onMessage(function(msg) {
+        window.wiish.sendMessage("Hello from JavaScript!");
+        div.innerText = 'sent message from JavaScript';
+        window.wiish.onMessage(function(msg) {
           div.innerText = msg;
         });
         setInterval(function() {
-          wiish.sendMessage("still working")
-        }, 5000);  
-      })
-      
+          window.wiish.sendMessage("still working" + Date());
+          div.innerText = "Sent message: " + Date();
+        }, 2000);  
+      }
     </script>
   </body>
 </html>

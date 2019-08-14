@@ -1,5 +1,7 @@
 package org.wiish.exampleapp;
 
+import java.lang.Thread;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.WebView;
@@ -24,12 +26,23 @@ class WiishJsBridge {
 	}
 
 	@JavascriptInterface
-	public String echo(String message) {
-		return message;
+	public void sendMessageToNim(final String message) {
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				activity.wiish_sendMessageToNim(message);
+			}
+		});
 	}
+
 	@JavascriptInterface
-	public void sendMessageToNim(String message) {
-		activity.wiish_sendMessageToNim(message);
+	public void signalJSIsReady() {		
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				activity.wiish_signalJSIsReady();
+			}
+		});
 	}
 }
 
@@ -42,10 +55,7 @@ public class WiishActivity extends Activity {
 	public native void wiish_init();
 	public native String wiish_getInitURL();
 	public native void wiish_sendMessageToNim(String message);
-
-	public String echoTest() {
-		return "This is a string";
-	}
+	public native void wiish_signalJSIsReady();
 
 	public void evalJavaScript(final String js) {
 		if (webView == null) {
@@ -85,20 +95,40 @@ public class WiishActivity extends Activity {
 
 		// This multi-line string syntax is ridiculous
 		final String javascript = ""
-			+ "window.wiish = {};"
+			+ "const readyrunner = {"
+			+ "	set: function(obj, prop, value) {"
+			+ "   if (prop === 'onReady') { value(); wiishutil.signalJSIsReady(); }"
+			+ "   obj[prop] = value;"
+			+ "   return true;"
+			+ " }"
+			+ "};"
+			// Check to see if onReady is already installed
+			+ "let onReadyFunc;"
+			+ "if (window.wiish && window.wiish.onReady) {"
+			+ "	 onReadyFunc = window.wiish.onReady;"
+			+ "}"
+			+ "window.wiish = new Proxy({}, readyrunner);"
 			+ "window.wiish.handlers = [];"
+			// Called by Nim code to transmit a message to JS
 			+ "window.wiish._handleMessage = function(message) {"
 			+ "	 for (var i = 0; i < window.wiish.handlers.length; i++) {"
 			+ "    window.wiish.handlers[i](message);"
 			+ "  }"
 			+ "};"
+			// Called by JS application code to watch for messages from Nim
 			+ "window.wiish.onMessage = function(handler) {"
 			+ "  wiish.handlers.push(handler);"
 			+ "};"
+			// Called by JS application code to send messages to Nim
 			+ "window.wiish.sendMessage = function(message) {"
 			+ "  wiishutil.sendMessageToNim(message);"
 			+ "};"
+			// Run any existing onReady function
+			+ "if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }"
 			+ "";
+
+		wiish_init();
+
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView webView, String url) {
@@ -110,11 +140,6 @@ public class WiishActivity extends Activity {
 				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
-
-		wiish_init();
-		// wiish_sendMessage("Test message");
-
-		//webView.getSettings().setSupportMultipleWindows(false);
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
 		webView.loadUrl(wiish_getInitURL());
