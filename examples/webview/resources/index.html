@@ -42,18 +42,26 @@
       <div class="button" style="background-color: black; color: white;">black</div>
     </div>
     <script>
+      const messages = document.getElementById('messages');
+      function log(msg) {
+        let div = document.createElement('div');
+        div.innerText = msg;
+        messages.appendChild(div);
+        setTimeout(() => {
+          messages.removeChild(div);
+        }, 1999);
+      }
       window.wiish = window.wiish || {};
       window.wiish.onReady = () => {
-        const div = document.getElementById('messages');
-        div.innerText = "start";
+        log("wiish.onReady");
         window.wiish.sendMessage("Hello from JavaScript!");
-        div.innerText = 'sent message from JavaScript';
+        log("sent message from JavaScript");
         window.wiish.onMessage(function(msg) {
-          div.innerText = msg;
+          log("got message: " + msg);
         });
         setInterval(function() {
           window.wiish.sendMessage("still working" + Date());
-          div.innerText = "Sent message: " + Date();
+          log("Sent message: " + Date());
         }, 2000);  
       }
     </script>
