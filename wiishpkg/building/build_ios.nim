@@ -2,19 +2,21 @@
 ##
 import os
 import osproc
-import ospaths
 import strformat
 import strutils
 import parsetoml
 import posix
 import re
 import logging
+import sequtils
 
 import ./config
 import ./buildutil
 
 const
   simulator_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
+  ios_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/"
+  CODE_SIGN_IDENTITY_VARNAME = "WIISH_IOS_SIGNING_IDENTITY"
 
 type
   CodeSignIdentity = object
@@ -33,6 +35,10 @@ proc listCodesigningIdentities(): seq[CodeSignIdentity] =
       identity.shortid = matches[2]
       identity.fullname = &"{identity.name} ({identity.shortid})"
       result.add(identity)
+
+proc signApp(path:string, identity:string) =
+  ## Sign an iOS/macOS app using an identity
+  run("codesign", "-s", identity, "-v", path)
 
 proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2.a, creating it if necessary
@@ -88,20 +94,20 @@ proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
 
 proc listPossibleSDKVersions(simulator: bool):seq[string] =
   ## List all SDK versions installed on this computer
-  for kind, thing in walkDir(simulator_sdk_root):
+  let rootdir = if simulator: simulator_sdk_root else: ios_sdk_root
+  for kind, thing in walkDir(rootdir):
     let name = thing.extractFilename
     if name =~ re".*?(\d+\.\d+)\.sdk":
       result.add(matches[0])
 
-proc doiOSBuild*(directory:string, configPath:string, release:bool = true):string =
+proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simulator = false):string =
   ## Build an iOS .app
   ## Returns the path to the packaged .app
   let
     config = getiOSConfig(configPath)
     buildDir = directory/config.dst/"ios"
     appSrc = directory/config.src
-    simulator = true
-    sdkName = if simulator: "iphonesimulator" else: "iphoneos"
+    # sdkName = if simulator: "iphonesimulator" else: "iphoneos"
     identities = listCodesigningIdentities()
     appDir = buildDir/config.name & ".app"
     appInfoPlistPath = appDir/"Info.plist"
@@ -122,7 +128,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   if simulator:
     sdkPath = simulator_sdk_root / "iPhoneSimulator" & sdk_version & ".sdk"
   else:
-    raise newException(CatchableError, "Non-simulator not yet supported")
+    sdkPath = ios_sdk_root / "iPhoneOS" & sdk_version & ".sdk"
 
   result = appDir
   
@@ -183,9 +189,6 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
     createDir(dstResources)
     copyDir(srcResources, dstResources)
 
-  # debug "Choosing signing identity ..."
-  # let signing_identity = identities[0].fullname
-
   if config.windowFormat == SDL:
     debug "Obtaining SDL2 library ..."
     sdllibSrc = buildSDLlib(sdk_version, simulator)
@@ -215,9 +218,15 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
       "-d:simulator",
     ])
   else:
-    raise newException(CatchableError, "Non-simulator not yet supported")
+    nimFlags.add([
+      "--cpu:arm64",
+    ])
+    linkAndCompile(&"-arch arm64")
   
-  linkAndCompile(&"-mios-simulator-version-min={sdk_version}")
+  if simulator:
+    linkAndCompile(&"-mios-simulator-version-min={sdk_version}")
+  else:
+    linkAndCompile(&"-mios-version-min={sdk_version}")
   if config.windowFormat == SDL:
     linkerFlags.add([
       "-fobjc-link-runtime",
@@ -255,10 +264,23 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true):strin
   # debug args.join(" ")
   run(args)
 
+  if not simulator:
+    var signing_identity = getEnv(CODE_SIGN_IDENTITY_VARNAME, "")
+    if signing_identity == "":
+      if identities.len > 0:
+        debug &"Since {CODE_SIGN_IDENTITY_VARNAME} was not set, choosing a signing identity at random ..."
+        signing_identity = identities[0].fullname
+    debug "Signing identity: ", signing_identity
+    if signing_identity == "":
+      debug "Skipping signing; no identity set."
+    else:
+      debug "Signing app..."
+      signApp(appDir, signing_identity)
+
 proc doiOSRun*(directory:string = ".") =
   ## Run the application in an iOS simulator
   var
-    args: seq[string]
+    # args: seq[string]
     p: Process
   let
     configPath = directory/"wiish.toml"
@@ -266,7 +288,7 @@ proc doiOSRun*(directory:string = ".") =
 
   # compile the app
   debug "Compiling app..."
-  let apppath = doiOSBuild(directory, configPath, release = false)
+  let apppath = doiOSBuild(directory, configPath, release = false, simulator = true)
   
   # open the simulator
   debug "Opening simulator..."
@@ -314,6 +336,27 @@ proc checkDoctor*():seq[DoctorResult] =
       cap.status = NotWorking
       cap.error = "xcode not found"
       cap.fix = "Install Xcode command line tools"
+    else:
+      cap.status = Working
+    result.add(cap)
+
+    cap = DoctorResult(name: "ios/signingkeys")
+    let identities = listCodesigningIdentities().filterIt(it.fullname.startsWith("iPhone"))
+    if identities.len == 0:
+      cap.status = NotWorking
+      cap.error = "No valid signing keys installed"
+      cap.fix = "Obtain iPhone signing keys from Apple and install them in your keychain."
+    else:
+      cap.status = Working
+    result.add(cap)
+
+    cap = DoctorResult(name: "ios/chosenkey")
+    if getEnv(CODE_SIGN_IDENTITY_VARNAME, "") == "":
+      cap.status = NotWorking
+      cap.error = "No identity chosen for iOS code signing"
+      cap.fix = &"Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by 'security find-identity -v -p codesigning'"
+      if identities.len > 0:
+        cap.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work")
     else:
       cap.status = Working
     result.add(cap)
