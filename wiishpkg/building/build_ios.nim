@@ -267,12 +267,15 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simul
   if not simulator:
     var signing_identity = getEnv(CODE_SIGN_IDENTITY_VARNAME, "")
     if signing_identity == "":
-      debug &"Since {CODE_SIGN_IDENTITY_VARNAME} was not set, choosing a signing identity at random ..."
-      signing_identity = identities[0].fullname
+      if identities.len > 0:
+        debug &"Since {CODE_SIGN_IDENTITY_VARNAME} was not set, choosing a signing identity at random ..."
+        signing_identity = identities[0].fullname
     debug "Signing identity: ", signing_identity
-
-    debug "Signing app..."
-    signApp(appDir, signing_identity)
+    if signing_identity == "":
+      debug "Skipping signing; no identity set."
+    else:
+      debug "Signing app..."
+      signApp(appDir, signing_identity)
 
 proc doiOSRun*(directory:string = ".") =
   ## Run the application in an iOS simulator
