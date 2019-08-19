@@ -1,7 +1,6 @@
 import os
 import osproc
 import re
-import ospaths
 import logging
 import strformat
 import strutils
@@ -32,7 +31,7 @@ template fullActivityName(config:Config):string =
   ## Return the java.style.activity.name of an app
   config.java_package_name & "." & config.activityName()
 
-proc doAndroidBuild*(directory:string, configPath:string): string =
+proc doAndroidBuild*(directory:string, config:Config): string =
   ## Package an Android app
   ## Returns the path to the app
 
@@ -40,7 +39,6 @@ proc doAndroidBuild*(directory:string, configPath:string): string =
   # - ./docs/README-android.md
   # - ./build-scripts/androidbuild.sh
   let
-    config = getAndroidConfig(configPath)
     projectDir = directory/config.dst/"android"/"project"/config.java_package_name
     appSrc = directory/config.src
     sdlSrc = DATADIR()/"SDL"
@@ -250,7 +248,7 @@ proc doAndroidRun*(directory: string, verbose: bool = false) =
   ## Run the application in the Android emulator
   let
     configPath = directory/"wiish.toml"
-    config = getAndroidConfig(configPath)
+    config = getAndroidConfig(parseConfig(configPath))
 
   let adb_bin = findExe("adb")
   if adb_bin == "":
@@ -260,7 +258,7 @@ proc doAndroidRun*(directory: string, verbose: bool = false) =
   debug &"Android SDK path = {android_home}"
 
   debug "Building app ..."
-  let apkPath = doAndroidBuild(directory, configPath)
+  let apkPath = doAndroidBuild(directory, config)
 
   debug "Opening emulator ..."
   let device_list = runningDevices()

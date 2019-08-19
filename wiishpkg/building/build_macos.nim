@@ -1,6 +1,5 @@
 import os
 import osproc
-import ospaths
 import strformat
 import parsetoml
 import posix
@@ -35,10 +34,9 @@ proc createICNS*(srcfile:string, output:string) =
     run("iconutil", "-c", "icns", "--output", output, iconsetPath)
     removeDir(iconsetPath)
 
-proc doMacBuild*(directory:string, configPath:string) =
+proc doMacBuild*(directory:string, config:Config) =
   ## Build a macOS .app
   let
-    config = getMacosConfig(configPath)
     buildDir = directory/config.dst/"macos"
     appSrc = directory/config.src
     appDir = buildDir/config.name & ".app"

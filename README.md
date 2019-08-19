@@ -35,9 +35,11 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
     wiish run
     ```
 
-See `wiish --help` for how to build executables and apps.  For example:
+See `wiish --help` for how to build executables and apps and configure a project.  For example:
 
 ```
+wiish doctor
+wiish config
 wiish run --ios
 wiish run --android
 wiish build

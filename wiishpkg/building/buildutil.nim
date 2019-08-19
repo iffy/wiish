@@ -1,5 +1,4 @@
 import os
-import ospaths
 import osproc
 import strutils
 import logging

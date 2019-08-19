@@ -135,11 +135,11 @@ proc listPossibleSDKVersions(simulator: bool):seq[string] =
     if name =~ re".*?(\d+\.\d+)\.sdk":
       result.add(matches[0])
 
-proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simulator = false):string =
+
+proc doiOSBuild*(directory:string, config:Config):string =
   ## Build an iOS .app
   ## Returns the path to the packaged .app
   let
-    config = getiOSConfig(configPath)
     buildDir = directory/config.dst/"ios"
     appSrc = directory/config.src
     # sdkName = if simulator: "iphonesimulator" else: "iphoneos"
@@ -149,6 +149,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simul
     executablePath = appDir/"executable"
     srcResources = directory/config.resourceDir
     dstResources = appDir/"static"
+    simulator = config.ios_simulator
   var
     nimFlags, linkerFlags, compilerFlags: seq[string]
     sdk_version = config.sdk_version
@@ -348,11 +349,11 @@ proc doiOSRun*(directory:string = ".") =
     p: Process
   let
     configPath = directory/"wiish.toml"
-    config = getiOSConfig(configPath)
+    config = getiOSConfig(parseConfig(configPath))
 
   # compile the app
   debug "Compiling app..."
-  let apppath = doiOSBuild(directory, configPath, release = false, simulator = true)
+  let apppath = doiOSBuild(directory, config)
   
   # open the simulator
   debug "Opening simulator..."
