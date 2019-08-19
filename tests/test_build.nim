@@ -2,7 +2,7 @@ import unittest
 import os
 import strformat
 import random
-import ospaths
+import wiishpkg/building/config
 import wiishpkg/building/build
 import wiishpkg/building/buildutil
 
@@ -23,12 +23,14 @@ suite "build":
       if (example.path/"main_mobile.nim").fileExists:
         test("build --target ios examples/" & example.path.extractFilename):
           when defined(macosx):
-            doBuild(example.path, target = @[Ios])
+            var config = parseConfig(example.path/"wiish.toml")
+            config.override($IsSimulator, true)
+            doBuild(example.path, target = Ios, config)
           else:
             skip
         test("build --target android examples/" & example.path.extractFilename):
           if existsEnv("WIISH_BUILD_ANDROID"):
-            doBuild(example.path, target = @[Android])
+            doBuild(example.path, target = Android)
           else:
             skip
 
@@ -49,7 +51,9 @@ suite "build":
       # hack the path
       let path_to_wiishroot = pathToWiishRoot()
       writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
-      doBuild(tmpdir, target = @[Ios])
+      var config = parseConfig(tmpdir/"wiish.toml")
+      config.override($IsSimulator, true)
+      doBuild(tmpdir, target = Ios, config)
     else:
       skip
   
@@ -63,4 +67,4 @@ suite "build":
       # hack the path
       let path_to_wiishroot = pathToWiishRoot()
       writeFile(tmpdir/"config.nims", &"""switch("path", "{path_to_wiishroot}")""")
-      doBuild(tmpdir, target = @[Android])
+      doBuild(tmpdir, target = Android)

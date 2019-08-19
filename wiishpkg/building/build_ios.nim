@@ -9,6 +9,8 @@ import posix
 import re
 import logging
 import sequtils
+import xmltree
+import xmlparser
 
 import ./config
 import ./buildutil
@@ -17,6 +19,10 @@ const
   simulator_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
   ios_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/"
   CODE_SIGN_IDENTITY_VARNAME = "WIISH_IOS_SIGNING_IDENTITY"
+  PROVISIONING_PROFILE_VARNAME = "WIISH_IOS_PROVISIONING_PROFILE_PATH"
+
+var
+  PROV_PROFILE_DIR = expandTilde("~/Library/MobileDevice/Provisioning Profiles")
 
 type
   CodeSignIdentity = object
@@ -36,9 +42,38 @@ proc listCodesigningIdentities(): seq[CodeSignIdentity] =
       identity.fullname = &"{identity.name} ({identity.shortid})"
       result.add(identity)
 
-proc signApp(path:string, identity:string) =
+proc listProvisioningProfiles(): seq[string] =
+  for kind, thing in walkDir(PROV_PROFILE_DIR):
+    result.add(thing)
+
+proc formatCmd(args:seq[string]):string =
+  ## NOT SECURE, but good enough
+  var res:seq[string]
+  for arg in args:
+    if " " in arg:
+      res.add(&"'{arg}'")
+    else:
+      res.add(arg)
+  return res.join(" ")
+
+proc signApp(path:string, identity:string, entitlements_path:string = "") =
   ## Sign an iOS/macOS app using an identity
-  run("codesign", "-s", identity, "-v", path)
+
+  # Figuring this out was a lot of trial and error.
+  # Building an iOS project in Xcode and following along with
+  # the build log helped.
+  var cmd = @[
+    "codesign",
+    "--sign", identity,
+    "--timestamp=none",
+    "--verbose",
+  ]
+  if entitlements_path != "":
+    cmd.add(["--entitlements", entitlements_path])
+  cmd.add(path)
+  echo "Running cmd:"
+  echo cmd.formatCmd()
+  run(cmd)
 
 proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
   ## Returns the path to libSDL2.a, creating it if necessary
@@ -100,11 +135,11 @@ proc listPossibleSDKVersions(simulator: bool):seq[string] =
     if name =~ re".*?(\d+\.\d+)\.sdk":
       result.add(matches[0])
 
-proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simulator = false):string =
+
+proc doiOSBuild*(directory:string, config:Config):string =
   ## Build an iOS .app
   ## Returns the path to the packaged .app
   let
-    config = getiOSConfig(configPath)
     buildDir = directory/config.dst/"ios"
     appSrc = directory/config.src
     # sdkName = if simulator: "iphonesimulator" else: "iphoneos"
@@ -114,6 +149,7 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simul
     executablePath = appDir/"executable"
     srcResources = directory/config.resourceDir
     dstResources = appDir/"static"
+    simulator = config.ios_simulator
   var
     nimFlags, linkerFlags, compilerFlags: seq[string]
     sdk_version = config.sdk_version
@@ -265,17 +301,46 @@ proc doiOSBuild*(directory:string, configPath:string, release:bool = true, simul
   run(args)
 
   if not simulator:
+    # provisioning profile
+    var prov_profile = getEnv(PROVISIONING_PROFILE_VARNAME, "")
+    if prov_profile == "":
+      let options = listProvisioningProfiles()
+      if options.len > 0:
+        debug &"Since {PROVISIONING_PROFILE_VARNAME} was not set, choosing a provisioning profile at random ..."
+        prov_profile = options[0]
+      else:
+        raise newException(CatchableError, "No provisioning profile set.  Run 'wiish doctor' for instructions.")
+    
+    let dst = appDir/"embedded.mobileprovision"
+    debug &"Copying '{prov_profile}' to '{dst}'"
+    copyFile(prov_profile, dst)
+
+    # Extract entitlements from provisioning profile and put them in the signature
+    let prov_guts = prov_profile.readFile()
+    let i_prestart = prov_guts.find("<key>Entitlements")
+    let i_start = prov_guts.find("<dict>", i_prestart)
+    let i_end = prov_guts.find("</dict>", i_start) + "</dict>".len
+    let entitlements = prov_guts[i_start .. i_end]
+    let entitlements_file = buildDir/"Entitlements.plist"
+    writeFile(entitlements_file, &"""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      {entitlements}
+      </plist>
+    """)
+
     var signing_identity = getEnv(CODE_SIGN_IDENTITY_VARNAME, "")
     if signing_identity == "":
       if identities.len > 0:
         debug &"Since {CODE_SIGN_IDENTITY_VARNAME} was not set, choosing a signing identity at random ..."
         signing_identity = identities[0].fullname
-    debug "Signing identity: ", signing_identity
+
     if signing_identity == "":
-      debug "Skipping signing; no identity set."
-    else:
-      debug "Signing app..."
-      signApp(appDir, signing_identity)
+      raise newException(CatchableError, "No signing identity chosen. Run 'wiish doctor' for instructions.")
+    debug &"Signing app with identity {signing_identity}..."
+    signApp(appDir, signing_identity, entitlements_file)
+    entitlements_file.removeFile()
 
 proc doiOSRun*(directory:string = ".") =
   ## Run the application in an iOS simulator
@@ -284,11 +349,11 @@ proc doiOSRun*(directory:string = ".") =
     p: Process
   let
     configPath = directory/"wiish.toml"
-    config = getiOSConfig(configPath)
+    config = getiOSConfig(parseConfig(configPath))
 
   # compile the app
   debug "Compiling app..."
-  let apppath = doiOSBuild(directory, configPath, release = false, simulator = true)
+  let apppath = doiOSBuild(directory, config)
   
   # open the simulator
   debug "Opening simulator..."
@@ -356,7 +421,21 @@ proc checkDoctor*():seq[DoctorResult] =
       cap.error = "No identity chosen for iOS code signing"
       cap.fix = &"Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by 'security find-identity -v -p codesigning'"
       if identities.len > 0:
-        cap.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work")
+        cap.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
+    else:
+      cap.status = Working
+    result.add(cap)
+
+    cap = DoctorResult(name: "ios/provisioningprofile")
+    if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
+      cap.status = NotWorking
+      cap.error = "No provisioning profile chosen for iOS code signing"
+      cap.fix = &"Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found in '{PROV_PROFILE_DIR}' though they can also be downloaded from Apple."
+      let possible_profiles = listProvisioningProfiles()
+      if possible_profiles.len == 0:
+        cap.fix.add("  You *might* be able to create such a profile by opening Xcode, creating a blank iOS project, enabling 'Automatically manage signing' and building the project once.  TODO: come up with less goofy instructions.")
+      else:
+        cap.fix.add(&"  For instance: {PROVISIONING_PROFILE_VARNAME}='{possible_profiles[0]}' might work.")
     else:
       cap.status = Working
     result.add(cap)

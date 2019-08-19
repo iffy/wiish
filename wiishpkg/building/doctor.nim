@@ -28,6 +28,7 @@ proc display(res:DoctorResult) =
   
 
 proc runWiishDoctor*() =
+  echo "oo ee oo ah ah"
   for res in build_android.checkDoctor():
     res.display()
   for res in build_ios.checkDoctor():

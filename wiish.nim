@@ -1,5 +1,6 @@
 ## wiish command line interface
 import strformat
+import strutils
 import parseopt
 import tables
 import macros
@@ -8,6 +9,7 @@ import ospaths
 import logging
 import sequtils
 import parsetoml
+import wiishpkg/building/config
 import wiishpkg/building/build
 import wiishpkg/building/doctor
 import argparse
@@ -16,13 +18,13 @@ import sugar
 const examples_dir = currentSourcePath.parentDir/"examples"
 const EXAMPLE_NAMES = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
 
-proc handleBuild(directory:string, target:seq[string]) =
+proc handleBuild(directory:string, target:string, parsed_config:TomlValueRef) =
   doBuild(
     directory = directory,
-    target = target.map(proc (it: string): BuildTarget =
-      return parseEnum[BuildTarget](it)
-    ),
+    target = parseEnum[BuildTarget](target),
+    parsed_config = parsed_config,
   )
+
 
 let p = newParser("wiish"):
   command "init":
@@ -34,18 +36,33 @@ let p = newParser("wiish"):
   
   command "build":
     help("Build an application")
-    option("-t", "--target", multiple = true, choices = @[
+    option("-t", "--target", choices = @[
       $BuildTarget.MacApp,
-      $BuildTarget.MacDmg,
+      # $BuildTarget.MacDmg,
       $BuildTarget.Ios,
       $BuildTarget.Android,
       $BuildTarget.WinExe,
-      $BuildTarget.WinInstaller,
+      # $BuildTarget.WinInstaller,
       $BuildTarget.LinuxBin,
     ])
     arg("directory", default=".")
+    # --- ios options
+    for opt in low(ConfigOption)..high(ConfigOption):
+      case opt
+      of IsSimulator:
+        flag("--ios-simulator", help="Build for the iOS simulator instead of a real phone")
+      else:
+        discard
     run:
-      handleBuild(opts.directory, opts.target)
+      var parsed = parseConfig(opts.directory/"wiish.toml")
+      for opt in low(ConfigOption)..high(ConfigOption):
+        case opt
+        of IsSimulator:
+          # cli_config.ios_simulator = opts.ios_simulator
+          parsed.override($opt, true)
+        else:
+          discard
+      handleBuild(opts.directory, opts.target, parsed)
 
   command "run":
     help("Run an application (from the current dir)")
@@ -59,12 +76,17 @@ let p = newParser("wiish"):
       elif opts.android:
         doAndroidRun(directory = opts.directory, verbose = opts.verbose)
       else:
-        doDesktopRun(directory = opts.directory)
+        doDesktopRun(directory = opts.directory, parseConfig(opts.directory/"wiish.toml"))
   
   command "doctor":
     help("Show what needs to be installed/configured to support various features")
     run:
       runWiishDoctor()
+  
+  command "config":
+    help("Display a full config file")
+    run:
+      echo defaultConfig()
 
 if isMainModule:
   addHandler(newConsoleLogger())

@@ -19,6 +19,7 @@ export doAndroidRun
 
 type
   BuildTarget* = enum
+    AutoDetect = "",
     MacApp = "mac",
     MacDmg = "mac-dmg",
     Ios = "ios",
@@ -27,57 +28,60 @@ type
     WinInstaller = "win-installer",
     LinuxBin = "linux",
 
-proc doBuild*(directory:string = ".", target:seq[BuildTarget] = @[]) =
-  let
-    configPath = directory/"wiish.toml"
-  var target:seq[BuildTarget] = target
-  if target.len == 0:
+proc doBuild*(directory:string = ".", target:BuildTarget = AutoDetect, parsed_config: TomlValueRef) =
+  var target = target
+  if target == AutoDetect:
     when defined(macosx):
-      target.add(MacApp)
+      target = MacApp
     elif defined(windows):
-      target.add(WinExe)
+      target = WinExe
     elif defined(linux):
-      target.add(LinuxBin)
+      target = LinuxBin
   
-  if MacApp in target:
+  case target
+  of MacApp:
     info "Building macOS desktop..."
-    doMacBuild(directory, configPath)
-
-  if Ios in target:
+    let config = getMacosConfig(parsed_config)
+    doMacBuild(directory, config)
+  of Ios:
     info "Building iOS app ..."
-    let outputfile = doiOSBuild(directory, configPath)
+    let config = getiOSConfig(parsed_config)
+    let outputfile = doiOSBuild(directory, config)
     info "Built: " & outputfile
-
-  if Android in target:
+  of Android:
     info "Building Android app ..."
-    let outputfile = doAndroidBuild(directory, configPath)
+    let config = getAndroidConfig(parsed_config)
+    let outputfile = doAndroidBuild(directory, config)
     info "Built: " & outputfile
-
-  if WinExe in target:
+  of WinExe:
     info "Building Windows desktop..."
-    doWindowsBuild(directory, configPath)
-
-  if LinuxBin in target:
+    let config = getWindowsConfig(parsed_config)
+    doWindowsBuild(directory, config)
+  of LinuxBin:
     info "Building Linux desktop..."
-    doLinuxBuild(directory, configPath)
+    let config = getLinuxConfig(parsed_config)
+    doLinuxBuild(directory, config)
+  else:
+    raise newException(CatchableError, "Building type not yet supported")
 
-proc doDesktopRun*(directory:string = ".") =
+proc doBuild*(directory:string = ".", target:BuildTarget = AutoDetect) =
+  doBuild(directory, target, parseConfig(directory/"wiish.toml"))
+
+proc doDesktopRun*(directory:string = ".", parsed_config: TomlValueRef) =
   ## Run the desktop application
   var
     args: seq[string]
     src_file: string
     config: Config
-  let
-    configPath = directory/"wiish.toml"
   when defined(macosx):
     args.add("nim")
-    config = getMacosConfig(configPath)
+    config = getMacosConfig(parsed_config)
   elif defined(windows):
     args.add("nim.exe")
-    config = getWindowsConfig(configPath)
+    config = getWindowsConfig(parsed_config)
   elif defined(linux):
     args.add("nim")
-    config = getLinuxConfig(configPath)
+    config = getLinuxConfig(parsed_config)
   else:
     raise newException(CatchableError, "Unknown OS")
   src_file = directory/config.src
