@@ -123,3 +123,8 @@ app.launched.handle:
     app.window.onMessage.handle(message):
         app.window.sendMessage("Thanks for the message, JS.")
 ```
+
+
+# A note on quality
+
+This library works as advertised, but it is a huge mess.  I'm learning as I'm going, and trying to wrangle all these platforms is ridiculous.  I happily welcome suggestions (and pull requests).

@@ -23,10 +23,9 @@ when defined(ios):
   """.}
 elif defined(android):
   import jnim
-  # import java/lang
   jclass org.wiish.wiishexample.WiishActivity of JVMObject:
     proc evalJavaScript*(js: string)
-    proc echoTest*():string
+    proc getInternalStoragePath*(): string
 
 type
   WebviewApp* = ref object of BaseApplication
@@ -66,6 +65,39 @@ proc evalJavaScript*(win:WebviewWindow, js:string) =
 proc sendMessage*(win:WebviewWindow, message:string) =
   ## Send a message from Nim to JS
   evalJavaScript(win, &"wiish._handleMessage({%message});")
+
+
+#-----------------------------------------------------------
+# File system
+#-----------------------------------------------------------
+
+when defined(ios):
+  {.passL: "-framework Foundation" .}
+  import darwin/objc/runtime
+  proc NSHomeDirectory*(): NSString {.importc.}
+
+when defined(android):
+  {.emit: """
+  #include <android/native_activity.h>
+  """.}
+
+proc documentsPath*(app:WebviewApp):string =
+  ## Get the path to a mobile app's private document storage directory
+  ##
+  ## On iOS, this is the app's Documents directory.
+  ## On Android, this is the root of the internal storage directory.
+  when defined(ios):
+    # iOS doesn't need an app ref but Android does
+    $(NSHomeDirectory().UTF8String()) / "Documents"
+  elif defined(android):
+    var activity = app.window.wiishActivity
+    var path = activity.getInternalStoragePath()
+    result = $path
+
+
+#-----------------------------------------------------------
+# main()
+#-----------------------------------------------------------
 
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
@@ -321,8 +353,6 @@ template start*(app: WebviewApp, url: string) =
     }
     """.}
 
-    
-  # app.willExit.emit(true)
 
 
 var app* = newWebviewApp()
