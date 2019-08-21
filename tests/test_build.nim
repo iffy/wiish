@@ -18,8 +18,12 @@ suite "build":
   # Build all the examples/
   for example in walkDir(currentSourcePath.parentDir.parentDir/"examples"):
     if example.kind == pcDir:
-      test("build examples/" & example.path.extractFilename):
-        doBuild(example.path)
+      # Desktop example apps
+      if (example.path/"main_desktop.nim").fileExists:
+        test("build examples/" & example.path.extractFilename):
+          doBuild(example.path)
+      
+      # Mobile example apps
       if (example.path/"main_mobile.nim").fileExists:
         test("build --target ios examples/" & example.path.extractFilename):
           when defined(macosx):

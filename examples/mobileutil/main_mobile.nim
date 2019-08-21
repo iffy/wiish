@@ -1,5 +1,6 @@
 ## Hello, World Wiish App
 import wiishpkg/webview_mobile
+import wiishpkg/mobileutil
 import os
 import strformat
 import strutils
@@ -13,7 +14,7 @@ app.launched.handle:
   app.window.onMessage.handle(message):
     case message
     of "fs":
-      let path = app.documentsPath()
+      let path = documentsPath()
       debug "got documents path: ", path
       let somefile = path/"atest.txt"
       if somefile.existsFile():

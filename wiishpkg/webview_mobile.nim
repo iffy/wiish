@@ -1,10 +1,8 @@
 ## Module for making mobile Webview applications.
 import macros
 import times
+import os
 import strformat
-import darwin/app_kit
-import darwin/objc/runtime
-import darwin/foundation
 import logging
 import json
 
@@ -21,7 +19,9 @@ when defined(ios):
   #include <UIKit/UIKit.h>
   #include <WebKit/WebKit.h>
   """.}
-elif defined(android):
+  import darwin/objc/runtime
+
+when defined(android):
   import jnim
   jclass org.wiish.wiishexample.WiishActivity of JVMObject:
     proc evalJavaScript*(js: string)
@@ -65,35 +65,6 @@ proc evalJavaScript*(win:WebviewWindow, js:string) =
 proc sendMessage*(win:WebviewWindow, message:string) =
   ## Send a message from Nim to JS
   evalJavaScript(win, &"wiish._handleMessage({%message});")
-
-
-#-----------------------------------------------------------
-# File system
-#-----------------------------------------------------------
-
-when defined(ios):
-  {.passL: "-framework Foundation" .}
-  import darwin/objc/runtime
-  proc NSHomeDirectory*(): NSString {.importc.}
-
-when defined(android):
-  {.emit: """
-  #include <android/native_activity.h>
-  """.}
-
-proc documentsPath*(app:WebviewApp):string =
-  ## Get the path to a mobile app's private document storage directory
-  ##
-  ## On iOS, this is the app's Documents directory.
-  ## On Android, this is the root of the internal storage directory.
-  when defined(ios):
-    # iOS doesn't need an app ref but Android does
-    $(NSHomeDirectory().UTF8String()) / "Documents"
-  elif defined(android):
-    var activity = app.window.wiishActivity
-    var path = activity.getInternalStoragePath()
-    result = $path
-
 
 #-----------------------------------------------------------
 # main()

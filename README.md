@@ -55,6 +55,7 @@ Wiish provides 2 main things:
     - `wiishpkg/webview_desktop` - Library for making Webview-based desktop apps.
     - `wiishpkg/webview_mobile` - Library for making Webview-based mobile apps.
     - `wiishpkg/sdlapp` - Library for making SDL and/or OpenGL apps (both desktop and mobile).
+    - `wiishpkg/mobileutil` - Utilities for accessing native modules (e.g. file system)
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
