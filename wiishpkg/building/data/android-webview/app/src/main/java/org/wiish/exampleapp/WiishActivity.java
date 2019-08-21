@@ -16,6 +16,8 @@ import android.graphics.Bitmap;
 import android.os.Message;
 import android.util.Log;
 
+// Log.d(TAG, "message");
+
 
 class WiishJsBridge {
 
@@ -72,6 +74,10 @@ public class WiishActivity extends Activity {
 			// XXX This is untested
 			webView.loadUrl("javascript:".concat(js));
 		}
+	}
+
+	public final String getInternalStoragePath() {
+		return this.getFilesDir().getAbsolutePath();
 	}
 
 	private WebView webView;

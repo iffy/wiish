@@ -344,12 +344,10 @@ proc doiOSBuild*(directory:string, config:Config):string =
 
 proc doiOSRun*(directory:string = ".") =
   ## Run the application in an iOS simulator
-  var
-    # args: seq[string]
-    p: Process
-  let
-    configPath = directory/"wiish.toml"
-    config = getiOSConfig(parseConfig(configPath))
+  var p: Process
+  let configPath = directory/"wiish.toml"
+  var config = getiOSConfig(parseConfig(configPath))
+  config.ios_simulator = true
 
   # compile the app
   debug "Compiling app..."

@@ -1,0 +1,16 @@
+[main]
+version      = "0.1.0"
+dst          = "dist"
+windowFormat = "webview"
+resourceDir  = "resources"
+
+[mobile]
+name        = "WiishMobile"
+src         = "main_mobile.nim"
+icon        = ""
+
+[ios]
+bundle_identifier = "org.wiish.mobile"
+
+[android]
+java_package_name = "org.wiish.mobile"

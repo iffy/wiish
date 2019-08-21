@@ -1,10 +1,8 @@
 ## Module for making mobile Webview applications.
 import macros
 import times
+import os
 import strformat
-import darwin/app_kit
-import darwin/objc/runtime
-import darwin/foundation
 import logging
 import json
 
@@ -21,12 +19,13 @@ when defined(ios):
   #include <UIKit/UIKit.h>
   #include <WebKit/WebKit.h>
   """.}
-elif defined(android):
+  import darwin/objc/runtime
+
+when defined(android):
   import jnim
-  # import java/lang
   jclass org.wiish.wiishexample.WiishActivity of JVMObject:
     proc evalJavaScript*(js: string)
-    proc echoTest*():string
+    proc getInternalStoragePath*(): string
 
 type
   WebviewApp* = ref object of BaseApplication
@@ -66,6 +65,10 @@ proc evalJavaScript*(win:WebviewWindow, js:string) =
 proc sendMessage*(win:WebviewWindow, message:string) =
   ## Send a message from Nim to JS
   evalJavaScript(win, &"wiish._handleMessage({%message});")
+
+#-----------------------------------------------------------
+# main()
+#-----------------------------------------------------------
 
 template start*(app: WebviewApp, url: string) =
   ## Start the webview app at the given URL.
@@ -321,8 +324,6 @@ template start*(app: WebviewApp, url: string) =
     }
     """.}
 
-    
-  # app.willExit.emit(true)
 
 
 var app* = newWebviewApp()
