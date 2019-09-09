@@ -146,6 +146,14 @@ template getAndroidConfig*(parsed: TomlValueRef): Config =
 template getAndroidConfig*(filename: string): Config =
   filename.parseConfig().getAndroidConfig()
 
+template getMyOSConfig*(filename:string): Config =
+  when defined(macosx):
+    getMacosConfig(filename)
+  elif defined(windows):
+    getWindowsConfig(filename)
+  else:
+    getLinuxConfig(filename)
+
 proc defaultConfig*():string =
   ## Return a default config file
   var

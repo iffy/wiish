@@ -1,5 +1,6 @@
 import ./events
 import os
+import ./building/config
 
 type  
   BaseApplication* = ref object of RootRef
