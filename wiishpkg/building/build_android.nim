@@ -91,6 +91,7 @@ proc doAndroidBuild*(directory:string, config:Config): string =
   proc buildFor(android_abi:string, cpu:string) =
     var nimFlags:seq[string]
     nimFlags.add(["nim", "c"])
+    nimFlags.add(config.nimflags)
     nimFlags.add([
       "--os:android",
       "-d:android",

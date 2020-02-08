@@ -293,6 +293,8 @@ proc doiOSBuild*(directory:string, config:Config):string =
   for flag in compilerFlags:
     nimFlags.add("--passC:" & flag)
   
+  nimFlags.add(config.nimflags)
+
   debug "Doing build ..."
   var args = @["nim", "objc"]
   args.add(nimFlags)
@@ -342,7 +344,7 @@ proc doiOSBuild*(directory:string, config:Config):string =
     signApp(appDir, signing_identity, entitlements_file)
     entitlements_file.removeFile()
 
-proc doiOSRun*(directory:string = ".") =
+proc doiOSRun*(directory:string = ".", verbose = false) =
   ## Run the application in an iOS simulator
   var p: Process
   let configPath = directory/"wiish.toml"
@@ -387,8 +389,10 @@ proc doiOSRun*(directory:string = ".") =
   let childPid = startmessage.strip.split(" ")[1]
 
   # Watch the logs
-  run("xcrun", "simctl", "spawn", "booted", "log", "stream",
-    "--predicate", &"subsystem contains \"{config.bundle_identifier}\"")
+  var args = @["xcrun", "simctl", "spawn", "booted", "log", "stream"]
+  if not verbose:
+    args.add(@["--predicate", &"subsystem contains \"{config.bundle_identifier}\""])
+  run(args)
 
 
 proc checkDoctor*():seq[DoctorResult] =

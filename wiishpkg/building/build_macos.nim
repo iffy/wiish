@@ -59,8 +59,7 @@ proc doMacBuild*(directory:string, config:Config) =
     "-d:release",
     &"-d:appName={config.name}",
   ]
-  for flag in config.nimflags:
-    args.add(flag)
+  args.add(config.nimflags)
   args.add(&"-o:{executablePath}")
   args.add(appSrc)
   run(args)

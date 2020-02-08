@@ -72,7 +72,7 @@ let p = newParser("wiish"):
     arg("directory", default=".")
     run:
       if opts.ios:
-        doiOSRun(directory = opts.directory)
+        doiOSRun(directory = opts.directory, verbose = opts.verbose)
       elif opts.android:
         doAndroidRun(directory = opts.directory, verbose = opts.verbose)
       else:
