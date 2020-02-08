@@ -299,7 +299,7 @@ proc doiOSBuild*(directory:string, config:Config):string =
   var args = @["nim", "objc"]
   args.add(nimFlags)
   args.add(appSrc)
-  # debug args.join(" ")
+  debug args.join(" ")
   run(args)
 
   if not simulator:
