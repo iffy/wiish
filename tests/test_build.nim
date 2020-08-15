@@ -2,9 +2,9 @@ import unittest
 import os
 import strformat
 import random
-import wiishpkg/building/config
-import wiishpkg/building/build
-import wiishpkg/building/buildutil
+import wiish/building/config
+import wiish/building/build
+import wiish/building/buildutil
 
 randomize()
 

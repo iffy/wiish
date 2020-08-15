@@ -50,7 +50,7 @@ proc getWiishPackageRoot*():string =
   return wiishPackagePath
 
 proc DATADIR*():string =
-  return getWiishPackageRoot()/"wiishpkg"/"building"/"data"
+  return getWiishPackageRoot()/"wiish"/"building"/"data"
 
 proc getNimLibPath*(): string =
   ## Return the path to Nim's lib if it can be found

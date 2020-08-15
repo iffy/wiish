@@ -1,5 +1,5 @@
 ## Hello, World Wiish App
-import wiishpkg/sdlapp
+import wiish/sdlapp
 import logging
 import sdl2/sdl
 import sdl2/sdl_ttf as ttf

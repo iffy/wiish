@@ -15,8 +15,6 @@ runnableExamples:
   doAssert count == 2
 
 
-import sequtils
-
 type
   EventSource*[T] = object
     listeners: seq[proc(message:T):void]

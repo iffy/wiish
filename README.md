@@ -51,11 +51,11 @@ wiish init --base-template opengl my_opengl_app
 Wiish provides 2 main things:
 
 1. `wiish` - A command line tool for running, building and packaging apps.
-2. `wiishpkg` - A Nim library for making apps.  This is further divided into:
-    - `wiishpkg/webview_desktop` - Library for making Webview-based desktop apps.
-    - `wiishpkg/webview_mobile` - Library for making Webview-based mobile apps.
-    - `wiishpkg/sdlapp` - Library for making SDL and/or OpenGL apps (both desktop and mobile).
-    - `wiishpkg/mobileutil` - Utilities for accessing native modules (e.g. file system)
+2. `wiish` - A Nim library for making apps.  This is further divided into:
+    - `wiish/webview/desktop` - Library for making Webview-based desktop apps.
+    - `wiish/webview/mobile` - Library for making Webview-based mobile apps.
+    - `wiish/sdlapp` - Library for making SDL and/or OpenGL apps (both desktop and mobile).
+    - `wiish/mobileutil` - Utilities for accessing native modules (e.g. file system)
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
@@ -116,7 +116,7 @@ wiish.onReady = () => {
 In Nim do this:
 
 ```nim
-import wiishpkg/webview_mobile
+import wiish/webview_mobile
 
 app.launched.handle:
     app.window.onReady.handle:

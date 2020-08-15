@@ -15,12 +15,16 @@
 ##
 import logging
 import strformat
-import os
 
 const fmtString = "$levelname [$datetime] "
 const appName {.strdefine.}: string = ""
 
-when defined(ios):
+when defined(wiishdev):
+  # Use a console logger
+  var console_logger = newConsoleLogger(fmtStr = fmtString)
+  addHandler(console_logger)
+
+elif defined(ios):
   const appBundleIdentifier {.strdefine.}: string = ""
   
   # Use new iOS logging framework
@@ -94,10 +98,6 @@ elif defined(android):
   android_logger.fmtStr = "$levelname "
   android_logger.levelThreshold = lvlAll
   addHandler(android_logger)
-elif defined(wiishDev):
-  # Use a console logger
-  var console_logger = newConsoleLogger(fmtStr = fmtString)
-  addHandler(console_logger)
 else:
   # Built, desktop app
   if appName != "":

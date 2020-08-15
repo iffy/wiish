@@ -1,43 +1,23 @@
-## Module for making mobile Webview applications.
-import macros
-import times
-import os
-import strformat
-import logging
-import json
+## Module for making Android Webview applications.
+when not defined(android):
+  {.fatal: "Only available for -d:android".}
 
-import ./events
-export events
-import ./logsetup
-import ./baseapp
-export baseapp
+import ./base
+export base
+import jnim
 
-when defined(ios):
-  {.passL: "-framework UIKit" .}
-  {.passL: "-framework WebKit" .}
-  {.emit: """
-  #include <UIKit/UIKit.h>
-  #include <WebKit/WebKit.h>
-  """.}
-  import darwin/objc/runtime
-
-when defined(android):
-  import jnim
-  jclass org.wiish.wiishexample.WiishActivity of JVMObject:
-    proc evalJavaScript*(js: string)
-    proc getInternalStoragePath*(): string
+jclass org.wiish.wiishexample.WiishActivity of JVMObject:
+  proc evalJavaScript*(js: string)
+  proc getInternalStoragePath*(): string
 
 type
   WebviewApp* = ref object of BaseApplication
-    window*: WebviewWindow
+    window*: AndroidWindow
   
-  WebviewWindow* = ref object of BaseWindow
+  AndroidWindow* = ref object of WebviewWindow
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
-    when defined(ios):
-      wiishController*: pointer
-    elif defined(android):
-      wiishActivity*: WiishActivity
+    wiishActivity*: WiishActivity
 
 proc newWebviewApp(): WebviewApp =
   new(result)
@@ -47,7 +27,7 @@ proc newWebviewApp(): WebviewApp =
   result.window.onMessage = newEventSource[string]()
   result.window.onReady = newEventSource[bool]()
 
-proc evalJavaScript*(win:WebviewWindow, js:string) =
+proc evalJavaScript*(win:AndroidWindow, js:string) =
   ## Evaluate some JavaScript in the webview
   when defined(ios):
     var
@@ -62,7 +42,7 @@ proc evalJavaScript*(win:WebviewWindow, js:string) =
       javascript = js
     activity.evalJavaScript(javascript)
 
-proc sendMessage*(win:WebviewWindow, message:string) =
+proc sendMessage*(win:AndroidWindow, message:string) =
   ## Send a message from Nim to JS
   evalJavaScript(win, &"wiish._handleMessage({%message});")
 
@@ -77,7 +57,7 @@ template start*(app: WebviewApp, url: string) =
     {.error: "Please run Nim with --noMain flag.".}
 
   # Procs common to ios and android
-  proc nimwin() : WebviewWindow {.exportc.} = app.window
+  proc nimwin() : AndroidWindow {.exportc.} = app.window
 
   #--------------------------------------------------------
   # iOS

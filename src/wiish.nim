@@ -9,9 +9,9 @@ import ospaths
 import logging
 import sequtils
 import parsetoml
-import wiishpkg/building/config
-import wiishpkg/building/build
-import wiishpkg/building/doctor
+import wiish/building/config
+import wiish/building/build
+import wiish/building/doctor
 import argparse
 import sugar
 

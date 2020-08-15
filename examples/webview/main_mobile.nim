@@ -1,5 +1,5 @@
 ## Hello, World Wiish App
-import wiishpkg/webview_mobile
+import wiish/webview/mobile
 import os
 import strformat
 import strutils
