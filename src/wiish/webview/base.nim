@@ -1,22 +1,17 @@
 import ../baseapp
+export baseapp
 
 type
-  WebviewApp* = concept app
-    discard
+  IWebviewMobileApp* = concept app
+    ## This is the interface required for a webview mobile app
+    app is IMobileApp
+    newWebviewMobileApp() is typeof app
+    app.start(url = string)
+    app.life is MobileLifecycle
   
-when defined(mobile):
-  type
-    WebviewMobileApp* = concept app
-      app is WebviewApp
-      app is MobileApp
-      newWebviewApp() is app
-else:
-  type
-    WebviewDesktopApp* = concept app
-      app is WebviewApp
-      app is DesktopApp
-      newWebviewApp() is app
-
-type
-  WebviewWindow* = ref object of RootRef
-    ## Reference to a single webview window
+  IWebviewDesktopApp* = concept app
+    ## These are the things needed for a webview desktop app
+    app is IDesktopApp
+    newWebviewDesktopApp() is app
+    app.start(url = string)
+    app.life is DesktopLifecycle

@@ -1,8 +1,10 @@
 ## Module for making mobile Webview applications.
+## Import from here regardless of the operating system.
 import ./base
 export base
+import ../common; export common
 
-when defined(wiishdev):
+when wiish_dev and wiish_mobile:
   import ./mobile_dev
   export mobile_dev
 elif defined(ios):
@@ -11,6 +13,10 @@ elif defined(ios):
 elif defined(android):
   import ./webview_android
   export webview_android
+else:
+  {.fatal: "No mobile os chosen".}
+
+isConcept(IWebviewMobileApp, newWebviewMobileApp())
 
 # elif defined(ios):
 #   {.passL: "-framework UIKit" .}

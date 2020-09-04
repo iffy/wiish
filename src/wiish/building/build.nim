@@ -11,11 +11,13 @@ import ./build_ios
 import ./build_windows
 import ./build_linux
 import ./build_android
+import ./build_mobiledev
 import ./config
 import ./buildutil
 
 export doiOSRun
 export doAndroidRun
+export doMobileDevRun
 
 type
   BuildTarget* = enum

@@ -12,54 +12,84 @@ const
     ## Indicates that this is a webview app
   wiish_sdl* = defined(wiish_sdl)
     ## Indicates that this is an SDL2 app
+  testconcepts* = defined(testconcepts)
+
+template isConcept*(con: untyped, instance: untyped): untyped =
+  ## Check if the given concept is fulfilled by the instance.
+  when testconcepts:
+    {.hint: "Checking concept: " & $con .}
+    block:
+      proc checkConcept(ign: con) {.used.} = discard
+      checkConcept(instance) {.explain.}
 
 type
-  BaseApp* = concept app
-    ## Interface common to both mobile and desktop applications
-    discard
-
-  DesktopApp* = concept app
-    ## Interface required for desktop applications
-    app is BaseApp
-    app.launched is EventSource[bool]
-    app.willExit is EventSource[bool]
-
-  MobileApp* = concept app
-    ## Interface required for mobile applications
-    app is BaseApp
-
-  BaseApplication* = ref object of RootRef
-    ## This is the base application for all Wiish applications
-    ## 
-    ## Different implementations
-    launched*: EventSource[bool]
-    willExit*: EventSource[bool]
+  MobileLifecycle* = ref object of RootRef
+    ## Object onto which you can register handlers related
+    ## to a mobile application's lifecycle events
+    onCreate*: EventSource[bool]
+    onStart*: EventSource[bool]
+    onResume*: EventSource[bool]
+    onPause*: EventSource[bool]
+    onStop*: EventSource[bool]
+    onDestroy*: EventSource[bool]
   
-  BaseWindow* = ref object of RootRef
+  DesktopLifecycle* = ref object of RootRef
+    ## Object onto which you can register handlers related
+    ## to a desktop application's lifecycle events
+    onStart*: EventSource[bool]
+    onBeforeExit*: EventSource[bool]
 
-assert BaseApplication is BaseApp
+proc newMobileLifecycle*(): MobileLifecycle =
+  new(result)
+  result.onCreate = newEventSource[bool]()
+  result.onStart = newEventSource[bool]()
+  result.onResume = newEventSource[bool]()
+  result.onPause = newEventSource[bool]()
+  result.onStop = newEventSource[bool]()
+  result.onDestroy = newEventSource[bool]()
 
+proc newDesktopLifecycle*(): DesktopLifecycle =
+  new(result)
+  result.onStart = newEventSource[bool]()
+  result.onBeforeExit = newEventSource[bool]()
 
-when wiish_dev:
-  import ./building/config
-  proc resourcePath*(app: BaseApplication, filename: string): string =
-    ## Return the path to a static resource included in the application
-    let
-      appdir = getAppDir()
-      configPath = appdir/"wiish.toml"
-      config = getMyOSConfig(configPath)
-    result = joinPath(appdir, config.resourceDir, filename) # XXX this is not safe from going above resourcePath
-else:
-  proc resourcePath*(app: BaseApplication, filename: string): string =
-    ## Return the path to a static resource included in the application
-    let
-      root = 
-        when defined(ios):
-          getAppDir()/"static"
-        elif defined(android):
-          "/android_asset"
-        elif defined(macosx):
-          normalizedPath(getAppDir()/"../Resources/resources").absolutePath()
-        else:
-          getAppDir()
-    result = joinPath(root, filename) # XXX this is not safe from going above resourcePath
+# iOS <12 events
+# https://developer.apple.com/documentation/uikit/uiapplicationdelegate
+# - didFinishLaunching
+# - didBecomeActive
+# - willResignActive
+# - didEnterBackground
+# - willEnterForeground
+# - willTerminate
+
+# iOS >=13 events (application still has the above, but also has the below)
+# https://developer.apple.com/documentation/uikit/uiscenedelegate
+# - sceneAdded
+# - sceneDidDisconnect
+# - sceneWillEnterForeground
+# - sceneDidBecomeActive
+# - sceneWillResignActive
+# - sceneDidEnterBackground
+
+# Android
+# https://developer.android.com/guide/components/activities/activity-lifecycle
+# - onCreate
+# - onStart
+# - onResume
+# - onPause
+# - onStop
+# - onDestroy
+
+type
+  IBaseApp* = concept app
+    ## Interface common to both mobile and desktop applications
+
+  IDesktopApp* = concept app
+    ## Interface required for desktop applications
+    app is IBaseApp
+    app.life is DesktopLifecycle
+
+  IMobileApp* = concept app
+    ## Interface required for mobile applications
+    app is IBaseApp
+    app.life is MobileLifecycle

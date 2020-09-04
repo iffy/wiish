@@ -14,12 +14,11 @@
 ##  - **Android**: not yet implemented
 ##
 import logging
-import strformat
+import ./baseapp
 
 const fmtString = "$levelname [$datetime] "
-const appName {.strdefine.}: string = ""
 
-when defined(wiishdev):
+when wiish_dev:
   # Use a console logger
   var console_logger = newConsoleLogger(fmtStr = fmtString)
   addHandler(console_logger)
@@ -100,7 +99,11 @@ elif defined(android):
   addHandler(android_logger)
 else:
   # Built, desktop app
-  if appName != "":
+  import strformat
+  const appName {.strdefine.}: string = ""
+  if appName == "":
+    {.warning: "Define -d:appName=name_of_your_app to enable logging".}
+  else:
     var
       logfilename:string
     when defined(macosx):
@@ -109,3 +112,4 @@ else:
       logfilename.parentDir.createDir()
       let rolling_logger = newRollingFileLogger(logfilename, fmtStr = fmtString, bufSize = 0)
       addHandler(rolling_logger)
+  

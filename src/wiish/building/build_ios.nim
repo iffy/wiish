@@ -156,8 +156,10 @@ proc doiOSBuild*(directory:string, config:Config):string =
     sdllibSrc, sdlttflibSrc: string
   
   if sdk_version == "":
-    debug &"Choosing sdk version ..."
-    sdk_version = listPossibleSDKVersions(simulator)[^1]
+    debug &"Choosing SDK version ..."
+    let sdk_versions = listPossibleSDKVersions(simulator)
+    debug "Possible SDK versions: " & sdk_versions.join(", ")
+    sdk_version = sdk_versions[^1]
     debug &"Chose SDK version: {sdk_version}"
 
   var sdkPath:string

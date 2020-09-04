@@ -146,6 +146,11 @@ template getAndroidConfig*(parsed: TomlValueRef): Config =
 template getAndroidConfig*(filename: string): Config =
   filename.parseConfig().getAndroidConfig()
 
+template getMobileDevConfig*(parsed: TomlValueRef): Config =
+  parsed.getConfig(@[OVERRIDE_KEY, "mobile", "main"])
+template getMobileDevConfig*(filename: string): Config =
+  filename.parseConfig().getMobileDevConfig()
+
 template getMyOSConfig*(filename:string): Config =
   when defined(macosx):
     getMacosConfig(filename)

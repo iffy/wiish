@@ -67,6 +67,7 @@ let p = newParser("wiish"):
   command "run":
     help("Run an application (from the current dir)")
     flag("--verbose", "-v", help="Verbose log output")
+    flag("--mobiledev", help="Run mobile app in simulated environment (e.g. web page)")
     flag("--ios", help="Run app in the iOS Simulator")
     flag("--android", help="Run app in the Android Emulator")
     arg("directory", default=".")
@@ -75,6 +76,8 @@ let p = newParser("wiish"):
         doiOSRun(directory = opts.directory, verbose = opts.verbose)
       elif opts.android:
         doAndroidRun(directory = opts.directory, verbose = opts.verbose)
+      elif opts.mobiledev:
+        doMobileDevRun(directory = opts.directory, verbose = opts.verbose)
       else:
         doDesktopRun(directory = opts.directory, parseConfig(opts.directory/"wiish.toml"))
   

@@ -1,23 +1,22 @@
 ## Module for making desktop Webview applications.
 import webview
 import macros
-import times
 import strutils
-import strformat
 import logging
 import json
 
-import ./events
+import ../events
 export events
-import ./logsetup
-import ./baseapp
-export baseapp
+import ../logsetup
+import ../baseapp
+import ./base
 
 type
-  WebviewApp* = ref object of BaseApplication
+  WebviewDesktopApp* = ref object of RootRef
     windows*: seq[WebviewWindow]
+    life*: DesktopLifecycle
   
-  WebviewWindow* = ref object of BaseWindow
+  WebviewWindow* = ref object of RootRef
     webview*: Webview
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
@@ -65,18 +64,17 @@ window.wiish.sendMessage = function(message) {
 if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }
 """
 
-proc newWebviewApp(): WebviewApp =
+proc newWebviewDesktopApp*(): WebviewDesktopApp =
   new(result)
-  result.launched = newEventSource[bool]()
-  result.willExit = newEventSource[bool]()
+  result.life = newDesktopLifecycle()
 
-proc newWindow*(app: WebviewApp, title:string = "", url:string = ""): WebviewWindow =
+proc newWindow*(app: WebviewDesktopApp, title:string = "", url:string = "", width=640, height=480): WebviewWindow =
   ## Create a new webview window
   new(result)
   let w = result
   result.onReady = newEventSource[bool]()
   result.onMessage = newEventSource[string]()
-  result.webview = newWebView(title = title, url = url)
+  result.webview = newWebView(title = title, url = url, width = width, height = height)
   result.webview.externalInvokeCB = proc(wv: Webview, data: string) =
     let parts = data.split(":", 1)
     case parts[0]
@@ -101,16 +99,16 @@ proc sendMessage*(win:WebviewWindow, message:string) =
     discard win.webview.eval("wiish._handleMessage(" & $ %message & ");")
   )
 
-template start*(app: WebviewApp) =
+template start*(app: WebviewDesktopApp) =
   ## Start the application loop
-  app.launched.emit(true)
+  app.life.onStart.emit(true)
   var keepgoing = true
   while keepgoing:
     for window in app.windows:
       if loop(window.webview, 1) != 0:
         keepgoing = false
-  app.willExit.emit(true)
-
-var app* = newWebviewApp()
+  app.life.onBeforeExit.emit(true)
 
 
+isConcept(IDesktopApp, newWebviewDesktopApp())
+isConcept(IWebviewDesktopApp, newWebviewDesktopApp())
