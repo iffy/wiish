@@ -284,12 +284,14 @@ proc doiOSBuild*(directory:string, config:Config):string =
     "--verbosity:0",
     "--hint[Pattern]:off",
     "--parallelBuild:0",
+    "--threads:on",
+    "--tlsEmulation:off",
     "--out:" & executablePath,
     "--nimcache:nimcache",
     ])
-  nimFlags.add([
-    "--noMain",
-  ])
+  # nimFlags.add([
+  #   "--noMain",
+  # ])
   for flag in linkerFlags:
     nimFlags.add("--passL:" & flag)
   for flag in compilerFlags:

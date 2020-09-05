@@ -17,7 +17,7 @@ nimcheck() {
 macOS="--os:macosx"
 linux="--os:linux"
 windows="--os:windows"
-ios="--os:macosx -d:ios --noMain"
+ios="--os:macosx -d:ios"
 android="--os:linux -d:android --noMain"
 mobiledev="-d:wiish_mobiledev"
 

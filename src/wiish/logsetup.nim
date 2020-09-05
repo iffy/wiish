@@ -42,6 +42,8 @@ elif defined(ios):
     """.}
   if appBundleIdentifier != "":
     configureLogger(appBundleIdentifier)
+  else:
+    {.warning: "Pass -d:appBundleIdentifier=your.app.name to enabled logging".}
 
   proc systemLog(msg: cstring) =
     var message {.exportc.} = msg
