@@ -1,4 +1,4 @@
-import ./events
+import ./events; export events
 import os
 
 const
@@ -22,63 +22,58 @@ template isConcept*(con: untyped, instance: untyped): untyped =
       proc checkConcept(ign: con) {.used.} = discard
       checkConcept(instance) {.explain.}
 
+## For iOS related documentation see:
+##
+## - Overview: https://developer.apple.com/documentation/uikit/app_and_environment/managing_your_app_s_life_cycle?language=objc
+## - UIApplicationDelegate: https://developer.apple.com/documentation/uikit/uiapplicationdelegate?language=objc
+## - UISceneDelegate: https://developer.apple.com/documentation/uikit/uiscenedelegate?language=objc
+## - Scenes: https://developer.apple.com/documentation/uikit/app_and_environment/scenes?language=objc
+##
+## For Android, TODO
+## - # https://developer.android.com/guide/components/activities/activity-lifecycle
+
 type
-  MobileLifecycle* = ref object of RootRef
-    ## Object onto which you can register handlers related
-    ## to a mobile application's lifecycle events
-    onCreate*: EventSource[bool]
-    onStart*: EventSource[bool]
-    onResume*: EventSource[bool]
-    onPause*: EventSource[bool]
-    onStop*: EventSource[bool]
-    onDestroy*: EventSource[bool]
-  
+  MobileEventKind* = enum
+    AppStarted
+      ## iOS      UIApplicationDelegate didFinishLaunchingWithOptions 
+      ## Android  TODO
+    AppWillExit
+      ## iOS      UIApplicationDelegate applicationWillTerminate
+      ## Android  TODO
+    WindowAdded
+      ## iOS 13   UISceneDelegate willConnectToSession
+      ## Android  TODO
+    WindowWillForeground
+      ## iOS 13   UISceneDelegate sceneWillEnterForeground
+      ## Android  TODO
+    WindowDidForeground
+      ## iOS 13   UISceneDelegate sceneDidBecomeActive
+      ## Android  TODO
+    WindowWillBackground
+      ## iOS 13   UISceneDelegate sceneWillResignActive
+      ## Android  TODO
+    WindowClosed
+      ## iOS 13   UISceneDelegate sceneDidDisconnect
+      ## Android  TODO
+
+  MobileEvent* = object
+    ## Events that can happen to mobile apps
+    case kind*: MobileEventKind
+    of AppStarted, AppWillExit:
+      discard
+    of WindowAdded, WindowWillForeground, WindowDidForeground, WindowWillBackground, WindowClosed:
+      windowId*: int
+
   DesktopLifecycle* = ref object of RootRef
     ## Object onto which you can register handlers related
     ## to a desktop application's lifecycle events
     onStart*: EventSource[bool]
     onBeforeExit*: EventSource[bool]
 
-proc newMobileLifecycle*(): MobileLifecycle =
-  new(result)
-  result.onCreate = newEventSource[bool]()
-  result.onStart = newEventSource[bool]()
-  result.onResume = newEventSource[bool]()
-  result.onPause = newEventSource[bool]()
-  result.onStop = newEventSource[bool]()
-  result.onDestroy = newEventSource[bool]()
-
 proc newDesktopLifecycle*(): DesktopLifecycle =
   new(result)
   result.onStart = newEventSource[bool]()
   result.onBeforeExit = newEventSource[bool]()
-
-# iOS <12 events
-# https://developer.apple.com/documentation/uikit/uiapplicationdelegate
-# - didFinishLaunching
-# - didBecomeActive
-# - willResignActive
-# - didEnterBackground
-# - willEnterForeground
-# - willTerminate
-
-# iOS >=13 events (application still has the above, but also has the below)
-# https://developer.apple.com/documentation/uikit/uiscenedelegate
-# - sceneAdded
-# - sceneDidDisconnect
-# - sceneWillEnterForeground
-# - sceneDidBecomeActive
-# - sceneWillResignActive
-# - sceneDidEnterBackground
-
-# Android
-# https://developer.android.com/guide/components/activities/activity-lifecycle
-# - onCreate
-# - onStart
-# - onResume
-# - onPause
-# - onStop
-# - onDestroy
 
 type
   IBaseApp* = concept app
@@ -92,4 +87,4 @@ type
   IMobileApp* = concept app
     ## Interface required for mobile applications
     app is IBaseApp
-    app.life is MobileLifecycle
+    app.life is EventSource[MobileEvent]

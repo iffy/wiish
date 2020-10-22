@@ -8,27 +8,22 @@ import logging
 
 var app = newWebviewMobileApp()
 
+app.life.addListener proc(ev: MobileEvent) =
+  info "Event: ", $ev
+  case ev.kind
+  of WindowAdded:
+    echo "window ", $ev.windowId, " added"
+    let win = app.getWindow(ev.windowId)
+    win.onReady.handle:
+      info "JS is ready"
+    win.onMessage.handle(msg):
+      info "Got JS message: ", $msg
+      win.sendMessage("Hello from Nim! You said " & msg)
+  else:
+    discard
+
 let index_html = resourcePath("index.html").replace(" ", "%20")
-echo $index_html
-
-app.life.onCreate.handle:
-  debug "onCreate"
-
-app.life.onStart.handle:
-  debug "App launched"
-
-app.life.onResume.handle:
-  debug "onResume"
-
-app.life.onPause.handle:
-  debug "onPause"
-
-app.life.onStop.handle:
-  debug "onStop"
-
-app.life.onDestroy.handle:
-  debug "onDestroy"
-
+debug $index_html
 app.start(url = "file://" & index_html)
 
 # # app.launched.handle:

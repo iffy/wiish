@@ -24,7 +24,7 @@ type
   WebviewIosApp* = ref object of RootObj
     url*: string
     window*: WebviewIosWindow
-    life*: MobileLifecycle
+    life*: EventSource[MobileEvent]
   
   WebviewIosWindow* = ref object of RootObj
     onReady*: EventSource[bool]
@@ -39,7 +39,7 @@ var globalapp {.global, guard: globalapplock.} : WebviewIosApp
 proc newWebviewMobileApp*(): WebviewIosApp =
   new(result)
   new(result.window)
-  result.life = newMobileLifecycle()
+  result.life = newEventSource[MobileEvent]()
 
 proc registerWiishController*(controller: pointer) {.exportc.} =
   ## Register the controller with the global app
@@ -124,35 +124,31 @@ proc jsbridgecode(): cstring {.exportc.} =
 proc doLog(x:cstring) {.exportc.} =
   debug(x)
 
+#---------------------------------------------------
+# lifecycle events
+#---------------------------------------------------
+
 proc nim_didFinishLaunching() {.exportc.} =
-  # debug "didFinishLaunching"
   globalapplock.withLock:
-    globalapp.life.onCreate.emit(true)
+    globalapp.life.emit(MobileEvent(kind: AppStarted))
 
 proc nim_applicationWillResignActive() {.exportc.} =
-  # debug "applicationWillResignActive"
   globalapplock.withLock:
-    globalapp.life.onPause.emit(true)
-
-proc nim_applicationDidEnterBackground() {.exportc.} =
-  # debug "applicationDidEnterBackground"
-  globalapplock.withLock:
-    globalapp.life.onStop.emit(true)
+    ## TODO: when multi-scene is supported, change the windowId appropriately
+    globalapp.life.emit(MobileEvent(kind: WindowWillBackground, windowId: 0))
 
 proc nim_applicationWillEnterForeground() {.exportc.} =
-  # debug "applicationWillEnterForeground"
   globalapplock.withLock:
-    globalapp.life.onResume.emit(true)
+    globalapp.life.emit(MobileEvent(kind: WindowWillForeground, windowId: 0))
 
 proc nim_applicationDidBecomeActive() {.exportc.} =
-  # debug "applicationDidBecomeActive"
   globalapplock.withLock:
-    globalapp.life.onStart.emit(true)
+    globalapp.life.emit(MobileEvent(kind: WindowDidForeground, windowId: 0))
 
 proc nim_applicationWillTerminate() {.exportc.} =
-  # debug "applicationWillTerminate"
   globalapplock.withLock:
-    globalapp.life.onDestroy.emit(true)
+    globalapp.life.emit(MobileEvent(kind: AppWillExit))
+
 
 proc nim_signalJSMessagesReady() {.exportc.} =
   # debug "nim_signalJSMessagesReady"
