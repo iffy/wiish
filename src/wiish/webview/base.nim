@@ -18,6 +18,8 @@ type
   IWebviewDesktopApp* = concept app
     ## These are the things needed for a webview desktop app
     app is IDesktopApp
-    newWebviewDesktopApp() is app
-    app.start(url = string)
+    newWebviewDesktopApp() is typeof app
+    app.start()
+    app.newWindow(title = string, url = string) is IWebviewWindow
+    # app.start(url = string)
     app.life is DesktopLifecycle

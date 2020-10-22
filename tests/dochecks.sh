@@ -17,8 +17,8 @@ nimcheck() {
 macOS="--os:macosx"
 linux="--os:linux"
 windows="--os:windows"
-ios="--os:macosx -d:ios"
-android="--os:linux -d:android --noMain"
+ios="--os:macosx -d:ios --threads:on"
+android="--os:linux -d:android --noMain --threads:on"
 mobiledev="-d:wiish_mobiledev"
 
 echo SDL tests
