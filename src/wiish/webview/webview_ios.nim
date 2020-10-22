@@ -1,35 +1,39 @@
 ## Module for making iOS Webview applications.
 when not defined(ios):
   {.fatal: "webview_ios only works with ios".}
-import net
 import asyncdispatch
 import json
-import strformat
-import logging
 import locks
+import logging
+import net
+import options
+import strformat
+import tables
 
-import ../events
-export events
+import ../events ; export events
 import ../logsetup
-import ../baseapp
-export baseapp
-import ./base
-export base
+import ../baseapp ; export baseapp
+import ./base ; export base
 
 {.passL: "-framework Foundation" .}
 {.passL: "-framework UIKit" .}
 {.passL: "-framework WebKit" .}
+{.emit: """
+#include <CoreFoundation/CoreFoundation.h>
+""" .}
   
 type
   WebviewIosApp* = ref object of RootObj
     url*: string
-    window*: WebviewIosWindow
     life*: EventSource[MobileEvent]
+    windows: Table[int, WebviewIosWindow]
+    nextWindowId: int
   
   WebviewIosWindow* = ref object of RootObj
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
-    wiishController*: pointer
+    app: WebviewIosApp
+    wiishController: Option[pointer]
 
 var globalapplock {.global.}: Lock
 initLock(globalapplock)
@@ -38,18 +42,37 @@ var globalapp {.global, guard: globalapplock.} : WebviewIosApp
 
 proc newWebviewMobileApp*(): WebviewIosApp =
   new(result)
-  new(result.window)
   result.life = newEventSource[MobileEvent]()
+  result.windows = initTable[int, WebviewIosWindow]()
 
-proc registerWiishController*(controller: pointer) {.exportc.} =
-  ## Register the controller with the global app
+proc newWindow(app: WebviewIosApp): WebviewIosWindow =
+  new(result)
+  result.onReady = newEventSource[bool]()
+  result.onMessage = newEventSource[string]()
+  result.app = app
+
+proc getWindow*(app: WebviewIosApp, windowId: int): WebviewIosWindow {.inline.} =
+  app.windows[windowId]
+
+proc nim_nextWindowId*(): cint {.exportc.} =
+  ## Return the next Window ID to be used.
   globalapplock.withLock:
-    globalapp.window.wiishController = controller
+    result = globalapp.nextWindowId.cint
+    inc globalapp.nextWindowId
+
+proc nim_windowCreated*(windowId: cint, controller: pointer) {.exportc.} =
+  ## A new window in iOS land.  Add it to the list
+  globalapplock.withLock:
+    var win = globalapp.newWindow()
+    win.wiishController = some(controller)
+    globalapp.windows[windowId.int] = win
+    globalapp.life.emit(MobileEvent(kind: WindowAdded, windowId: windowId.int))
 
 proc evalJavaScript*(win:WebviewIosWindow, js:string) =
   ## Evaluate some JavaScript in the webview
+  # doAssert win.wiishController.isSome()
   var
-    controller = win.wiishController
+    controller = win.wiishController.get()
     javascript:cstring = js
   {.emit: """
   [controller evalJavaScript:[NSString stringWithUTF8String:javascript]];
@@ -122,6 +145,7 @@ proc jsbridgecode(): cstring {.exportc.} =
   """
 
 proc doLog(x:cstring) {.exportc.} =
+  ## TODO: how do I call this from objc?
   debug(x)
 
 #---------------------------------------------------
@@ -132,41 +156,39 @@ proc nim_didFinishLaunching() {.exportc.} =
   globalapplock.withLock:
     globalapp.life.emit(MobileEvent(kind: AppStarted))
 
-proc nim_applicationWillResignActive() {.exportc.} =
+proc nim_windowWillBackground(windowId: cint) {.exportc.} =
   globalapplock.withLock:
     ## TODO: when multi-scene is supported, change the windowId appropriately
-    globalapp.life.emit(MobileEvent(kind: WindowWillBackground, windowId: 0))
+    globalapp.life.emit(MobileEvent(kind: WindowWillBackground, windowId: windowId.int))
 
-proc nim_applicationWillEnterForeground() {.exportc.} =
+proc nim_windowWillForeground(windowId: cint) {.exportc.} =
   globalapplock.withLock:
-    globalapp.life.emit(MobileEvent(kind: WindowWillForeground, windowId: 0))
+    globalapp.life.emit(MobileEvent(kind: WindowWillForeground, windowId: windowId.int))
 
-proc nim_applicationDidBecomeActive() {.exportc.} =
+proc nim_windowDidForeground(windowId: cint) {.exportc.} =
   globalapplock.withLock:
-    globalapp.life.emit(MobileEvent(kind: WindowDidForeground, windowId: 0))
+    globalapp.life.emit(MobileEvent(kind: WindowDidForeground, windowId: windowId.int))
 
 proc nim_applicationWillTerminate() {.exportc.} =
   globalapplock.withLock:
     globalapp.life.emit(MobileEvent(kind: AppWillExit))
 
 
-proc nim_signalJSMessagesReady() {.exportc.} =
-  # debug "nim_signalJSMessagesReady"
+proc nim_signalJSMessagesReady(windowId: cint) {.exportc.} =
+  var win: WebviewIosWindow
   globalapplock.withLock:
-    globalapp.window.onReady.emit(true)
+    win = globalapp.getWindow(windowId.int)
+  win.onReady.emit(true)
 
-proc nim_sendMessageToNim(x:cstring) {.exportc.} =
-  # debug "nim_sendMessageToNim: " & $x
+proc nim_sendMessageToNim(windowId: cint, x:cstring) {.exportc.} =
+  var win: WebviewIosWindow
   globalapplock.withLock:
-    globalapp.window.onMessage.emit($x)
+    win = globalapp.getWindow(windowId.int)
+  win.onMessage.emit($x)
 
 proc getInitURL(): cstring {.exportc.} =
   globalapplock.withLock:
     result = globalapp.url
-
-proc nimwin(): WebviewIosWindow {.exportc.} =
-  globalapplock.withLock:
-    result = globalapp.window
 
 proc start*(app: WebviewIosApp, url: string) =
   ## Start the webview app at the given URL.

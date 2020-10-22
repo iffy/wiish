@@ -3,29 +3,27 @@
 #include <CoreFoundation/CoreFoundation.h>
 #import "webview_ios.h"
 
-// WiishController
-@interface WiishController : UIViewController <WKNavigationDelegate, WKScriptMessageHandler> {
+// WiishWindowController
+@interface WiishWindowController : UIViewController <WKNavigationDelegate, WKScriptMessageHandler> {
   WKWebView* webView;
 }
+@property int windowID;
 - (void)evalJavaScript:(NSString *)jscript;
 @end
 
-@implementation WiishController { }
+@implementation WiishWindowController { }
 - (void)evalJavaScript:(NSString *)jscript {
   [webView evaluateJavaScript:jscript completionHandler:nil];
 }
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
   if (message.name == @"wiish_internal_ready") {
-    nim_signalJSMessagesReady();
+    nim_signalJSMessagesReady(self.windowID);
   } else {
-    nim_sendMessageToNim([message.body UTF8String]);
+    nim_sendMessageToNim(self.windowID, [message.body UTF8String]);
   }
 }
 - (void)viewDidLoad {
   [super viewDidLoad];
-  // TODO: This isn't absolutely safe... but probably is :)
-  registerWiishController((void*)self);
-
   // Prepare JS/Nim bridge
   NSString *javascript = [NSString stringWithUTF8String:jsbridgecode()];
   WKUserScript *userScript = [[WKUserScript alloc]
@@ -64,29 +62,30 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    self.window.rootViewController = [[WiishController alloc] init];
+    WiishWindowController* ctrl = [WiishWindowController alloc];
+    self.window.rootViewController = [ctrl init];
     self.window.backgroundColor = [UIColor redColor];
     [self.window makeKeyAndVisible];
+    ctrl.windowID = nim_nextWindowId();
+    nim_windowCreated(ctrl.windowID, (void*)ctrl); // TODO: This isn't absolutely safe... but probably is :)
     nim_didFinishLaunching();
     return YES;
 }
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
-    nim_applicationWillResignActive();
+    // TODO: when multiple scenes are supported, use a real windowId
+    nim_windowWillBackground(0);
 }
-// - (void)applicationDidEnterBackground:(UIApplication *)application {
-//     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-//     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-//     nim_applicationDidEnterBackground();
-// }
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
-    nim_applicationWillEnterForeground();
+    // TODO: when multiple scenes are supported, use a real windowId
+    nim_windowWillForeground(0);
 }
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    nim_applicationDidBecomeActive();
+    // TODO: when multiple scenes are supported, use a real windowId
+    nim_windowDidForeground(0);
 }
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
