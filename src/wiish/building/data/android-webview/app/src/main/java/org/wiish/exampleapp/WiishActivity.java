@@ -1,3 +1,5 @@
+// DEV NOTE: After making any change to this file
+//  - Run updateJNIheaders.sh
 package org.wiish.exampleapp;
 
 import java.lang.Thread;
@@ -18,7 +20,9 @@ import android.util.Log;
 
 // Log.d(TAG, "message");
 
-
+/**
+ * Functions to expose to the JavaScript within a Webview
+ */
 class WiishJsBridge {
 
 	private WiishActivity activity;
@@ -55,6 +59,8 @@ public class WiishActivity extends Activity {
 
 	// JNI stuff
 	public native void wiish_init();
+	public native int wiish_nextWindowId();
+	public native void wiish_windowAdded(int windowId);
 	public native String wiish_getInitURL();
 	public native void wiish_sendMessageToNim(String message);
 	public native void wiish_signalJSIsReady();
@@ -85,19 +91,30 @@ public class WiishActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		Log.i("org.wiish.webviewexample", "about to wiish_init()");
+		wiish_init();
+		Log.i("org.wiish.webviewexample", "end      wiish_init()");
+
 		LinearLayout view = new LinearLayout(this);
 		view.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 		view.setOrientation(LinearLayout.VERTICAL);
 		setContentView(view);
-        
+    
+		Log.i("org.wiish.webviewexample", "A");
+
 		webView = new WebView(this);
+
+		Log.i("org.wiish.webviewexample", "A2");
 		webView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		Log.i("org.wiish.webviewexample", "A3");
 		webView.setWebChromeClient(new WebChromeClient() {
 			// @Override
 			// public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
 				
 			// }
 		});
+
+		Log.i("org.wiish.webviewexample", "B");
 
 		// This multi-line string syntax is ridiculous
 		final String javascript = ""
@@ -133,8 +150,6 @@ public class WiishActivity extends Activity {
 			+ "if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }"
 			+ "";
 
-		wiish_init();
-
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView webView, String url) {
@@ -146,9 +161,19 @@ public class WiishActivity extends Activity {
 				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
+		Log.i("org.wiish.webviewexample", "C");
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
 		webView.loadUrl(wiish_getInitURL());
 		view.addView(webView);
+
+		Log.i("org.wiish.webviewexample", "D");
+
+		Log.i("org.wiish.webviewexample", "about to wiish_nextWindowId()");
+		int windowId = wiish_nextWindowId();
+		Log.i("org.wiish.webviewexample", "E");
+		Log.i("org.wiish.webviewexample", "windowId = " + windowId);
+		wiish_windowAdded(windowId);
+		Log.i("org.wiish.webviewexample", "F");
 	}
 }

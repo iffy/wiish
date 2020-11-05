@@ -37,7 +37,6 @@ type
 
 var globalapplock {.global.}: Lock
 initLock(globalapplock)
-
 var globalapp {.global, guard: globalapplock.} : WebviewIosApp
 
 proc newWebviewMobileApp*(): WebviewIosApp =
@@ -192,6 +191,7 @@ proc getInitURL(): cstring {.exportc.} =
 
 proc start*(app: WebviewIosApp, url: string) =
   ## Start the webview app at the given URL.
+  startLogging()
   globalapplock.withLock:
     globalapp = app
     app.url = url

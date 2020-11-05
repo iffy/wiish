@@ -2,6 +2,7 @@
 import wiish/webview/mobile
 import strutils
 import logging
+import memtools
 
 var app = newWebviewMobileApp()
 
@@ -9,7 +10,7 @@ app.life.addListener proc(ev: MobileEvent) =
   info "Event: ", $ev
   case ev.kind
   of WindowAdded:
-    let win = app.getWindow(ev.windowId)
+    var win = app.getWindow(ev.windowId)
     win.onReady.handle:
       debug "JS is ready"
       win.sendMessage("Nim knows the JS is ready")

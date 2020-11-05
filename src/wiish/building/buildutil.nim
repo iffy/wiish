@@ -14,7 +14,9 @@ type
     fix*: string
 
 const
-  NIMBASE_H* = slurp"data/nimbase.h"
+  NIMBASE_1_0_X* = slurp"data/nimbase-1.0.x.h"
+  NIMBASE_1_2_X* = slurp"data/nimbase-1.2.x.h"
+  NIMBASE_1_4_x* = slurp"data/nimbase-1.4.x.h"
 
 template withDir*(dir: string, body: untyped): untyped =
   let origDir = getCurrentDir()

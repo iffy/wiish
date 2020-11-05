@@ -30,7 +30,8 @@ template isConcept*(con: untyped, instance: untyped): untyped =
 ## - Scenes: https://developer.apple.com/documentation/uikit/app_and_environment/scenes?language=objc
 ##
 ## For Android, TODO
-## - # https://developer.android.com/guide/components/activities/activity-lifecycle
+## - Overview: https://developer.android.com/guide/components/activities/activity-lifecycle
+## - 
 
 type
   MobileEventKind* = enum

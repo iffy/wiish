@@ -22,6 +22,9 @@ type
 proc newEventSource*[T](): EventSource[T] =
   result = EventSource[T]()
 
+proc `$`*(ev: EventSource): string =
+  result = "EventSource(listeners#=" & $(ev.listeners.len) & ")"
+
 proc addListener*[T](es: var EventSource[T], listener: proc(message:T):void) =
   ## Add a proc to handle events.  Proc will be called once for each
   ## event emit.  See the ``handle`` template for a nicer syntax.

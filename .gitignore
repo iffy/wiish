@@ -8,4 +8,3 @@ bin
 .project
 .settings
 nakefile
-wiish/building/data/android-webview/app/src/main/java/org/wiish/exampleapp/*.class

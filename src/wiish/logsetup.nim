@@ -20,9 +20,9 @@ const fmtString = "$levelname [$datetime] "
 
 when wiish_dev:
   # Use a console logger
-  var console_logger = newConsoleLogger(fmtStr = fmtString)
-  addHandler(console_logger)
-
+  proc startLogging*() =
+    var console_logger = newConsoleLogger(fmtStr = fmtString)
+    addHandler(console_logger)
 elif defined(ios):
   const appBundleIdentifier {.strdefine.}: string = ""
   
@@ -63,10 +63,11 @@ elif defined(ios):
       except IOError:
         discard
   
-  var ios_logger = new IOSLogger
-  ios_logger.fmtStr = "$levelname "
-  ios_logger.levelThreshold = lvlAll
-  addHandler(ios_logger)
+  proc startLogging*() =
+    var ios_logger = new IOSLogger
+    ios_logger.fmtStr = "$levelname "
+    ios_logger.levelThreshold = lvlAll
+    addHandler(ios_logger)
 elif defined(android):
   const appJavaPackageName {.strdefine.}: string = "org.wiish.app"
 
@@ -95,17 +96,18 @@ elif defined(android):
       except IOError:
         systemLog("IOError while attempting to log")
   
-  var android_logger = new AndroidLogger
-  android_logger.fmtStr = "$levelname "
-  android_logger.levelThreshold = lvlAll
-  addHandler(android_logger)
+  proc startLogging*() =
+    var android_logger = new AndroidLogger
+    android_logger.fmtStr = "$levelname "
+    android_logger.levelThreshold = lvlAll
+    addHandler(android_logger)
 else:
   # Built, desktop app
   import strformat
   const appName {.strdefine.}: string = ""
   if appName == "":
     {.warning: "Define -d:appName=name_of_your_app to enable logging".}
-  else:
+  proc startLogging*() =
     var
       logfilename:string
     when defined(macosx):

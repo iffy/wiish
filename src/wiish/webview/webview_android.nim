@@ -2,308 +2,309 @@
 when not defined(android):
   {.fatal: "Only available for -d:android".}
 
-import ./base
-export base
-import jnim
+echo "========= START ============="
 
-jclass org.wiish.wiishexample.WiishActivity of JVMObject:
-  proc evalJavaScript*(js: string)
-  proc getInternalStoragePath*(): string
+#----------------------------------------------------
+# mini jni
+#----------------------------------------------------
+type
+  JavaVM {.header: "<jni.h>", importc: "JavaVM".} = pointer
+  JNIEnv {.header: "<jni.h>", importc: "JNIEnv".} = pointer
+  jint* = int32
+  # jsize* = jint
+  # jchar* = uint16
+  # jlong* = int64
+  # jshort* = int16
+  # jbyte* = int8
+  # jfloat* = cfloat
+  # jdouble* = cdouble
+  # jboolean* = uint8
+
+  jobject_base {.inheritable, pure.} = object
+  jobject* = ptr jobject_base
+  jstring* = ptr object of jobject
+#----------------------------------------------------
+# end of mini jni
+#----------------------------------------------------
 
 type
-  WebviewApp* = ref object of BaseApplication
-    window*: AndroidWindow
+  WiishActivity = jobject
+
+import memtools
+
+# import jnim
+import asyncdispatch
+import locks
+import logging
+import options
+import os
+import strformat
+import tables
+
+import ../logsetup
+import ./base ; export base
+
+# jclass org.wiish.wiishexample.WiishActivity of JVMObject:
+#   proc evalJavaScript*(js: string)
+#   proc getInternalStoragePath*(): string
+
+type
+  MessageToMainKind = enum
+    AppStarted
+    AppWillExit
+    WindowAdded
+  MessageToMain = object
+    case kind: MessageToMainKind
+    of AppStarted, AppWillExit:
+      discard
+    of WindowAdded:
+      windowId: int
+
+var ch_to_main: Channel[MessageToMain]; ch_to_main.open()
+var ch_main_setup: Channel[bool]; ch_main_setup.open()
+
+type
+  WebviewAndroidApp* = object
+    url*: string
+    life*: EventSource[MobileEvent]
+    windows: Table[int, WebviewAndroidWindow]
+    nextWindowId: int
   
-  AndroidWindow* = ref object of WebviewWindow
+  WebviewAndroidWindow* = object
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
-    wiishActivity*: WiishActivity
+    wiishActivity*: Option[WiishActivity]
 
-proc newWebviewApp(): WebviewApp =
-  new(result)
-  result.launched = newEventSource[bool]()
-  result.willExit = newEventSource[bool]()
-  new(result.window)
-  result.window.onMessage = newEventSource[string]()
-  result.window.onReady = newEventSource[bool]()
+var globalapplock: Lock
+initLock(globalapplock)
+var globalapp {.guard: globalapplock.}: ptr WebviewAndroidApp
 
-proc evalJavaScript*(win:AndroidWindow, js:string) =
-  ## Evaluate some JavaScript in the webview
-  when defined(ios):
-    var
-      controller = win.wiishController
-      javascript:cstring = js
-    {.emit: """
-    [controller evalJavaScript:[NSString stringWithUTF8String:javascript]];
-    """.}
-  elif defined(android):
-    var
-      activity = win.wiishActivity
-      javascript = js
-    activity.evalJavaScript(javascript)
+proc `$`*(win: WebviewAndroidWindow): string =
+  result = &"WebviewAndroidWindow()"
 
-proc sendMessage*(win:AndroidWindow, message:string) =
-  ## Send a message from Nim to JS
-  evalJavaScript(win, &"wiish._handleMessage({%message});")
+proc `$`*(app: WebviewAndroidApp): string =
+  result = &"WebviewAndroidApp(url={app.url}, life={app.life}, windows={app.windows.len}, nextWindowId={app.nextWindowId})"
 
-#-----------------------------------------------------------
-# main()
-#-----------------------------------------------------------
+proc `$`*(win: ptr WebviewAndroidApp): string =
+  if win.isNil:
+    result = "WebviewAndroidApp==nil"
+  else:
+    result = "ptr[" & $win[] & "]"
 
-template start*(app: WebviewApp, url: string) =
-  ## Start the webview app at the given URL.
+proc newWebviewMobileApp*(): WebviewAndroidApp =
+  {.gcsafe.}:
+    globalapplock.withLock:
+      if not globalapp.isNil:
+        raise newException(ValueError, "Only one WebviewAndroidApp can be created at once")
+      globalapp = createShared(WebviewAndroidApp)
+      globalapp[].life = newEventSource[MobileEvent]()
+      globalapp[].windows = initTable[int, WebviewAndroidWindow]()
+      result = globalapp[]
 
-  when not compileOption("noMain"):
-    {.error: "Please run Nim with --noMain flag.".}
+proc newWebviewAndroidWindow*(): WebviewAndroidWindow =
+  result = WebviewAndroidWindow()
+  result.onReady = newEventSource[bool]()
+  result.onMessage = newEventSource[string]()
 
-  # Procs common to ios and android
-  proc nimwin() : AndroidWindow {.exportc.} = app.window
+proc getWindow*(app: WebviewAndroidApp, windowId: int): WebviewAndroidWindow {.inline.} =
+  app.windows[windowId]
 
-  #--------------------------------------------------------
-  # iOS
-  #--------------------------------------------------------
-  when defined(ios):
-    proc jsbridgecode() : cstring {.exportc.} =
-      """
-      const readyrunner = {
-        set: function(obj, prop, value) {
-          if (prop === 'onReady') {
-            value();
-            window.webkit.messageHandlers.wiish_internal_ready.postMessage('');
-          }
-          obj[prop] = value;
-          return true;
-        }
-      };
-      let onReadyFunc;
-      if (window.wiish && window.wiish.onReady) {
-        onReadyFunc = window.wiish.onReady;
-      }
-      window.wiish = new Proxy({}, readyrunner);
-      window.wiish.handlers = [];
-      /**
-       * Called by Nim code to transmit a message to JS.
-       */
-      window.wiish._handleMessage = function(message) {
-        for (let i = 0; i < wiish.handlers.length; i++) {
-          wiish.handlers[i](message);
-        }
-      };
+proc sendMessage*(win: WebviewAndroidWindow, message: string) =
+  discard
+  # TODO
 
-      /**
-       *  Called by JS application code to watch for messages
-       *  from Nim
-       */
-      window.wiish.onMessage = function(handler) {
-        wiish.handlers.push(handler);
-      };
-      
-      /**
-       *  Called by JS application code to send messages to Nim
-       */
-      window.wiish.sendMessage = function(message) {
-        window.webkit.messageHandlers.wiish.postMessage(message);
-      };
-      if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }
-      """
+template withJNI(body:untyped):untyped =
+  body
+  # if theEnv.isNil():
+  #   checkInit()
+  #   body
+  # else:
+  #   body
 
-    proc doLog(x:cstring) {.exportc.} =
-      debug(x)
-    proc nim_didFinishLaunching() {.exportc.} =
-      debug "didFinishLaunching"
-      app.launched.emit(true)
-    proc nim_applicationWillResignActive() {.exportc.} =
-      debug "applicationWillResignActive"
-    proc nim_applicationDidEnterBackground() {.exportc.} =
-      debug "applicationDidEnterBackground"
-    proc nim_applicationWillEnterForeground() {.exportc.} =
-      debug "applicationWillEnterForeground"
-    proc nim_applicationDidBecomeActive() {.exportc.} =
-      debug "applicationDidBecomeActive"
-    proc nim_applicationWillTerminate() {.exportc.} =
-      debug "applicationWillTerminate"
-    
-    proc nim_signalJSMessagesReady() {.exportc.} =
-      debug "nim_signalJSMessagesReady"
-      app.window.onReady.emit(true)
-    proc nim_sendMessageToNim(x:cstring) {.exportc.} =
-      debug "nim_sendMessageToNim: " & $x
-      app.window.onMessage.emit($x)
-    
-    proc getInitURL(): cstring {.exportc.} = url
+proc processMainMessage(msg: MessageToMain) =
+  ## Handle messages sent from other threads to the main loop thread
+  echo "Processing main message in thread : ", $getThreadId()
+  case msg.kind
+  else:
+    echo "UNHANDLED: ", $msg
 
-    {.emit: """
-    #include <UIKit/UIKit.h>
-    #include <WebKit/WebKit.h>
+proc nimLoop() {.thread.} =
+  ch_main_setup.send(true)
+  try:
+    while true:
+      try:
+        drain()
+      except ValueError:
+        discard
+      # look for messages from other threads
+      let resp = ch_to_main.tryRecv()
+      if resp.dataAvailable:
+        processMainMessage(resp.msg)
+  except:
+    echo "nimLoop exception: ", getCurrentExceptionMsg()
+    echo "nimLoop stack:     ", getStackTrace()
 
-    // WiishController
-    @interface WiishController : UIViewController <WKNavigationDelegate, WKScriptMessageHandler> {
-      WKWebView* webView;
-    }
-    - (void)evalJavaScript:(NSString *)jscript;
-    @end
-    @implementation WiishController {
-    }
-    - (void)evalJavaScript:(NSString *)jscript {
-      [webView evaluateJavaScript:jscript completionHandler:nil];
-    }
-    - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-      if (message.name == @"wiish_internal_ready") {
-        nim_signalJSMessagesReady();
-      } else {
-        nim_sendMessageToNim([message.body UTF8String]);
-      }
-    }
-    - (void)viewDidLoad {
-      [super viewDidLoad];
-      nimwin()->wiishController = self;
+proc startNimLoop() =
+  var thread: Thread[void]
+  createThread(thread, nimLoop)
+  # wait for main loop to start...
+  discard ch_main_setup.recv()
 
-      // Prepare JS/Nim bridge
-      NSString *javascript = [NSString stringWithUTF8String:jsbridgecode()];
-      WKUserScript *userScript = [[WKUserScript alloc]
-        initWithSource:javascript
-        injectionTime:WKUserScriptInjectionTimeAtDocumentStart
-        forMainFrameOnly:NO
-      ];
+proc start*(app: WebviewAndroidApp, url: string) =
+  startLogging()
+  globalapplock.withLock:
+    globalapp[].url = url
+  startNimLoop()
 
-      self.view = [[UIView alloc] initWithFrame:self.view.frame];
-      self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-      self.view.autoresizesSubviews = YES;
-      self.view.backgroundColor = [UIColor greenColor];
-      WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
-      [theConfiguration.userContentController addScriptMessageHandler:self name:@"wiish"];
-      [theConfiguration.userContentController addScriptMessageHandler:self name:@"wiish_internal_ready"];
-      [theConfiguration.userContentController addUserScript:userScript];
+#---------------------------------------------------
+# JNI helpers
+#
+# These functions are used below in the JNI functions
+#---------------------------------------------------
+proc wiish_c_appStarted() {.exportc.} =
+  ch_to_main.send(MessageToMain(kind: AppStarted))
 
-      webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:theConfiguration];
-      webView.navigationDelegate = self;
-      webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-      webView.autoresizesSubviews = YES;
-      webView.scrollView.bounces = false;
-      NSURL *nsurl=[NSURL URLWithString: [NSString stringWithUTF8String:getInitURL()]];
-      NSURLRequest *nsrequest=[NSURLRequest requestWithURL:nsurl];
-      [webView loadRequest:nsrequest];
-      [self.view addSubview:webView];
-      return;
-    }
-    @end
+proc wiish_c_appWillExit() {.exportc.} =
+  ch_to_main.send(MessageToMain(kind: AppWillExit))
 
-    @interface AppDelegate : UIResponder <UIApplicationDelegate>
-    @property (strong, nonatomic) UIWindow *window;
-    @end
+proc wiish_c_windowAdded(windowId: cint, activity: jobject) {.exportc.} =
+  withJNI:
+    var window = newWebviewAndroidWindow()
+    window.wiishActivity = some(activity)
+    globalapplock.withLock:
+      globalapp.windows[windowId] = window
+  ch_to_main.send(MessageToMain(kind: WindowAdded, windowId: windowId.int))
 
-    @implementation AppDelegate
-    - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-        // Override point for customization after application launch.
-        self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-        self.window.rootViewController = [[WiishController alloc] init];
-        self.window.backgroundColor = [UIColor blueColor];
-        [self.window makeKeyAndVisible];
-        nim_didFinishLaunching();
-        return YES;
-    }
-    - (void)applicationWillResignActive:(UIApplication *)application {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
-        nim_applicationWillResignActive();
-    }
-    - (void)applicationDidEnterBackground:(UIApplication *)application {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        nim_applicationDidEnterBackground();
-    }
-    - (void)applicationWillEnterForeground:(UIApplication *)application {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
-        nim_applicationWillEnterForeground();
-    }
-    - (void)applicationDidBecomeActive:(UIApplication *)application {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-        nim_applicationDidBecomeActive();
-    }
-    - (void)applicationWillTerminate:(UIApplication *)application {
-        // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-        nim_applicationWillTerminate();
-    }
-    @end
+proc wiish_c_windowWillForeground(windowId: cint) {.exportc.} =
+  discard
+  # withJNI:
+  #   globalapplock.withLock:
+  #     globalapp.life.emit(MobileEvent(kind: WindowWillForeground, windowId: windowId))
 
-    N_CDECL(void, NimMain)(void);
-    int main(int argc, char * argv[]) {
-        @autoreleasepool {
-            NimMain();
-            return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
-        }
-    }
-    """ .}
+proc wiish_c_windowDidForeground(windowId: cint) {.exportc.} =
+  discard
+  # withJNI:
+  #   globalapplock.withLock:
+  #     globalapp.life.emit(MobileEvent(kind: WindowDidForeground, windowId: windowId))
 
-  #--------------------------------------------------------
-  # Android
-  #--------------------------------------------------------
-  elif defined(android):
-    import jnim
-    
-    template withJNI(body:untyped):untyped =
-      if theEnv.isNil():
-        checkInit()
-        body
-      else:
-        body
+proc wiish_c_windowWillBackground(windowId: cint) {.exportc.} =
+  discard
+  # withJNI:
+  #   globalapplock.withLock:
+  #     globalapp.life.emit(MobileEvent(kind: WindowWillBackground, windowId: windowId))
 
-    # JNI helpers
-    proc wiish_c_didFinishLaunching() {.exportc.} =
-      withJNI:
-        app.launched.emit(true)
-    
-    proc wiish_c_getInitURL(): cstring {.exportc.} =
-      withJNI:
-        result = url
+proc wiish_c_windowClosed(windowId: cint) {.exportc.} =
+  discard
+  # withJNI:
+  #   globalapplock.withLock:
+  #     globalapp.life.emit(MobileEvent(kind: WindowClosed, windowId: windowId))
 
-    proc wiish_c_sendMessageToNim(message:cstring) {.exportc.} =
-      ## message sent from js to nim
-      withJNI:
-        let msg = $message
-        app.window.onMessage.emit(msg)
+proc wiish_c_nextWindowId*(): cint {.exportc.} =
+  ## Return the next Window ID to be used.
+  globalapplock.withLock:
+    result = globalapp.nextWindowId.cint
+    inc globalapp.nextWindowId
 
-    proc wiish_c_signalJSIsReady() {.exportc.} =
-      ## Child page is ready for messages
-      withJNI:
-        app.window.onReady.emit(true)
+proc wiish_c_getInitURL(): cstring {.exportc.} =
+  ## Return the URL that a new window should open to.
+  globalapplock.withLock:
+    result = globalapp.url
 
-    proc wiish_c_saveActivity(obj: jobject) {.exportc.} =
-      ## Store the activity where Nim can get to it for sending
-      ## messages to JavaScript
-      withJNI:
-        app.window.wiishActivity = WiishActivity.fromJObject(obj)
+proc wiish_c_sendMessageToNim(message:cstring) {.exportc.} =
+  ## message sent from js to nim
+  withJNI:
+    let msg = $message
+    # globalapplock.withLock:
+    #   globalapp.window.onMessage.emit(msg)
 
-    {.emit: """
-    #include <org_wiish_exampleapp_WiishActivity.h> // This file is generated from WiishActivity.java by ./updateJNIheaders.sh
-    N_CDECL(void, NimMain)(void);
+proc wiish_c_signalJSIsReady() {.exportc.} =
+  ## Child page is ready for messages
+  # withJNI:
+  #   globalapplock.withLock:
+  #     globalapp.window.onReady.emit(true)
 
-    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
-  (JNIEnv * env, jobject obj) {
-      NimMain();
-      jobject gobj = (*env)->NewGlobalRef(env, obj);
-      wiish_c_saveActivity(gobj);
-      wiish_c_didFinishLaunching();
-    }
+proc wiish_c_saveActivity(obj: jobject) {.exportc.} =
+  ## Store the activity where Nim can get to it for sending
+  ## messages to JavaScript
+  # withJNI:
+  #   globalapplock.withLock:
+  #     globalapp.window.wiishActivity = WiishActivity.fromJObject(obj)
 
-    JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
-  (JNIEnv * env, jobject obj) {
-      return (*env)->NewStringUTF(env, wiish_c_getInitURL());
-    }
 
-    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessageToNim
-  (JNIEnv * env, jobject obj, jstring str) {
-      const char *nativeString = (*env)->GetStringUTFChars(env, str, 0);
-      wiish_c_sendMessageToNim(nativeString);
-      (*env)->ReleaseStringUTFChars(env, str, nativeString);
-    }
+proc wiish_c_log(message: cstring) {.exportc.} =
+  echo "WIISH LOG: ", $message
 
-    JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIsReady
-  (JNIEnv * env, jobject obj) {
-      wiish_c_signalJSIsReady();
-    }
-    """.}
+#---------------------------------------------------
+# Exposed-to-Java functions
+# TODO: How do I know the signature for adding these?
+#---------------------------------------------------
+{.emit: """
+#include <org_wiish_exampleapp_WiishActivity.h> // This file is generated from WiishActivity.java by ./updateJNIheaders.sh
+N_CDECL(void, NimMain)(void);
+
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
+(JNIEnv * env, jobject obj) {
+  NimMain();
+  wiish_c_appStarted();
+}
+
+JNIEXPORT jint JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1nextWindowId
+(JNIEnv * env, jobject obj) {
+  return wiish_c_nextWindowId();
+}
+
+JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInitURL
+(JNIEnv * env, jobject obj) {
+  return (*env)->NewStringUTF(env, wiish_c_getInitURL());
+}
+
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1windowAdded
+(JNIEnv * env, jobject obj, jint windowId) {
+  jobject gobj = (*env)->NewGlobalRef(env, obj);
+  wiish_c_windowAdded(windowId, gobj);
+}
+
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessageToNim
+(JNIEnv * env, jobject obj, jstring str) {
+  wiish_c_log("sendMessageToNim");
+  const char *nativeString = (*env)->GetStringUTFChars(env, str, 0);
+  wiish_c_sendMessageToNim(nativeString);
+  (*env)->ReleaseStringUTFChars(env, str, nativeString);
+}
+
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIsReady
+(JNIEnv * env, jobject obj) {
+  wiish_c_log("signalJSIsReady");
+  wiish_c_signalJSIsReady();
+}
+""".}
 
 
 
-var app* = newWebviewApp()
+# type
+#   WebviewApp* = ref object of BaseApplication
+#     window*: WebviewAndroidWindow
+  
+#   WebviewAndroidWindow* = ref object of WebviewWindow
+#     onReady*: EventSource[bool]
+#     onMessage*: EventSource[string]
+#     wiishActivity*: WiishActivity
+
+# proc newWebviewApp(): WebviewApp =
+#   new(result)
+#   result.launched = newEventSource[bool]()
+#   result.willExit = newEventSource[bool]()
+#   new(result.window)
+#   result.window.onMessage = newEventSource[string]()
+#   result.window.onReady = newEventSource[bool]()
+
+# proc evalJavaScript*(win:WebviewAndroidWindow, js:string) =
+#   ## Evaluate some JavaScript in the webview
+#   var
+#     activity = win.wiishActivity
+#     javascript = js
+#   activity.evalJavaScript(javascript)
+
+# proc sendMessage*(win:WebviewAndroidWindow, message:string) =
+#   ## Send a message from Nim to JS
+#   evalJavaScript(win, &"wiish._handleMessage({%message});")

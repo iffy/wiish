@@ -75,6 +75,14 @@ JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1init
 
 /*
  * Class:     org_wiish_exampleapp_WiishActivity
+ * Method:    wiish_nextWindowId
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1nextWindowId
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_wiish_exampleapp_WiishActivity
  * Method:    wiish_getInitURL
  * Signature: ()Ljava/lang/String;
  */

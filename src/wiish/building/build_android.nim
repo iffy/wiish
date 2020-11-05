@@ -5,17 +5,10 @@ import logging
 import strformat
 import strutils
 import tables
-import posix
 import parsetoml
 
 import ./config
 import ./buildutil
-
-# proc getEnvOrFail(name: string, errmessage: string = ""): string =
-#   if existsEnv(name):
-#     getEnv(name)
-#   else:
-#     raise newException(CatchableError, &"Environment variable {name} must be set.  {errmessage}")
 
 proc replaceInFile(filename: string, replacements: Table[string, string]) =
   ## Replace lines in a file with the given replacements
@@ -48,9 +41,12 @@ proc doAndroidBuild*(directory:string, config:Config): string =
     dstResources = projectDir/"app"/"src"/"main"/"assets"
     # androidNDKPath = getEnvOrFail("ANDROID_NDK", "Set to your local Android NDK path.  Download from https://developer.android.com/ndk/downloads/")
     # androidSDKPath = getEnvOrFail("ANDROID_SDK", "Set to your local Android SDK path.  Download from https://developer.android.com/studio/#downloads")
-  
+
+  if projectDir.dirExists():
+    projectDir.removeDir()
+
   if config.windowFormat == SDL:
-    if not projectDir.existsDir():
+    if not projectDir.dirExists():
       debug &"Copying SDL android project to {projectDir}"
       createDir(projectDir)
       copyDirWithPermissions(sdlSrc/"android-project", projectDir)
@@ -72,7 +68,7 @@ proc doAndroidBuild*(directory:string, config:Config): string =
       }.toTable)
 
   elif config.windowFormat == Webview:
-    if not projectDir.existsDir():
+    if not projectDir.dirExists():
       debug &"Copying Android template project to {projectDir}"
       createDir(projectDir)
       copyDirWithPermissions(webviewSrc, projectDir)
@@ -89,21 +85,26 @@ proc doAndroidBuild*(directory:string, config:Config): string =
 
   debug "Compiling Nim portion ..."
   proc buildFor(android_abi:string, cpu:string) =
+    let nimcachedir = projectDir/"app"/"jni"/"src"/android_abi
+    if nimcachedir.dirExists:
+      nimcachedir.removeDir()
     var nimFlags:seq[string]
     nimFlags.add(["nim", "c"])
     nimFlags.add(config.nimflags)
     nimFlags.add([
       "--os:android",
       "-d:android",
+      "-d:androidNDK",
       &"--cpu:{cpu}",
-      &"-d:appJavaPackageName={config.java_package_name}",
-      "--noMain",
-      "--gc:regions",
+      "--noMain:on",
+      "--gc:orc",
       "--header",
       "--threads:on",
+      "--tlsEmulation:off",
       "--hints:off",
       "--compileOnly",
-      "--nimcache:" & projectDir/"app"/"jni"/"src"/android_abi,
+      &"-d:appJavaPackageName={config.java_package_name}",
+      "--nimcache:" & nimcachedir,
       appSrc,
     ])
     debug nimFlags.join(" ")
@@ -111,8 +112,16 @@ proc doAndroidBuild*(directory:string, config:Config): string =
     
     let
       nimbase_dst = projectDir/"app"/"jni"/"src"/android_abi/"nimbase.h"
-    debug &"Writing {nimbase_dst} ..."
-    nimbase_dst.writeFile(NIMBASE_H)
+      nimversion = execCmdEx("nim --version").output.split(" ")[3]
+      nimminor = nimversion.rsplit(".", 1)[0]
+    debug &"Writing {nimbase_dst} for Nim version {nimminor} ..."
+    let nimbase_h = case nimminor
+      of "1.0": NIMBASE_1_0_X
+      of "1.2": NIMBASE_1_2_X
+      of "1.4": NIMBASE_1_4_x
+      else:
+        raise ValueError.newException("Unsupported Nim version: " & nimversion)
+    nimbase_dst.writeFile(nimbase_h)
 
   # Android ABIs: https://developer.android.com/ndk/guides/android_mk#taa
   # nim --cpus: https://github.com/nim-lang/Nim/blob/devel/lib/system/platforms.nim#L14
@@ -144,8 +153,6 @@ proc doAndroidBuild*(directory:string, config:Config): string =
     if item.kind == pcFile and item.path.endsWith(".c"):
       cfiles.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
   
-  
-
   replaceInFile(projectDir/"app"/"build.gradle", {
     "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
   }.toTable)
@@ -224,7 +231,6 @@ include $(BUILD_SHARED_LIBRARY)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxhdpi"/"ic_launcher.png", 144, 144)
   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-xxxhdpi"/"ic_launcher.png", 192, 192)
 
-  
   if srcResources.dirExists:
     debug &"Copying in resources ..."
     createDir(dstResources)
@@ -232,7 +238,10 @@ include $(BUILD_SHARED_LIBRARY)
 
   debug &"Building with gradle in {projectDir} ..."
   withDir(projectDir):
-    run("/bin/bash", "gradlew", "assembleDebug", "--console=plain")
+    # TODO: assembleRelease?
+    let args = ["/bin/bash", "gradlew", "assembleDebug", "--console=plain"]
+    debug args.join(" ")
+    run(args)
   
   result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
 
@@ -287,6 +296,7 @@ proc doAndroidRun*(directory: string, verbose: bool = false) =
   if not verbose:
     logargs.add("-s")
     logargs.add(config.java_package_name)
+    logargs.add("nim")
   var logp = startProcess(command="adb", args = logargs, options = {poUsePath, poParentStreams})
 
   let

@@ -1,11 +1,12 @@
 ## Module for mobile dev build (e.g. a web page)
 ## This simulates what iOS and Android do
-import ./base
-import ./desktop
-export desktop
 import logging
 import tables
 import std/exitprocs
+
+import ./base
+import ./desktop ; export desktop
+import ../logsetup
 
 type
   WebviewMobileApp* = ref object of RootRef
@@ -23,6 +24,7 @@ proc getWindow*(app: WebviewMobileApp, windowId: int): WebviewWindow {.inline.} 
   app.windows[windowId]
 
 proc start*(app: WebviewMobileApp, url: string) =
+  startLogging()
   app.desktop.life.onStart.handle:
     app.life.emit(MobileEvent(kind: AppStarted))
 
