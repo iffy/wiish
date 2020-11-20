@@ -14,6 +14,7 @@ runnableExamples:
   doAssert messages == @["foo", "bar"]
   doAssert count == 2
 
+import memtools
 
 type
   EventSource*[T] = object
@@ -22,8 +23,16 @@ type
 proc newEventSource*[T](): EventSource[T] =
   result = EventSource[T]()
 
+proc `$`*[T](p: proc(message:T):void): string =
+  &"proc<{addrstr(p)}>"
+
 proc `$`*(ev: EventSource): string =
-  result = "EventSource(listeners#=" & $(ev.listeners.len) & ")"
+  result = &"EventSource<{addrstr(ev)}>(listeners="
+  for i,l in ev.listeners:
+    result.add &"{l},"
+  result.add ")"
+
+proc `$`*(ev: ref EventSource): string = "ref " & $ev[]
 
 proc addListener*[T](es: var EventSource[T], listener: proc(message:T):void) =
   ## Add a proc to handle events.  Proc will be called once for each

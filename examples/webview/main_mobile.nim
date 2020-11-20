@@ -7,9 +7,9 @@ import memtools
 var app = newWebviewMobileApp()
 
 app.life.addListener proc(ev: MobileEvent) =
-  info "Event: ", $ev
   case ev.kind
   of WindowAdded:
+    debug "WindowAdded"
     var win = app.getWindow(ev.windowId)
     win.onReady.handle:
       debug "JS is ready"
@@ -18,8 +18,7 @@ app.life.addListener proc(ev: MobileEvent) =
       debug "Got JS message: ", $msg
       win.sendMessage("Hello from Nim! You said " & msg)
   else:
-    discard
+    debug "Unhandled Message: ", $ev
 
 let index_html = resourcePath("index.html").replace(" ", "%20")
-debug $index_html
 app.start(url = "file://" & index_html)

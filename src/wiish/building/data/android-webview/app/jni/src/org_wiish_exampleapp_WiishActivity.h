@@ -83,6 +83,14 @@ JNIEXPORT jint JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1nextWindow
 
 /*
  * Class:     org_wiish_exampleapp_WiishActivity
+ * Method:    wiish_windowAdded
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1windowAdded
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     org_wiish_exampleapp_WiishActivity
  * Method:    wiish_getInitURL
  * Signature: ()Ljava/lang/String;
  */
@@ -92,18 +100,18 @@ JNIEXPORT jstring JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1getInit
 /*
  * Class:     org_wiish_exampleapp_WiishActivity
  * Method:    wiish_sendMessageToNim
- * Signature: (Ljava/lang/String;)V
+ * Signature: (ILjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1sendMessageToNim
-  (JNIEnv *, jobject, jstring);
+  (JNIEnv *, jobject, jint, jstring);
 
 /*
  * Class:     org_wiish_exampleapp_WiishActivity
  * Method:    wiish_signalJSIsReady
- * Signature: ()V
+ * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIsReady
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
 }

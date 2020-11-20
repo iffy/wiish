@@ -36,7 +36,7 @@ class WiishJsBridge {
 		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				activity.wiish_sendMessageToNim(message);
+				activity.wiish_sendMessageToNim(activity.windowId, message);
 			}
 		});
 	}
@@ -46,7 +46,7 @@ class WiishJsBridge {
 		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				activity.wiish_signalJSIsReady();
+				activity.wiish_signalJSIsReady(activity.windowId);
 			}
 		});
 	}
@@ -57,13 +57,15 @@ public class WiishActivity extends Activity {
 		System.loadLibrary("main");
 	}
 
+	public int windowId;
+
 	// JNI stuff
 	public native void wiish_init();
 	public native int wiish_nextWindowId();
 	public native void wiish_windowAdded(int windowId);
 	public native String wiish_getInitURL();
-	public native void wiish_sendMessageToNim(String message);
-	public native void wiish_signalJSIsReady();
+	public native void wiish_sendMessageToNim(int windowId, String message);
+	public native void wiish_signalJSIsReady(int windowId);
 
 	public void evalJavaScript(final String js) {
 		if (webView == null) {
@@ -91,22 +93,22 @@ public class WiishActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		Log.i("org.wiish.webviewexample", "about to wiish_init()");
+		// Log.i("org.wiish.webviewexample", "about to wiish_init()");
 		wiish_init();
-		Log.i("org.wiish.webviewexample", "end      wiish_init()");
+		// Log.i("org.wiish.webviewexample", "end      wiish_init()");
 
 		LinearLayout view = new LinearLayout(this);
 		view.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 		view.setOrientation(LinearLayout.VERTICAL);
 		setContentView(view);
     
-		Log.i("org.wiish.webviewexample", "A");
+		// Log.i("org.wiish.webviewexample", "A");
 
 		webView = new WebView(this);
 
-		Log.i("org.wiish.webviewexample", "A2");
+		// Log.i("org.wiish.webviewexample", "A2");
 		webView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		Log.i("org.wiish.webviewexample", "A3");
+		// Log.i("org.wiish.webviewexample", "A3");
 		webView.setWebChromeClient(new WebChromeClient() {
 			// @Override
 			// public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -114,7 +116,7 @@ public class WiishActivity extends Activity {
 			// }
 		});
 
-		Log.i("org.wiish.webviewexample", "B");
+		// Log.i("org.wiish.webviewexample", "B");
 
 		// This multi-line string syntax is ridiculous
 		final String javascript = ""
@@ -161,19 +163,19 @@ public class WiishActivity extends Activity {
 				WiishActivity.this.evalJavaScript(javascript);
 			}
 		});
-		Log.i("org.wiish.webviewexample", "C");
+		// Log.i("org.wiish.webviewexample", "C");
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
 		webView.loadUrl(wiish_getInitURL());
 		view.addView(webView);
 
-		Log.i("org.wiish.webviewexample", "D");
+		// Log.i("org.wiish.webviewexample", "D");
 
-		Log.i("org.wiish.webviewexample", "about to wiish_nextWindowId()");
-		int windowId = wiish_nextWindowId();
-		Log.i("org.wiish.webviewexample", "E");
-		Log.i("org.wiish.webviewexample", "windowId = " + windowId);
+		// Log.i("org.wiish.webviewexample", "about to wiish_nextWindowId()");
+		windowId = wiish_nextWindowId();
+		// Log.i("org.wiish.webviewexample", "E");
+		// Log.i("org.wiish.webviewexample", "windowId = " + windowId);
 		wiish_windowAdded(windowId);
-		Log.i("org.wiish.webviewexample", "F");
+		// Log.i("org.wiish.webviewexample", "F");
 	}
 }
