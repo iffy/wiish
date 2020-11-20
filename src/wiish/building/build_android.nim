@@ -245,7 +245,7 @@ include $(BUILD_SHARED_LIBRARY)
   
   result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
 
-template runningDevices() : seq[string] = 
+proc runningDevices(): seq[string] {.inline.} = 
   ## List all currently running Android devices
   runoutput("adb", "devices").strip.splitLines[1..^1]
 
@@ -274,8 +274,10 @@ proc doAndroidRun*(directory: string, verbose: bool = false) =
   let device_list = runningDevices()
   debug &"devices: {device_list.repr}"
   if device_list.len == 0:
+    debug "No running devices. Let's start one..."
     let emulator_bin = findExe("emulator")
     let possible_avds = possibleDevices()
+    debug &"Found {possible_avds.len} possible devices"
     if possible_avds.len == 0:
       raise newException(CatchableError, "No emulators installed. XXX provide instructions to get them installed.")
     let avd = possible_avds[0]
