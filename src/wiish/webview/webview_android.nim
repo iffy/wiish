@@ -2,23 +2,12 @@
 when not defined(android):
   {.fatal: "Only available for -d:android".}
 
-import json
-import logging
-import jnim/private/jni_wrapper
-
-echo "========= START ============="
-
-template TODO(msg: string) =
-  when defined(release):
-    {.fatal: "TODO" & msg .}
-  else:
-    echo "TODO: ", msg
-
-
-import memtools
 import asyncdispatch
-import locks
+import jnim/private/jni_wrapper
 import json
+import locks
+import logging
+import memtools
 import options
 import os
 import strformat
@@ -31,12 +20,16 @@ type
   MessageToMainKind = enum
     StdMobileEvent
     JsIsReady
+    MessageFromJavaScript
   MessageToMain = object
     case kind: MessageToMainKind
     of StdMobileEvent:
       mobile_ev: MobileEvent
     of JsIsReady:
       windowId: int
+    of MessageFromJavaScript:
+      js_message_windowId: int
+      js_message: string
 
 var ch_to_main: Channel[MessageToMain]; ch_to_main.open()
 var ch_main_setup: Channel[bool]; ch_main_setup.open()
@@ -45,7 +38,7 @@ type
   WebviewAndroidApp* = object
     url*: string
     life*: EventSource[MobileEvent]
-    windows*: Table[int, ref WebviewAndroidWindow]
+    windows: Table[int, ref WebviewAndroidWindow]
     nextWindowId: int
   
   WebviewAndroidWindow* = object
@@ -55,10 +48,30 @@ type
 
   WiishActivity = jobject
 
-TODO "make windows* -> windows"
-
 var global_JavaVM: JavaVMPtr
 var global_JavaVersion: jint
+
+type
+  JavaVMAttachArgs = object
+    version: jint
+    name: cstring
+    group: jobject
+
+proc jniErrorMessage(err: jint): string =
+  ## Convert an error return code into a string
+  result = case err
+    of JNI_ERR: "Error"
+    of JNI_EDETACHED: "Error detached"
+    of JNI_EVERSION: "Error version"
+    of JNI_ENOMEM: "Error no memory"
+    of JNI_EEXIST: "Error exist"
+    of JNI_EINVAL: "Error invalid"
+    else: "Unknown error"
+  result.add " " & $err.int
+
+proc ok(rc: jint) =
+  if rc != JNI_OK:
+    raise newException(ValueError, "JNI Error: " & rc.jniErrorMessage())
 
 proc initializeJavaVM(env: JNIEnvPtr) =
   ## Set up the global_JavaVM
@@ -66,19 +79,33 @@ proc initializeJavaVM(env: JNIEnvPtr) =
   if isJVMLoaded():
     var
       nVMs: jsize
-    if JNI_GetCreatedJavaVMs(global_JavaVM.addr, 1.jsize, nVMs.addr) != JNI_OK:
-      error "Error getting JavaVM"
-    elif nVMs.int == 0:
+    JNI_GetCreatedJavaVMs(global_JavaVM.addr, 1.jsize, nVMs.addr).ok()
+    if nVMs.int == 0:
       error "Error finding JavaVM"
     global_JavaVersion = env.GetVersion(env)
 
 proc getJNIEnv(): JNIEnvPtr =
-  echo "getJNIEnv"
   doAssert not(global_JavaVM.isNil)
   let vm:JavaVM = global_JavaVM[]
-  if vm.GetEnv(global_JavaVM, cast[ptr pointer](result.addr), global_JavaVersion) != JNI_OK:
-    raise newException(ValueError, "Error getting JNIEnv")
-  echo "getJNIEnv -> ok!"
+  var initArgs = JavaVMAttachArgs(
+    version: global_JavaVersion,
+    name: "wiish",
+    group: nil,
+  )
+  vm.AttachCurrentThread(global_JavaVM, cast[ptr pointer](result.addr), initArgs.addr).ok()
+
+template withJEnv(env: untyped, body: untyped): untyped =
+  var env = getJNIEnv()
+  try:
+    body
+  finally:
+    let vm:JavaVM = global_JavaVM[]
+    try:
+      vm.DetachCurrentThread(global_JavaVM).ok()
+    except:
+      error "Error detaching jenv from thread: " & getCurrentExceptionMsg()
+    
+
 
 var globalapplock: Lock
 initLock(globalapplock)
@@ -119,38 +146,26 @@ proc getWindow*(app: ptr WebviewAndroidApp, windowId: int): ref WebviewAndroidWi
 
 proc evalJavaScript(win: ref WebviewAndroidWindow, js: string) =
   ## Evaluate some JavaScript in the webview
-  echo "evalJavaScript: " & js
   if win.wiishActivity.isNone:
     warn "Attempting to execute JavaScript in unattached webview window"
   else:
     var
       activity = win.wiishActivity.get()
-      javascript = js
-    # let env = getJNIEnv()
-    TODO "evalJavaScript"
-    # jclass cls = (*env)->GetObjectClass(env, obj);
-    # see: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
-    # or: https://stackoverflow.com/questions/12900695/how-to-obtain-jni-interface-pointer-jnienv-for-asynchronous-calls
-    # or: https://www.iitk.ac.in/esc101/05Aug/tutorial/native1.1/implementing/method.html
-    # activity.evalJavaScript(javascript)
+      javascript = js.cstring
+    withJEnv(env):
+      var cls: JClass = env.GetObjectClass(env, activity)
+      var mid: jmethodID = env.GetMethodID(env, cls, "evalJavaScript", "(Ljava/lang/String;)V");
+      if mid.isNil:
+        raise newException(ValueError, "Failed to get evalJavaScript methodId")
+      var jstring_js = env.NewStringUTF(env, js)
+      env.CallVoidMethod(env, activity, mid, jstring_js)
 
 proc sendMessage*(win: ref WebviewAndroidWindow, message: string) =
   ## Send a string message to the JavaScript in the window's webview
-  echo "sendMessage(" & $message & ")"
   win.evalJavaScript(&"wiish._handleMessage({%message});")
-
-template withJNI(body:untyped):untyped =
-  body
-  # if theEnv.isNil():
-  #   checkInit()
-  #   body
-  # else:
-  #   body
 
 proc processMainMessage(msg: MessageToMain) {.gcsafe.} =
   ## Handle messages sent from other threads to the main loop thread
-  # echo "Processing main message in thread : ", $getThreadId()
-  echo "processMainMessage", $msg
   case msg.kind
   of StdMobileEvent:
     globalapplock.withLock:
@@ -160,8 +175,13 @@ proc processMainMessage(msg: MessageToMain) {.gcsafe.} =
     globalapplock.withLock:
       {.gcsafe.}:
         globalapp.windows[msg.windowId].onReady.emit(true)
+  of MessageFromJavaScript:
+    globalapplock.withLock:
+      {.gcsafe.}:
+        globalapp.windows[msg.js_message_windowId].onMessage.emit(msg.js_message)
 
 proc nimLoop() {.thread, gcsafe.} =
+  ## The main async nim loop
   startLogging()
   ch_main_setup.send(true)
   try:
@@ -175,8 +195,8 @@ proc nimLoop() {.thread, gcsafe.} =
       if resp.dataAvailable:
         processMainMessage(resp.msg)
   except:
-    echo "nimLoop exception: ", getCurrentExceptionMsg()
-    echo "nimLoop stack:     ", getStackTrace()
+    error "nimLoop exception: ", getCurrentExceptionMsg()
+    error "nimLoop stack:     ", getStackTrace()
 
 proc startNimLoop() =
   var thread: Thread[void]
@@ -198,7 +218,6 @@ proc start*(app: ptr WebviewAndroidApp, url: string) =
 # Assume that these are NOT being run on the main thread
 #---------------------------------------------------
 proc wiish_c_initVM(env: JNIEnvPtr) {.exportc.} =
-  debug "wiish_c_initVM"
   env.initializeJavaVM()
 
 proc wiish_c_appStarted() {.exportc.} =
@@ -210,41 +229,28 @@ proc wiish_c_appWillExit() {.exportc.} =
     mobile_ev: MobileEvent(kind: AppWillExit)))
 
 proc wiish_c_windowAdded(windowId: cint, activity: jobject) {.exportc.} =
-  withJNI:
-    var window = newWebviewAndroidWindow()
-    window.wiishActivity = some(activity)
-    globalapplock.withLock:
-      globalapp.windows[windowId] = window
+  var window = newWebviewAndroidWindow()
+  window.wiishActivity = some(activity)
+  globalapplock.withLock:
+    globalapp.windows[windowId] = window
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
     mobile_ev: MobileEvent(kind: WindowAdded, windowId: windowId.int)))
 
 proc wiish_c_windowWillForeground(windowId: cint) {.exportc.} =
-  TODO "wiish_c_windowWillForeground"
-  discard
-  # withJNI:
-  #   globalapplock.withLock:
-  #     globalapp.life.emit(MobileEvent(kind: WindowWillForeground, windowId: windowId))
+  ch_to_main.send(MessageToMain(kind: StdMobileEvent,
+    mobile_ev: MobileEvent(kind: WindowWillForeground, windowId: windowId)))
 
 proc wiish_c_windowDidForeground(windowId: cint) {.exportc.} =
-  TODO "wiish_c_windowDidForeground"
-  discard
-  # withJNI:
-  #   globalapplock.withLock:
-  #     globalapp.life.emit(MobileEvent(kind: WindowDidForeground, windowId: windowId))
+  ch_to_main.send(MessageToMain(kind: StdMobileEvent,
+    mobile_ev: MobileEvent(kind: WindowDidForeground, windowId: windowId)))
 
 proc wiish_c_windowWillBackground(windowId: cint) {.exportc.} =
-  TODO "wiish_c_windowWillBackground"
-  discard
-  # withJNI:
-  #   globalapplock.withLock:
-  #     globalapp.life.emit(MobileEvent(kind: WindowWillBackground, windowId: windowId))
+  ch_to_main.send(MessageToMain(kind: StdMobileEvent,
+    mobile_ev: MobileEvent(kind: WindowWillBackground, windowId: windowId)))
 
 proc wiish_c_windowClosed(windowId: cint) {.exportc.} =
-  TODO "wiish_c_windowClosed"
-  discard
-  # withJNI:
-  #   globalapplock.withLock:
-  #     globalapp.life.emit(MobileEvent(kind: WindowClosed, windowId: windowId))
+  ch_to_main.send(MessageToMain(kind: StdMobileEvent,
+    mobile_ev: MobileEvent(kind: WindowClosed, windowId: windowId)))
 
 proc wiish_c_nextWindowId*(): cint {.exportc.} =
   ## Return the next Window ID to be used.
@@ -259,24 +265,13 @@ proc wiish_c_getInitURL(): cstring {.exportc.} =
 
 proc wiish_c_sendMessageToNim(windowId: cint, message:cstring) {.exportc.} =
   ## message sent from js to nim
-  # TODO "wiish_c_sendMessageToNim"
-  # withJNI:
-  #   let msg = $message
-    # globalapplock.withLock:
-    #   globalapp.window.onMessage.emit(msg)
+  ch_to_main.send(MessageToMain(kind: MessageFromJavaScript,
+    js_message: $message,
+    js_message_windowId: windowId))
 
 proc wiish_c_signalJSIsReady(windowId: cint) {.exportc.} =
   ## Child page is ready for messages
   ch_to_main.send(MessageToMain(kind: JsIsReady, windowId: windowId))
-
-proc wiish_c_saveActivity(obj: jobject) {.exportc.} =
-  ## Store the activity where Nim can get to it for sending
-  ## messages to JavaScript
-  TODO "wiish_c_saveActivity"
-  # withJNI:
-  #   globalapplock.withLock:
-  #     globalapp.window.wiishActivity = WiishActivity.fromJObject(obj)
-
 
 proc wiish_c_log(message: cstring) {.exportc.} =
   echo "WIISH LOG: ", $message
