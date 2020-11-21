@@ -13,7 +13,6 @@ import tables
 import ../events ; export events
 import ../logsetup
 import ../baseapp ; export baseapp
-import ./base ; export base
 
 {.passL: "-framework Foundation" .}
 {.passL: "-framework UIKit" .}

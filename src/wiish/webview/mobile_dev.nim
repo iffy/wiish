@@ -1,48 +1,48 @@
 ## Module for mobile dev build (e.g. a web page)
 ## This simulates what iOS and Android do
-import logging
 import tables
 import std/exitprocs
 
-import ./base
+import ../baseapp ; export baseapp
 import ./desktop ; export desktop
-import ../logsetup
 
 type
-  WebviewMobileApp* = ref object of RootRef
-    desktop: WebviewDesktopApp
+  WebviewMobileApp* = object
+    desktop: ref WebviewDesktopApp
     life*: EventSource[MobileEvent]
-    windows: Table[int, WebviewWindow]
+    windows: Table[int, ref WebviewWindow]
 
-proc newWebviewMobileApp*(): WebviewMobileApp =
+proc newWebviewMobileApp*(): ref WebviewMobileApp =
   new(result)
   result.desktop = newWebviewDesktopApp()
   result.life = newEventSource[MobileEvent]()
-  result.windows = initTable[int, WebviewWindow]()
+  result.windows = initTable[int, ref WebviewWindow]()
 
-proc getWindow*(app: WebviewMobileApp, windowId: int): WebviewWindow {.inline.} =
+proc getWindow*(app: ref WebviewMobileApp, windowId: int): ref WebviewWindow {.inline.} =
   app.windows[windowId]
 
-proc start*(app: WebviewMobileApp, url: string) =
-  startLogging()
-  app.desktop.life.onStart.handle:
-    app.life.emit(MobileEvent(kind: AppStarted))
-
-    let window = app.desktop.newWindow(
-      title = "Wiish Mobile Dev",
-      url = url,
-      width = 375,
-      height = 667,
-    )
-    let windowId = 0
-    app.windows[windowId] = window
-    app.life.emit(MobileEvent(kind: WindowAdded, windowId: windowId))
-    app.life.emit(MobileEvent(kind: WindowWillForeground, windowId: windowId))
-    app.life.emit(MobileEvent(kind: WindowDidForeground, windowId: windowId))
-    # window.onMessage.handle(message):
-    #   debug "MATT: desktop.window.onMessage: " & message
-    # window.onReady.handle:
-    #   debug "MATT: window.onReady"
+proc start*(app: ref WebviewMobileApp, url: string) =
+  app.desktop.life.addListener proc(ev: DesktopEvent) =
+    case ev.kind
+    of desktopAppStarted:
+      app.life.emit(MobileEvent(kind: AppStarted))
+      let window = app.desktop.newWindow(
+        title = "Wiish Mobile Dev",
+        url = url,
+        width = 375,
+        height = 667,
+      )
+      let windowId = 0
+      app.windows[windowId] = window
+      app.life.emit(MobileEvent(kind: WindowAdded, windowId: windowId))
+      app.life.emit(MobileEvent(kind: WindowWillForeground, windowId: windowId))
+      app.life.emit(MobileEvent(kind: WindowDidForeground, windowId: windowId))
+      # window.onMessage.handle(message):
+      #   debug "MATT: desktop.window.onMessage: " & message
+      # window.onReady.handle:
+      #   debug "MATT: window.onReady"
+    of desktopAppWillExit:
+      discard "This is handled below in addExitProc"
 
   addExitProc proc() =
     for windowId in app.windows.keys:

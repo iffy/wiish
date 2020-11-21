@@ -14,8 +14,6 @@ runnableExamples:
   doAssert messages == @["foo", "bar"]
   doAssert count == 2
 
-import memtools
-
 type
   EventSource*[T] = object
     listeners: seq[proc(message:T):void]
@@ -23,14 +21,8 @@ type
 proc newEventSource*[T](): EventSource[T] =
   result = EventSource[T]()
 
-proc `$`*[T](p: proc(message:T):void): string =
-  &"proc<{addrstr(p)}>"
-
 proc `$`*(ev: EventSource): string =
-  result = &"EventSource<{addrstr(ev)}>(listeners="
-  for i,l in ev.listeners:
-    result.add &"{l},"
-  result.add ")"
+  result = &"EventSource(listeners=#" & $ev.listeners.len & ")"
 
 proc `$`*(ev: ref EventSource): string = "ref " & $ev[]
 

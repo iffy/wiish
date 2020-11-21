@@ -2,7 +2,6 @@
 import wiish/webview/mobile
 import strutils
 import logging
-import memtools
 
 var app = newWebviewMobileApp()
 
@@ -18,7 +17,7 @@ app.life.addListener proc(ev: MobileEvent) =
       debug "Got JS message: ", $msg
       win.sendMessage("Hello from Nim! You said " & msg)
   else:
-    debug "Unhandled Message: ", $ev
+    debug "Unhandled message: ", $ev
 
 let index_html = resourcePath("index.html").replace(" ", "%20")
 app.start(url = "file://" & index_html)

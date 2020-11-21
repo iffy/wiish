@@ -14,7 +14,7 @@ import strformat
 import tables
 
 import ../logsetup
-import ./base ; export base
+import ../baseapp ; export baseapp
 
 type
   MessageToMainKind = enum

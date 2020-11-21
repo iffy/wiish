@@ -65,16 +65,15 @@ type
     of WindowAdded, WindowWillForeground, WindowDidForeground, WindowWillBackground, WindowClosed:
       windowId*: int
 
-  DesktopLifecycle* = ref object of RootRef
-    ## Object onto which you can register handlers related
-    ## to a desktop application's lifecycle events
-    onStart*: EventSource[bool]
-    onBeforeExit*: EventSource[bool]
-
-proc newDesktopLifecycle*(): DesktopLifecycle =
-  new(result)
-  result.onStart = newEventSource[bool]()
-  result.onBeforeExit = newEventSource[bool]()
+  DesktopEventKind* = enum
+    desktopAppStarted
+    desktopAppWillExit
+  
+  DesktopEvent* = object
+    ## Events that can happen to desktop apps
+    case kind*: DesktopEventKind
+    of desktopAppStarted, desktopAppWillExit:
+      discard
 
 type
   IBaseApp* = concept app
@@ -83,7 +82,7 @@ type
   IDesktopApp* = concept app
     ## Interface required for desktop applications
     app is IBaseApp
-    app.life is DesktopLifecycle
+    app.life is EventSource[DesktopEvent]
 
   IMobileApp* = concept app
     ## Interface required for mobile applications
