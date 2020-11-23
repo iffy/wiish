@@ -104,6 +104,7 @@ elif defined(android):
 else:
   # Built, desktop app
   import strformat
+  import os
   const appName {.strdefine.}: string = ""
   if appName == "":
     {.warning: "Define -d:appName=name_of_your_app to enable logging".}
