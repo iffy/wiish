@@ -7,7 +7,7 @@ import parsetoml
 import ./config
 import ./buildutil
 
-proc doLinuxBuild*(directory:string, config:Config) =
+proc doLinuxBuild*(directory: string, config: WiishConfig) =
   ## Package a Linux application
   # let config = getLinuxConfig(configPath)
   # let src_file = directory/config.src

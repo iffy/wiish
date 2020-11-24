@@ -32,7 +32,7 @@ type
     JavaPackageName = "java_package_name",
 
   ## Config is a project's configuration
-  Config* = object of RootObj
+  WiishConfig* = object of RootObj
     name*: string
     version*: string
     src*: string
@@ -66,14 +66,15 @@ proc get*[T](maintoml: TomlValueRef, sections:seq[string], key: string, default:
 const OVERRIDE_KEY = "_override_"
 
 proc override*[T](x:var TomlValueRef, key:string, val:T) =
+  ## Set a command-line override
   x[OVERRIDE_KEY][key] = ?val
 
 proc parseConfig*(filename:string): TomlValueRef =
   result = parsetoml.parseFile(filename)
   result[OVERRIDE_KEY] = newTTable()
 
-proc getConfig*(toml: TomlValueRef, sections:seq[string]):Config =
-  result = Config()
+proc getConfig*(toml: TomlValueRef, sections:seq[string]):WiishConfig =
+  result = WiishConfig()
   for opt in low(ConfigOption)..high(ConfigOption):
     case opt
     of Name:
@@ -121,37 +122,37 @@ proc getConfig*(toml: TomlValueRef, sections:seq[string]):Config =
     of JavaPackageName:
       result.java_package_name = toml.get(sections, $opt, ?"com.example.wiishapp").stringVal
 
-template getMacosConfig*(parsed: TomlValueRef): Config =
+template getMacosConfig*(parsed: TomlValueRef): WiishConfig =
   parsed.getConfig(@[OVERRIDE_KEY, "macos", "desktop", "main"])
-template getMacosConfig*(filename: string): Config =
+template getMacosConfig*(filename: string): WiishConfig =
   filename.parseConfig().getMacosConfig()
 
-template getWindowsConfig*(parsed: TomlValueRef): Config =
+template getWindowsConfig*(parsed: TomlValueRef): WiishConfig =
   parsed.getConfig(@[OVERRIDE_KEY, "windows", "desktop", "main"])
-template getWindowsConfig*(filename: string): Config =
+template getWindowsConfig*(filename: string): WiishConfig =
   filename.parseConfig().getWindowsConfig()
 
-template getLinuxConfig*(parsed: TomlValueRef): Config =
+template getLinuxConfig*(parsed: TomlValueRef): WiishConfig =
   parsed.getConfig(@[OVERRIDE_KEY, "linux", "desktop", "main"])
-template getLinuxConfig*(filename: string): Config =
+template getLinuxConfig*(filename: string): WiishConfig =
   filename.parseConfig().getLinuxConfig()
 
-template getiOSConfig*(parsed: TomlValueRef): Config =
+template getiOSConfig*(parsed: TomlValueRef): WiishConfig =
   parsed.getConfig(@[OVERRIDE_KEY, "ios", "mobile", "main"])
-template getiOSConfig*(filename: string): Config =
+template getiOSConfig*(filename: string): WiishConfig =
   filename.parseConfig().getiOSConfig()
 
-template getAndroidConfig*(parsed: TomlValueRef): Config =
+template getAndroidConfig*(parsed: TomlValueRef): WiishConfig =
   parsed.getConfig(@[OVERRIDE_KEY, "android", "mobile", "main"])
-template getAndroidConfig*(filename: string): Config =
+template getAndroidConfig*(filename: string): WiishConfig =
   filename.parseConfig().getAndroidConfig()
 
-template getMobileDevConfig*(parsed: TomlValueRef): Config =
+template getMobileDevConfig*(parsed: TomlValueRef): WiishConfig =
   parsed.getConfig(@[OVERRIDE_KEY, "mobile", "main"])
-template getMobileDevConfig*(filename: string): Config =
+template getMobileDevConfig*(filename: string): WiishConfig =
   filename.parseConfig().getMobileDevConfig()
 
-template getMyOSConfig*(filename:string): Config =
+template getMyOSConfig*(filename:string): WiishConfig =
   when defined(macosx):
     getMacosConfig(filename)
   elif defined(windows):

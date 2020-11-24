@@ -136,7 +136,7 @@ proc listPossibleSDKVersions(simulator: bool):seq[string] =
       result.add(matches[0])
 
 
-proc doiOSBuild*(directory:string, config:Config):string =
+proc doiOSBuild*(directory:string, config: WiishConfig):string =
   ## Build an iOS .app
   ## Returns the path to the packaged .app
   let

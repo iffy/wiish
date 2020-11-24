@@ -2,6 +2,46 @@ import os
 import osproc
 import strutils
 import logging
+import ./config
+
+type
+  TargetOS* = enum
+    AutoDetectOS = "auto"
+    Mac = "mac"
+    Ios = "ios"
+    Android = "android"
+    Windows = "windows"
+    Linux = "linux"
+  
+  TargetFormat* = enum
+    defaultFormat = "auto"
+    macApp = "app"
+    macDMG = "dmg"
+    winExe = "exe"
+    winInstaller = "win-installer"
+  
+  BuildContext* = object
+    ## The context for all builds
+    projectPath*: string
+    targetOS*: TargetOS
+    targetFormats*: seq[TargetFormat]
+    config*: WiishConfig
+
+  BuildStep* = enum
+    ## List of steps that are executed during a build
+    PreBuild
+    PreCompileTargetConfig
+    CompileNim
+    BuildIcons
+    PostCompileTargetConfig
+    EmbedResources
+    PostBuild
+    Package
+    SignPackage
+    NotarizePackage
+    Run
+  
+  buildProc* = proc(step: BuildStep, ctx: ref BuildContext) {.nimcall.}
 
 type
   DoctorStatus* = enum
@@ -19,12 +59,13 @@ const
   NIMBASE_1_4_x* = slurp"data/nimbase-1.4.x.h"
 
 template withDir*(dir: string, body: untyped): untyped =
+  ## Execute a block of code within another directory.
   let origDir = getCurrentDir()
   setCurrentDir(dir)
   body
   setCurrentDir(origDir)
 
-proc run*(args:varargs[string, `$`]) =
+proc sh*(args:varargs[string, `$`]) =
   ## Run a process, failing the program if it fails
   var p = startProcess(command = args[0],
     args = args[1..^1],
@@ -32,7 +73,7 @@ proc run*(args:varargs[string, `$`]) =
   if p.waitForExit() != 0:
     raise newException(CatchableError, "Error running process")
 
-proc runoutput*(args:varargs[string, `$`]):string =
+proc shoutput*(args:varargs[string, `$`]):string =
   ## Run a process and return the output as a string
   result = execProcess(command = args[0],
     args = args[1..^1],
@@ -44,7 +85,7 @@ var
 
 proc getWiishPackageRoot*():string =
   if wiishPackagePath == "":
-    var path = runoutput("nimble", "path", "wiish").strip()
+    var path = shoutput("nimble", "path", "wiish").strip()
     if "Error:" in path:
       wiishPackagePath = currentSourcePath.parentDir.parentDir.parentDir
     else:
@@ -69,7 +110,7 @@ proc getNimLibPath*(): string =
 proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
   ## Resize a PNG image
   when defined(macosx):
-    discard runoutput("sips",
+    discard shoutput("sips",
       "-z", $height, $width,
       "--out", outfile,
       "-s", "format", "png",

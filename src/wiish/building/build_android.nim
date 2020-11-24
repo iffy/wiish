@@ -17,14 +17,14 @@ proc replaceInFile(filename: string, replacements: Table[string, string]) =
     guts = guts.replace(re(pattern), replacement)
   filename.writeFile(guts)
 
-template activityName(config:Config):string =
+template activityName(config: WiishConfig):string =
   config.java_package_name.split({'.'})[^1] & "Activity"
 
-template fullActivityName(config:Config):string =
+template fullActivityName(config: WiishConfig):string =
   ## Return the java.style.activity.name of an app
   config.java_package_name & "." & config.activityName()
 
-proc doAndroidBuild*(directory:string, config:Config): string =
+proc doAndroidBuild*(directory:string, config: WiishConfig): string =
   ## Package an Android app
   ## Returns the path to the app
 
