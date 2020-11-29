@@ -15,7 +15,7 @@ bin           = @["wiish"]
 # requires "nim <= 1.0.6"
 requires "nim >= 1.0.6"
 requires "parsetoml >= 0.3.2"
-requires "argparse >= 0.7.1" # "https://github.com/iffy/nim-argparse.git"
+requires "argparse >= 1.1.0" # "https://github.com/iffy/nim-argparse.git"
 # requires "https://github.com/mjendrusch/objc.git"
 requires "jnim >= 0.5"
 

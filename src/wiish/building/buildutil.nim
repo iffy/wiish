@@ -41,7 +41,9 @@ type
     NotarizePackage
     Run
   
-  buildProc* = proc(step: BuildStep, ctx: ref BuildContext) {.nimcall.}
+  BuildPlugin* = concept p
+    p.name() is string
+    p.runStep(BuildStep, ref BuildContext)
 
 type
   DoctorStatus* = enum

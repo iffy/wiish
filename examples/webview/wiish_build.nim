@@ -1,5 +1,7 @@
+import wiish/build
 import wiish/webview
-build(@[
-  wiishStdBuild,
-  wiishWebviewBuild,
-])
+
+build((
+  WiishBuild(),
+  WiishWebviewBuild(),
+))

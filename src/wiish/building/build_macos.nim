@@ -1,7 +1,7 @@
 import os
 import strformat
-import parsetoml
-import posix
+# import parsetoml
+# import posix
 import logging
 
 import ./config
@@ -51,24 +51,29 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
   of PreBuild:
     discard
   of PreCompileTargetConfig:
+    echo "mkdir ", contentsDir
     createDir(contentsDir)
+    echo "mkdir ", contentsDir/"Resources"
     createDir(contentsDir/"Resources")
+    echo "mkdir ", contentsDir/"MacOS"
     createDir(contentsDir/"MacOS")
     # Contents/PkgInfo
+    echo "create ", contentsDir/"PkgInfo"
     (contentsDir/"PkgInfo").writeFile("APPL????")
   of CompileNim:
-    # Compile Contents/MacOS/bin
-    var args = @[
-      "nim",
-      "c",
-      "-d:release",
-      "--gc:orc",
-      &"-d:appName={config.name}",
-    ]
-    args.add(config.nimflags)
-    args.add(&"-o:{executablePath}")
-    args.add(appSrc)
-    sh(args)
+    discard
+    # # Compile Contents/MacOS/bin
+    # var args = @[
+    #   "nim",
+    #   "c",
+    #   "-d:release",
+    #   "--gc:orc",
+    #   &"-d:appName={config.name}",
+    # ]
+    # args.add(config.nimflags)
+    # args.add(&"-o:{executablePath}")
+    # args.add(appSrc)
+    # sh(args)
   of BuildIcons:
     debug "Generating .icns file ..."
     var iconSrcPath:string
@@ -132,7 +137,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
   of Run:
     discard
 
-proc doMacBuild*(directory:string, config: WiishConfig) =
+proc doMacBuild*(directory:string, config: WiishConfig) {.deprecated.} =
   ## Build a macOS .app
   let
     buildDir = directory/config.dst/"macos"

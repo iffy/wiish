@@ -122,37 +122,37 @@ proc getConfig*(toml: TomlValueRef, sections:seq[string]):WiishConfig =
     of JavaPackageName:
       result.java_package_name = toml.get(sections, $opt, ?"com.example.wiishapp").stringVal
 
-template getMacosConfig*(parsed: TomlValueRef): WiishConfig =
+proc getMacosConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "macos", "desktop", "main"])
-template getMacosConfig*(filename: string): WiishConfig =
+proc getMacosConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getMacosConfig()
 
-template getWindowsConfig*(parsed: TomlValueRef): WiishConfig =
+proc getWindowsConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "windows", "desktop", "main"])
-template getWindowsConfig*(filename: string): WiishConfig =
+proc getWindowsConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getWindowsConfig()
 
-template getLinuxConfig*(parsed: TomlValueRef): WiishConfig =
+proc getLinuxConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "linux", "desktop", "main"])
-template getLinuxConfig*(filename: string): WiishConfig =
+proc getLinuxConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getLinuxConfig()
 
-template getiOSConfig*(parsed: TomlValueRef): WiishConfig =
+proc getiOSConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "ios", "mobile", "main"])
-template getiOSConfig*(filename: string): WiishConfig =
+proc getiOSConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getiOSConfig()
 
-template getAndroidConfig*(parsed: TomlValueRef): WiishConfig =
+proc getAndroidConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "android", "mobile", "main"])
-template getAndroidConfig*(filename: string): WiishConfig =
+proc getAndroidConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getAndroidConfig()
 
-template getMobileDevConfig*(parsed: TomlValueRef): WiishConfig =
+proc getMobileDevConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "mobile", "main"])
-template getMobileDevConfig*(filename: string): WiishConfig =
+proc getMobileDevConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getMobileDevConfig()
 
-template getMyOSConfig*(filename:string): WiishConfig =
+proc getMyOSConfig*(filename:string): WiishConfig {.inline.} =
   when defined(macosx):
     getMacosConfig(filename)
   elif defined(windows):

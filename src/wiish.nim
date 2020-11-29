@@ -19,51 +19,44 @@ const
   examples_dir = currentSourcePath.parentDir/"examples"
   EXAMPLE_NAMES = toSeq(examples_dir.walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
 
-# proc handleBuild(directory:string, target:string, parsed_config:TomlValueRef) =
-#   discard
-  # doBuild(
-  #   directory = directory,
-  #   # targetOS = parseEnum[BuildTarget](target),
-  #   parsed_config = parsed_config,
-  # )
-
-# import macros
-
-# expandMacros:
 let p = newParser("wiish"):
   command "init":
     help("Create a new wiish application")
-    arg("directory", default=".")
-    option("-b", "--base-template", help="Template to use.", default="webview", choices = EXAMPLE_NAMES)
+    arg("directory", default=some("."))
+    option("-b", "--base-template", help="Template to use.", default=some("webview"), choices = EXAMPLE_NAMES)
     run:
       doInit(directory = opts.directory, example = opts.base_template)
   command "build":
+    nohelpflag()
     help("Build an application")
-    option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
-    option("--target", multiple = true, choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it))
-    arg("directory", default=".")
+    # option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
+    # option("--target", multiple = true, choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it))
+    # arg("directory", default=".")
+    arg("extra", nargs = -1)
     # add config options
-    for opt in low(ConfigOption)..high(ConfigOption):
-      case opt
-      of IsSimulator:
-        flag("--ios-simulator", help="Build for the iOS simulator instead of a real phone")
-      else:
-        discard
-        # option("--" & $opt)
+    # for opt in low(ConfigOption)..high(ConfigOption):
+    #   case opt
+    #   of IsSimulator:
+    #     flag("--ios-simulator", help="Build for the iOS simulator instead of a real phone")
+    #   else:
+    #     discard
+    #     # option("--" & $opt)
     run:
-      var parsed = parseConfig(opts.directory/"wiish.toml")
-      for opt in low(ConfigOption)..high(ConfigOption):
-        case opt
-        of IsSimulator:
-          # cli_config.ios_simulator = opts.ios_simulator
-          parsed.override($opt, true)
-        else:
-          discard
-      echo $opts
-      withDir(opts.directory):
-        putEnv("WIISH_TARGET_OS", $opts.os)
-        putEnv("WIISH_TARGET_FORMATS", opts.target.mapIt($it).join(","))
-        sh(findExe"nim", "c", "-r", "wiish_build.nim")
+      # var parsed = parseConfig(opts.directory/"wiish.toml")
+      # for opt in low(ConfigOption)..high(ConfigOption):
+      #   case opt
+      #   of IsSimulator:
+      #     # cli_config.ios_simulator = opts.ios_simulator
+      #     parsed.override($opt, true)
+      #   else:
+      #     discard
+      # echo $opts
+      # withDir(opts.directory):
+        # putEnv("WIISH_TARGET_OS", $opts.os)
+        # putEnv("WIISH_TARGET_FORMATS", opts.target.mapIt($it).join(","))
+      var args = @[findExe"nim", "c", "-r", "wiish_build.nim"]
+      args.add(opts.extra)
+      sh(args)
       # handleBuild(opts.directory, opts.target, parsed)
 
   # command "run":
