@@ -1,4 +1,3 @@
-##
 ## Import this module to get the build template
 import os; export os
 import sequtils; export sequtils
@@ -38,9 +37,9 @@ template doBuildSteps*[T](ctx: ref BuildContext, builders: T) =
     of Ios,IosSimulator:
       ctx.targetFormats = @[targetIosApp]
     of Android:
-      raise ValueError.newException("Android not supported yet")
+      ctx.targetFormats = @[targetAndroidApk]
     of Linux:
-      raise ValueError.newException("Linux not supported yet")
+      raise ValueError.newException("Linux guessing of target format not supported yet")
     of AutoDetectOS:
       discard
   

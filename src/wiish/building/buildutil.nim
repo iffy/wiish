@@ -24,6 +24,7 @@ type
     targetWinExe = "exe"
     targetWinInstaller = "win-installer"
     targetIosApp = "ios-app"
+    targetAndroidApk = "apk"
   
   BuildContext* = object
     ## The context for all builds
@@ -41,6 +42,8 @@ type
       ## For builds that produce an executable, this is the path
       ## to that executable
     ios_sdk_version*: string
+    output_path*: string
+      ## Build product path (.app, .dmg, .apk, etc...)
 
   BuildStep* = enum
     ## List of steps that are executed during a build
@@ -139,7 +142,7 @@ proc getWiishPackageRoot*():string =
       wiishPackagePath = path
   return wiishPackagePath
 
-proc DATADIR*():string =
+proc DATADIR*():string {.deprecated: "Each plugin should have its own DATADIR".}=
   ## Return the path to the Wiish library data directory
   return getWiishPackageRoot()/"wiish"/"building"/"data"
 

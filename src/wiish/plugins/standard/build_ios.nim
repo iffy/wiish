@@ -4,13 +4,13 @@ import os
 import osproc
 import strformat
 import strutils
-import parsetoml
-import posix
+# import parsetoml
+# import posix
 import re
 import logging
 import sequtils
-import xmltree
-import xmlparser
+# import xmltree
+# import xmlparser
 
 import wiish/building/config
 import wiish/building/buildutil

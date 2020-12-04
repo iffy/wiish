@@ -9,7 +9,6 @@ import locks
 import logging
 import memtools
 import options
-import os
 import strformat
 import tables
 
