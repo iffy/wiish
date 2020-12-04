@@ -1,5 +1,5 @@
 import wiish/build
-import wiish/webview
+import wiish/plugins/webview
 
 build((
   WiishBuild(),

@@ -10,9 +10,9 @@ import options
 import strformat
 import tables
 
-import ../events ; export events
-import ../logsetup
-import ../baseapp ; export baseapp
+import wiish/events ; export events
+import wiish/logsetup
+import wiish/baseapp ; export baseapp
 
 {.passL: "-framework Foundation" .}
 {.passL: "-framework UIKit" .}

@@ -1,3 +1,4 @@
+{.deprecated: "wiish/building/build is deprecated".}
 import os
 import parsetoml
 import sequtils

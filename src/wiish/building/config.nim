@@ -32,7 +32,7 @@ type
     JavaPackageName = "java_package_name",
 
   ## Config is a project's configuration
-  WiishConfig* = object of RootObj
+  WiishConfig* = ref object
     name*: string
     version*: string
     src*: string
@@ -73,7 +73,7 @@ proc parseConfig*(filename:string): TomlValueRef =
   result = parsetoml.parseFile(filename)
   result[OVERRIDE_KEY] = newTTable()
 
-proc getConfig*(toml: TomlValueRef, sections:seq[string]):WiishConfig =
+proc getConfig*(toml: TomlValueRef, sections:seq[string]): WiishConfig =
   result = WiishConfig()
   for opt in low(ConfigOption)..high(ConfigOption):
     case opt

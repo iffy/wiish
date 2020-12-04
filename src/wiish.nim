@@ -54,12 +54,26 @@ let p = newParser("wiish"):
       # withDir(opts.directory):
         # putEnv("WIISH_TARGET_OS", $opts.os)
         # putEnv("WIISH_TARGET_FORMATS", opts.target.mapIt($it).join(","))
-      var args = @[findExe"nim", "c", "-r", "wiish_build.nim"]
+      var args = @[findExe"nim", "c", "-r", "wiish_build.nim", "build"]
       args.add(opts.extra)
-      sh(args)
+      try:
+        sh(args)
+      except:
+        quit(1)
       # handleBuild(opts.directory, opts.target, parsed)
 
-  # command "run":
+  command "run":
+    nohelpflag()
+    help("Run the application")
+    arg("extra", nargs = -1)
+    run:
+      var args = @[findExe"nim", "c", "-r", "wiish_build.nim", "run"]
+      args.add(opts.extra)
+      try:
+        sh(args)
+      except:
+        quit(1)
+
   #   help("Run an application (from the current dir)")
   #   flag("--verbose", "-v", help="Verbose log output")
   #   flag("--mobiledev", help="Run mobile app in simulated environment (e.g. web page)")

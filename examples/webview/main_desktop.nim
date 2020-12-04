@@ -1,5 +1,5 @@
 ## Hello, World Wiish App
-import wiish/webview/desktop
+import wiish/plugins/webview/desktop
 import strformat
 import strutils
 import logging

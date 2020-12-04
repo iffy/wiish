@@ -1,7 +1,7 @@
 ## Module for making mobile Webview applications.
 ## Import from here regardless of the operating system.
-import ../baseapp ; export baseapp
-import ../common ; export common
+import wiish/baseapp ; export baseapp
+import wiish/common ; export common
 
 type
   IWebviewWindow* = concept win

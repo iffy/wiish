@@ -13,8 +13,8 @@ import os
 import strformat
 import tables
 
-import ../logsetup
-import ../baseapp ; export baseapp
+import wiish/logsetup
+import wiish/baseapp ; export baseapp
 
 type
   MessageToMainKind = enum

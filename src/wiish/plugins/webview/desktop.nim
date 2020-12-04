@@ -8,10 +8,10 @@ import asyncdispatch
 import tables
 import json
 
-import ../events ; export events
-import ../logsetup
-import ../baseapp ; export baseapp
-import ../common ; export common
+import wiish/events ; export events
+import wiish/logsetup
+import wiish/baseapp ; export baseapp
+import wiish/common ; export common
 
 type
   IWebviewWindow* = concept win

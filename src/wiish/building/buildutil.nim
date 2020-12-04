@@ -2,6 +2,8 @@ import os
 import osproc
 import strutils
 import logging
+import tables
+import terminal
 import ./config
 
 type
@@ -9,16 +11,19 @@ type
     AutoDetectOS = "auto"
     Mac = "mac"
     Ios = "ios"
+    IosSimulator = "ios-simulator"
     Android = "android"
     Windows = "windows"
     Linux = "linux"
   
   TargetFormat* = enum
-    defaultFormat = "auto"
-    macApp = "app"
-    macDMG = "dmg"
-    winExe = "exe"
-    winInstaller = "win-installer"
+    targetAuto = "auto"
+    targetRun = "run"
+    targetMacApp = "app"
+    targetMacDMG = "dmg"
+    targetWinExe = "exe"
+    targetWinInstaller = "win-installer"
+    targetIosApp = "ios-app"
   
   BuildContext* = object
     ## The context for all builds
@@ -26,19 +31,41 @@ type
     targetOS*: TargetOS
     targetFormats*: seq[TargetFormat]
     config*: WiishConfig
+    currentStep*: BuildStep
+    currentPlugin*: string
+    pluginData: TableRef[string, pointer]
+    # data that is set during the build
+    build_dir*: string
+      ## Directory where build output goes
+    executable_path*: string
+      ## For builds that produce an executable, this is the path
+      ## to that executable
+    ios_sdk_version*: string
 
   BuildStep* = enum
     ## List of steps that are executed during a build
+    Setup
+
+    PreCompile
+    Compile
+    PostCompile
+
     PreBuild
-    PreCompileTargetConfig
-    CompileNim
-    BuildIcons
-    PostCompileTargetConfig
-    EmbedResources
+    Build
     PostBuild
+
+    PrePackage
     Package
-    SignPackage
-    NotarizePackage
+    PostPackage
+
+    PreSign
+    Sign
+    PostSign
+
+    PreNotarize
+    Notarize
+    PostNotarize
+
     Run
   
   BuildPlugin* = concept p
@@ -60,6 +87,7 @@ const
   NIMBASE_1_2_X* = slurp"data/nimbase-1.2.x.h"
   NIMBASE_1_4_x* = slurp"data/nimbase-1.4.x.h"
 
+
 template withDir*(dir: string, body: untyped): untyped =
   ## Execute a block of code within another directory.
   let origDir = getCurrentDir()
@@ -80,6 +108,23 @@ proc shoutput*(args:varargs[string, `$`]):string =
   result = execProcess(command = args[0],
     args = args[1..^1],
     options = {poUsePath})
+
+proc logprefix(ctx: ref BuildContext): string {.inline.} =
+  "[wiish] " & $ctx[].currentStep & "/" & ctx[].currentPlugin & " "
+
+proc log*(ctx: ref BuildContext, msg: varargs[string]) =
+  stderr.writeLine ctx.logprefix & msg.join("")
+
+proc logStartStep*(ctx: ref BuildContext) =
+  styledWriteLine(stderr, fgCyan, ctx.logprefix, "start", resetStyle)
+
+proc newBuildContext*(): ref BuildContext =
+  new(result)
+  result.pluginData = newTable[string,pointer]()
+
+proc main_nim*(ctx: ref BuildContext): string {.inline.} =
+  ## Absolute path to the main nim file to build
+  ctx.projectPath / ctx.config.src
 
 # Running from the wiish binary
 var

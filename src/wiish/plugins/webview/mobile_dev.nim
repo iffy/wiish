@@ -3,7 +3,7 @@
 import tables
 import std/exitprocs
 
-import ../baseapp ; export baseapp
+import wiish/baseapp ; export baseapp
 import ./desktop ; export desktop
 
 type
