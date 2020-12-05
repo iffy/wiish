@@ -1,0 +1,16 @@
+[ ] SDL mobile lifecycle events
+[ ] SDL opengl click event
+[ ] mobiledev SDL
+[ ] mobiledev webview
+[ ] OpenGL Android
+[ ] SDL Android
+[ ] Windows
+[ ] Linux
+[ ] OpenGL iOS clang notices about unusued linker stuff
+[X] Common nim compile args available to plugins (like logging name)
+[ ] Split out DATADIR into plugins
+
+Rename some thing:
+[ ] WiishSDL2Plugin -> WiishSDLPlugin
+[ ] WiishBuild -> WiishPlugin
+[ ] sdl2.nim -> wiishsdl.nim

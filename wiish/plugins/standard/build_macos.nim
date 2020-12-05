@@ -1,8 +1,5 @@
 import os
 import strformat
-# import parsetoml
-# import posix
-import logging
 
 import wiish/building/config
 import wiish/building/buildutil
@@ -41,10 +38,14 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Standard macOS Build
   case step
   of Setup:
+    if ctx.targetFormat notin {targetMacApp, targetMacDMG}:
+      return
     ctx.logStartStep()
     ctx.build_dir = ctx.projectPath / ctx.config.dst / "macos"
     let contentsDir = ctx.contentsDir
     ctx.executable_path = contentsDir / "MacOS" / ctx.config.src.splitFile.name
+    ctx.nim_flags.add ctx.config.nimFlags
+    ctx.nim_flags.add "-d:appName=" & ctx.config.name
     
     ctx.log "mkdir ", contentsDir
     createDir(contentsDir)
@@ -55,21 +56,9 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     # Contents/PkgInfo
     ctx.log "create ", contentsDir/"PkgInfo"
     (contentsDir/"PkgInfo").writeFile("APPL????")
-  of Compile:
-    discard
-    # # Compile Contents/MacOS/bin
-    # var args = @[
-    #   "nim",
-    #   "c",
-    #   "-d:release",
-    #   "--gc:orc",
-    #   &"-d:appName={config.name}",
-    # ]
-    # args.add(config.nimflags)
-    # args.add(&"-o:{executablePath}")
-    # args.add(appSrc)
-    # sh(args)
   of PreBuild:
+    if ctx.targetFormat notin {targetMacApp, targetMacDMG}:
+      return
     ctx.logStartStep()
     ctx.log "Generating .icns file ..."
     let

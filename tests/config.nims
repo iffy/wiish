@@ -1,4 +1,3 @@
-switch("path", "$projectDir/../src/")
-switch("hints", "off")
+switch("path", "$projectDir/../")
 switch("d", "testmode")
 switch("d", "testconcepts")

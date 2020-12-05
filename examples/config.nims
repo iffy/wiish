@@ -1,2 +1,1 @@
-switch("path", "$projectDir/../../src/")
-switch("gc", "orc")
+switch("path", "$projectDir/../../")

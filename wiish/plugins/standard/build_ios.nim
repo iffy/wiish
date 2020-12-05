@@ -12,12 +12,11 @@ import sequtils
 # import xmltree
 # import xmlparser
 
+import wiish/doctor
 import wiish/building/config
 import wiish/building/buildutil
 
 const
-  simulator_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
-  ios_sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/"
   CODE_SIGN_IDENTITY_VARNAME = "WIISH_IOS_SIGNING_IDENTITY"
   PROVISIONING_PROFILE_VARNAME = "WIISH_IOS_PROVISIONING_PROFILE_PATH"
 
@@ -45,17 +44,6 @@ proc listCodesigningIdentities(): seq[CodeSignIdentity] =
 proc listProvisioningProfiles(): seq[string] =
   for kind, thing in walkDir(PROV_PROFILE_DIR):
     result.add(thing)
-
-proc simulator*(ctx: ref BuildContext): bool {.inline.} =
-  ## Return whether this build is for the iOS simulator or not.
-  ctx.targetOS == IosSimulator
-
-proc ios_sdk_path*(ctx: ref BuildContext): string =
-  ## Given an sdk version, return the path to the SDK
-  if ctx.simulator:
-    return simulator_sdk_root / "iPhoneSimulator" & ctx.ios_sdk_version & ".sdk"
-  else:
-    return ios_sdk_root / "iPhoneOS" & ctx.ios_sdk_version & ".sdk"
 
 proc app_dir*(ctx: ref BuildContext): string {.inline.} =
   ## Return the "MyApp.app" path
@@ -93,58 +81,6 @@ proc signApp(path:string, identity:string, entitlements_path:string = "") =
   echo cmd.formatCmd()
   sh(cmd)
 
-# proc buildSDLlib(sdk_version:string, simulator:bool = true):string =
-#   ## Returns the path to libSDL2.a, creating it if necessary
-#   let
-#     platform = if simulator: "iphonesimulator" else: "iphoneos"
-#     xcodeProjPath = DATADIR()/"SDL/Xcode-iOS/SDL"
-#   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2.a"
-#   if not fileExists(result):
-#     debug &"Building {result.extractFilename}..."
-#     var args = @[
-#       "xcodebuild",
-#       "-project", xcodeProjPath/"SDL.xcodeproj",
-#       "-configuration", "Release",
-#       "-sdk", platform & sdk_version,
-#       "SYMROOT=build",
-#     ]
-#     if simulator:
-#       args.add("ARCHS=i386 x86_64")
-#     else:
-#       args.add("ARCHS=arm64 armv7")
-#     sh(args)
-#   else:
-#     debug &"Using existing {result.extractFilename}"
-  
-#   if not fileExists(result):
-#     raise newException(CatchableError, "Failed to build libSDL2.a")
-
-# proc buildSDLTTFlib(sdk_version:string, simulator:bool = true):string =
-#   ## Returns the path to libSDL2
-#   let
-#     platform = if simulator: "iphonesimulator" else: "iphoneos"
-#     xcodeProjPath = DATADIR()/"SDL_TTF/Xcode-iOS"
-#   result = (xcodeProjPath/"build/Release-" & platform)/"libSDL2_ttf.a"
-#   if not fileExists(result):
-#     debug &"Building {result.extractFilename}..."
-#     var args = @[
-#       "xcodebuild",
-#       "-project", xcodeProjPath/"SDL_ttf.xcodeproj",
-#       "-configuration", "Release",
-#       "-sdk", platform & sdk_version,
-#       "SYMROOT=build",
-#     ]
-#     if simulator:
-#       args.add("ARCHS=i386 x86_64")
-#     else:
-#       args.add("ARCHS=arm64 armv7")
-#     sh(args)
-#   else:
-#     debug &"Using existing {result.extractFilename}"
-  
-#   if not fileExists(result):
-#     raise newException(CatchableError, "Failed to build libSDL2.a")
-
 proc listPossibleSDKVersions(simulator: bool):seq[string] =
   ## List all SDK versions installed on this computer
   let rootdir = if simulator: simulator_sdk_root else: ios_sdk_root
@@ -161,6 +97,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.logStartStep()
     ctx.build_dir = ctx.projectPath / ctx.config.dst / "ios"
     ctx.executable_path = ctx.app_dir / "executable"
+    ctx.nim_flags.add ctx.config.nimFlags
+    ctx.nim_flags.add "-d:appBundleIdentifier=" & ctx.config.bundle_identifier
     var sdk_version = ctx.config.sdk_version
     if sdk_version == "":
       debug &"Choosing SDK version ..."
@@ -339,8 +277,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 
       # Watch the logs
       var args = @["xcrun", "simctl", "spawn", "booted", "log", "stream"]
-      # if not verbose:
-      args.add(@["--predicate", &"subsystem contains \"{ctx.config.bundle_identifier}\""])
+      if not ctx.verbose:
+        args.add(@["--predicate", &"subsystem contains \"{ctx.config.bundle_identifier}\""])
       sh(args)
     discard
 
@@ -607,10 +545,10 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 #   sh(args)
 
 
-proc checkDoctor*():seq[DoctorResult] =
+proc checkDoctor*(): seq[DoctorResult] =
   var cap:DoctorResult
   when defined(macosx):
-    cap = DoctorResult(name: "ios/xcode")
+    cap = DoctorResult(name: "ios/std/xcode")
     if findExe("xcrun") == "":
       cap.status = NotWorking
       cap.error = "xcode not found"
@@ -619,7 +557,7 @@ proc checkDoctor*():seq[DoctorResult] =
       cap.status = Working
     result.add(cap)
 
-    cap = DoctorResult(name: "ios/signingkeys")
+    cap = DoctorResult(name: "ios/std/signingkeys")
     let identities = listCodesigningIdentities().filterIt(it.fullname.startsWith("iPhone"))
     if identities.len == 0:
       cap.status = NotWorking
@@ -629,27 +567,42 @@ proc checkDoctor*():seq[DoctorResult] =
       cap.status = Working
     result.add(cap)
 
-    cap = DoctorResult(name: "ios/chosenkey")
+    cap = DoctorResult(name: "ios/std/chosenkey")
     if getEnv(CODE_SIGN_IDENTITY_VARNAME, "") == "":
       cap.status = NotWorking
       cap.error = "No identity chosen for iOS code signing"
-      cap.fix = &"Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by 'security find-identity -v -p codesigning'"
+      cap.fix = &"""Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by
+
+  security find-identity -v -p codesigning"""
       if identities.len > 0:
         cap.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
     else:
       cap.status = Working
     result.add(cap)
 
-    cap = DoctorResult(name: "ios/provisioningprofile")
+    cap = DoctorResult(name: "ios/std/provisioningprofile")
     if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
       cap.status = NotWorking
       cap.error = "No provisioning profile chosen for iOS code signing"
-      cap.fix = &"Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found in '{PROV_PROFILE_DIR}' though they can also be downloaded from Apple."
+      cap.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found with
+
+  ls "{PROV_PROFILE_DIR}"
+
+though they can also be downloaded from Apple."""
       let possible_profiles = listProvisioningProfiles()
       if possible_profiles.len == 0:
-        cap.fix.add("  You *might* be able to create such a profile by opening Xcode, creating a blank iOS project, enabling 'Automatically manage signing' and building the project once.  TODO: come up with less goofy instructions.")
+        cap.fix.add("""
+You *might* be able to create such a profile by:
+1. Opening Xcode
+2. Creating a blank iOS project
+3. Enabling 'Automatically manage signing'
+4. Building the project once.
+
+TODO: come up with less goofy instructions.""")
       else:
-        cap.fix.add(&"  For instance: {PROVISIONING_PROFILE_VARNAME}='{possible_profiles[0]}' might work.")
+        cap.fix.add(&""" For instance, this might work:
+  
+  {PROVISIONING_PROFILE_VARNAME}='{possible_profiles[0]}'""")
     else:
       cap.status = Working
     result.add(cap)
@@ -657,7 +610,7 @@ proc checkDoctor*():seq[DoctorResult] =
     result.add(DoctorResult(
       name: "ios",
       error: "iOS can only be built on the macOS operating system",
-      fix: "Spend money to fix this",
+      fix: "Give money to Apple to fix this",
     ))
   
     

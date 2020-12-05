@@ -7,6 +7,7 @@ import strutils
 import tables
 import parsetoml
 
+import wiish/doctor
 import wiish/building/config
 import wiish/building/buildutil
 
@@ -17,12 +18,23 @@ proc replaceInFile*(filename: string, replacements: Table[string, string]) =
     guts = guts.replace(re(pattern), replacement)
   filename.writeFile(guts)
 
-proc activityName*(ctx: ref BuildContext): string =
+proc activityName*(ctx: ref BuildContext): string {.inline.} =
   ctx.config.java_package_name.split({'.'})[^1] & "Activity"
 
-proc fullActivityName*(ctx: ref BuildContext):string =
+proc fullActivityName*(ctx: ref BuildContext): string {.inline.} =
   ## Return the java.style.activity.name of an app
   ctx.config.java_package_name & "." & ctx.activityName()
+
+proc activityJavaPath*(ctx: ref BuildContext): string =
+  ## Return the path to the Java Activity .java file
+  ctx.build_dir / "app" / "src" / "main" / "java" / ctx.config.java_package_name.replace(".", "/") / ctx.activityName() & ".java"
+
+proc getCFiles*(ctx: ref BuildContext): seq[string] =
+  ## Get the list of C files to be compiled
+  ctx.log "Listing c files ..."
+  for item in walkDir(ctx.build_dir/"app"/"jni"/"src"/"x86"):
+    if item.kind == pcFile and item.path.endsWith(".c"):
+      result.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
 
 proc runningDevices(): seq[string] {.inline.} = 
   ## List all currently running Android devices
@@ -39,9 +51,64 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
   of Setup:
     ctx.logStartStep
     ctx.build_dir = ctx.projectPath / ctx.config.dst / "android" / "project" / ctx.config.java_package_name
+    ctx.build_dir.parentdir.createDir()
     if ctx.build_dir.dirExists():
+      ctx.log "Removing old build dir: ", ctx.build_dir
       ctx.build_dir.removeDir()
     ctx.output_path = ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
+    ctx.nim_flags.add ctx.config.nimFlags
+    ctx.nim_flags.add "-d:appJavaPackageName=" & ctx.config.java_package_name
+  of Compile:
+    ctx.logStartStep
+    proc buildFor(android_abi:string, cpu:string) =
+      let nimcachedir = ctx.build_dir/"app"/"jni"/"src"/android_abi
+      if nimcachedir.dirExists:
+        nimcachedir.removeDir()
+      var nimFlags:seq[string]
+      nimFlags.add(@["nim", "c"])
+      nimFlags.add(ctx.nim_flags)
+      nimFlags.add(@[
+        "--os:android",
+        "-d:android",
+        "-d:androidNDK",
+        &"--cpu:{cpu}",
+        "--noMain:on",
+        "--gc:orc",
+        "--header",
+        "--threads:on",
+        "--tlsEmulation:off",
+        "--hints:off",
+        "--compileOnly",
+        &"-d:appJavaPackageName={ctx.config.java_package_name}",
+        "--nimcache:" & nimcachedir,
+        ctx.main_nim,
+      ])
+      ctx.log nimFlags.join(" ")
+      sh(nimFlags)
+      
+      let
+        nimbase_dst = ctx.build_dir/"app"/"jni"/"src"/android_abi/"nimbase.h"
+        nimversion = execCmdEx("nim --version").output.split(" ")[3]
+        nimminor = nimversion.rsplit(".", 1)[0]
+      ctx.log &"Writing {nimbase_dst} for Nim version {nimminor} ..."
+      let nimbase_h = case nimminor
+        of "1.0": NIMBASE_1_0_X
+        of "1.2": NIMBASE_1_2_X
+        of "1.4": NIMBASE_1_4_x
+        else:
+          raise ValueError.newException("Unsupported Nim version: " & nimversion)
+      nimbase_dst.writeFile(nimbase_h)
+
+    # Android ABIs: https://developer.android.com/ndk/guides/android_mk#taa
+    # nim --cpus: https://github.com/nim-lang/Nim/blob/devel/lib/system/platforms.nim#L14
+    buildFor("armeabi-v7a", "arm")
+    buildFor("arm64-v8a", "arm64")
+    buildFor("x86", "i386")
+    buildFor("x86_64", "amd64")
+    
+    replaceInFile(ctx.build_dir/"app"/"build.gradle", {
+      "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
+    }.toTable)
   of PreBuild:
     ctx.logStartStep
     ctx.log &"Creating icons ..."
@@ -63,8 +130,18 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.log &"Copying in resources ..."
       createDir(dstResources)
       copyDir(srcResources, dstResources)
+    
+    ctx.log "Prepare to create Activity ..."
+    ctx.activityJavaPath.parentDir.createDir()
   of Build:
     ctx.logStartStep
+    doAssert ctx.activityJavaPath.fileExists, "Other plugins failed to create Java Activity file"
+    
+    ctx.log &"Naming app ..."
+    replaceInFile(ctx.build_dir/"app"/"src"/"main"/"res"/"values"/"strings.xml", {
+      "<string name=\"app_name\">.*?</string>": &"""<string name="app_name">{ctx.config.name}</string>""",
+    }.toTable)
+
     ctx.log &"Building with gradle in {ctx.build_dir} ..."
     withDir(ctx.build_dir):
       # TODO: assembleRelease?
@@ -108,8 +185,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.log &"Watching logs ..."
     var logargs = @["logcat"]
     logargs.add(@["-T", "1"])
-    # if not verbose:
-    block:
+    if not ctx.verbose:
       logargs.add("-s")
       logargs.add(ctx.config.java_package_name)
       logargs.add("nim")
@@ -407,7 +483,7 @@ proc doAndroidBuild*(directory:string, config: WiishConfig): string =
 proc checkDoctor*():seq[DoctorResult] =
   var cap:DoctorResult
   # emulator
-  cap = DoctorResult(name: "android/emulator")
+  cap = DoctorResult(name: "android/std/emulator")
   if findExe("emulator") == "":
     cap.status = NotWorking
     cap.error = "Could not find 'emulator'"
@@ -417,7 +493,7 @@ proc checkDoctor*():seq[DoctorResult] =
   result.add(cap)
 
   # adb
-  cap = DoctorResult(name: "android/sdk-platform-tools")
+  cap = DoctorResult(name: "android/std/sdk-platform-tools")
   if findExe("adb") == "":
     cap.status = NotWorking
     cap.error = "Could not find 'adb'"
@@ -427,7 +503,7 @@ proc checkDoctor*():seq[DoctorResult] =
   result.add(cap)
   
   # devices
-  cap = DoctorResult(name: "android/devices")
+  cap = DoctorResult(name: "android/std/devices")
   try:
     let devices = possibleDevices()
     if devices.len == 0:

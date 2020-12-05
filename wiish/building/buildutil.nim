@@ -1,20 +1,26 @@
 import os
 import osproc
 import strutils
-import logging
 import tables
 import terminal
 import ./config
 
+const
+  simulator_sdk_root* = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
+  ios_sdk_root* = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/"
+
 type
   TargetOS* = enum
     AutoDetectOS = "auto"
-    Mac = "mac"
+    
+    Android = "android"
     Ios = "ios"
     IosSimulator = "ios-simulator"
-    Android = "android"
-    Windows = "windows"
+    MobileDev = "mobiledev"
+
     Linux = "linux"
+    Mac = "mac"
+    Windows = "windows"
   
   TargetFormat* = enum
     targetAuto = "auto"
@@ -30,7 +36,8 @@ type
     ## The context for all builds
     projectPath*: string
     targetOS*: TargetOS
-    targetFormats*: seq[TargetFormat]
+    targetFormat*: TargetFormat
+    verbose*: bool
     config*: WiishConfig
     currentStep*: BuildStep
     currentPlugin*: string
@@ -44,6 +51,9 @@ type
     ios_sdk_version*: string
     output_path*: string
       ## Build product path (.app, .dmg, .apk, etc...)
+    nim_flags*: seq[string]
+      ## Flags that should be set when compiling Nim code.
+      ## Includes the flags from the config.
 
   BuildStep* = enum
     ## List of steps that are executed during a build
@@ -75,28 +85,58 @@ type
     p.name() is string
     p.runStep(BuildStep, ref BuildContext)
 
-type
-  DoctorStatus* = enum
-    NotWorking,
-    Working,
-  DoctorResult* = object
-    name*: string
-    status*: DoctorStatus
-    error*: string
-    fix*: string
 
 const
   NIMBASE_1_0_X* = slurp"data/nimbase-1.0.x.h"
   NIMBASE_1_2_X* = slurp"data/nimbase-1.2.x.h"
   NIMBASE_1_4_x* = slurp"data/nimbase-1.4.x.h"
 
+proc viableTargets*(os: TargetOS): set[TargetFormat] =
+  ## Return the TargetFormats that can be built for the given TargetOS
+  case os
+  of AutoDetectOS:
+    result = {}
+  of Android:
+    result = {targetRun, targetAndroidApk}
+  of Ios:
+    result = {targetIosApp}
+  of IosSimulator:
+    result = {targetRun, targetIosApp}
+  of MobileDev:
+    result = {targetRun}
+  of Mac:
+    result = {targetRun, targetMacApp, targetMacDMG}
+  of Windows:
+    result = {targetRun, targetWinExe, targetWinInstaller}
+  of Linux:
+    result = {targetRun}
 
+#-------------------------------------------------------------
+# ios
+#-------------------------------------------------------------
+proc simulator*(ctx: ref BuildContext): bool {.inline.} =
+  ## Return whether this build is for the iOS simulator or not.
+  ctx.targetOS == IosSimulator
+
+proc ios_sdk_path*(ctx: ref BuildContext): string =
+  ## Given an sdk version, return the path to the SDK
+  if ctx.simulator:
+    return simulator_sdk_root / "iPhoneSimulator" & ctx.ios_sdk_version & ".sdk"
+  else:
+    return ios_sdk_root / "iPhoneOS" & ctx.ios_sdk_version & ".sdk"
+
+#-------------------------------------------------------------
+# general
+#-------------------------------------------------------------
 template withDir*(dir: string, body: untyped): untyped =
   ## Execute a block of code within another directory.
-  let origDir = getCurrentDir()
-  setCurrentDir(dir)
-  body
-  setCurrentDir(origDir)
+  let origDir = getCurrentDir().absolutePath
+  let dstDir = dir.absolutePath()
+  try:
+    setCurrentDir(dstDir)
+    body
+  finally:
+    setCurrentDir(origDir)
 
 proc sh*(args:varargs[string, `$`]) =
   ## Run a process, failing the program if it fails
@@ -116,7 +156,10 @@ proc logprefix(ctx: ref BuildContext): string {.inline.} =
   "[wiish] " & $ctx[].currentStep & "/" & ctx[].currentPlugin & " "
 
 proc log*(ctx: ref BuildContext, msg: varargs[string]) =
-  stderr.writeLine ctx.logprefix & msg.join("")
+  var fullmsg = ctx.logprefix & msg.join("")
+  for c in fullmsg:
+    stderr.write(c)
+  stderr.write("\L")
 
 proc logStartStep*(ctx: ref BuildContext) =
   styledWriteLine(stderr, fgCyan, ctx.logprefix, "start", resetStyle)
@@ -153,7 +196,7 @@ proc getNimLibPath*(): string =
     # Nim isn't installed or isn't in the PATH
     return ""
   let libDir = nimPath.splitPath().head.parentDir/"lib"
-  if libDir.existsDir:
+  if libDir.dirExists:
     return libDir
   return ""
 

@@ -3,5 +3,5 @@ import wiish/plugins/webview
 
 build((
   WiishBuild(),
-  WiishWebviewBuild(),
+  WiishWebviewPlugin(),
 ))

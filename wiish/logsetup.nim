@@ -103,7 +103,6 @@ elif defined(android):
     addHandler(android_logger)
 else:
   # Built, desktop app
-  import strformat
   import os
   const appName {.strdefine.}: string = ""
   if appName == "":
@@ -112,7 +111,7 @@ else:
     var
       logfilename:string
     when defined(macosx):
-      logfilename = expandTilde(&"~/Library/Logs/{appName}/log.log")
+      logfilename = expandTilde("~/Library/Logs" / appName / "log.log")
     if logfilename != "":
       logfilename.parentDir.createDir()
       let rolling_logger = newRollingFileLogger(logfilename, fmtStr = fmtString, bufSize = 0)
