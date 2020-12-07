@@ -26,7 +26,7 @@ proc show(win: SDL2Window) =
   win.sdlWindow.showWindow()
   win.sdlWindow.raiseWindow()
 
-proc newSDLWindow*[T](app: T, title: string): SDL2Window =
+proc newSDLWindow*[T](app: T, title = "Wiish"): SDL2Window =
   ## Create a new SDL window
   new(result)
   let id = app.nextWindowId
@@ -35,10 +35,10 @@ proc newSDLWindow*[T](app: T, title: string): SDL2Window =
   result.sdlWindow = createWindow(nil, 150, 250, 300, 400, SDL_WINDOW_RESIZABLE or SDL_WINDOW_ALLOW_HIGHDPI or SDL_WINDOW_HIDDEN)
   if result.sdlWindow.isNil:
     raise ValueError.newException("Failed to create SDL window!")
-  result.sdlWindow.setTitle("Wiish")
+  result.sdlWindow.setTitle(title)
   result.show()
 
-proc newGLWindow*[T](app: T, title: string): SDL2Window =
+proc newGLWindow*[T](app: T, title = "Wiish"): SDL2Window =
   ## Create a new SDL window with OpenGL turned on
   new(result)
   let id = app.nextWindowId
@@ -57,7 +57,7 @@ proc newGLWindow*[T](app: T, title: string): SDL2Window =
   discard glMakeCurrent(result.sdlWindow, result.sdlGlContext)
   glClearColor(45/255.0, 52/255.0, 54/255.0, 0)
   glClear(GL_COLOR_BUFFER_BIT)
-  result.sdlWindow.setTitle("Wiish")
+  result.sdlWindow.setTitle(title)
   result.show()
 
 proc redrawWindow*(win: SDL2Window) =

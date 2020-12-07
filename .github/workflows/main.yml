@@ -15,18 +15,22 @@ jobs:
           - stable
           - devel
         os:
-        # - ubuntu-latest
-        - macOS-latest
-        # - windows-latest
+          - ubuntu-latest
+          - macOS-latest
+          - windows-latest
     steps:
     - uses: actions/checkout@v1
     - uses: iffy/install-nim@v3
       with:
-        nimversion: ${{ matrix.nimversion }}
+        version: ${{ matrix.nimversion }}
     - name: Test
       run: |
-        nimble refresh
+        nimble refresh -y  
+        nimble install -y --depsOnly
         nimble test
+    - name: Install
+        nimble install -y
+        wiish init /tmp/foo
     - name: Docs
       if: runner.os == 'Linux'
       run: |

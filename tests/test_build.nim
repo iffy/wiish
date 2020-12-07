@@ -37,16 +37,32 @@ template skipReason(reason: string): untyped =
   stderr.styledWriteLine(fgYellow, "  SKIP REASON: " & reason, resetStyle)
   skip
 
-const desktopBuildSetups = [
-  ("macos", @["--os:macosx"]),
-  ("linux", @["--os:linux"]),
-  ("windows", @["--os:windows"]),
-]
-const mobileBuildSetups = [
-  ("ios", @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc"]),
-  ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
-  ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
-]
+when defined(macosx):
+  const desktopBuildSetups = [
+    ("macos", @["--os:macosx"]),
+    ("windows", @["--os:windows"]),
+  ]
+  const mobileBuildSetups = [
+    ("ios", @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc"]),
+    ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
+    ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
+  ]
+elif defined(windows):
+  const desktopBuildSetups = [
+    ("windows", @["--os:windows"]),
+  ]
+  const mobileBuildSetups = [
+    ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
+    ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
+  ]
+else:
+  const desktopBuildSetups = [
+    ("linux", @["--os:linux"]),
+  ]
+  const mobileBuildSetups = [
+    ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
+    ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
+  ]
 
 const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path)
 
@@ -60,6 +76,7 @@ suite "checks":
           cmd.add(args)
           cmd.add(example / "main_desktop.nim")
           let cmdstr = cmd.join(" ")
+          checkpoint "COMMAND: " & cmdstr
           check execCmd(cmdstr) == 0
     
     # Mobile checks
@@ -70,9 +87,15 @@ suite "checks":
           cmd.add(args)
           cmd.add(example / "main_mobile.nim")
           let cmdstr = cmd.join(" ")
+          checkpoint "COMMAND: " & cmdstr
           check execCmd(cmdstr) == 0
 
 suite "examples":
+
+  teardown:
+    let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples/"]
+    sh cmd
+
   # Build and check all the examples/
   for example in example_dirs:
     
