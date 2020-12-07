@@ -29,6 +29,7 @@ jobs:
         nimble install -y --depsOnly
         nimble test
     - name: Install
+      run: |
         nimble install -y
         wiish init /tmp/foo
     - name: Docs
