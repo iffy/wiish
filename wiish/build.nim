@@ -34,6 +34,8 @@ proc detectTargetOS*(targetFormat: TargetFormat): TargetOS =
     return Android
   of targetWinExe, targetWinInstaller:
     return Windows
+  of targetLinuxBin:
+    return Linux
 
 proc detectTargetFormat*(targetOS: TargetOS): TargetFormat =
   case targetOS
@@ -48,7 +50,7 @@ proc detectTargetFormat*(targetOS: TargetOS): TargetFormat =
   of Android:
     return targetAndroidApk
   of Linux:
-    raise ValueError.newException("Linux guessing of target format not supported yet")
+    return targetLinuxBin
   of MobileDev:
     return targetRun
   of AutoDetectOS:

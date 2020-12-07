@@ -4,6 +4,10 @@ import strutils
 import tables
 import terminal
 import ./config
+when defined(macos):
+  discard
+else:
+  import logging
 
 const
   simulator_sdk_root* = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/"
@@ -31,6 +35,7 @@ type
     targetWinInstaller = "win-installer"
     targetIosApp = "ios-app"
     targetAndroidApk = "apk"
+    targetLinuxBin = "bin"
   
   BuildContext* = object
     ## The context for all builds
@@ -109,7 +114,7 @@ proc viableTargets*(os: TargetOS): set[TargetFormat] =
   of Windows:
     result = {targetRun, targetWinExe, targetWinInstaller}
   of Linux:
-    result = {targetRun}
+    result = {targetRun, targetLinuxBin}
 
 #-------------------------------------------------------------
 # ios

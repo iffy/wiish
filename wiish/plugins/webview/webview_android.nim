@@ -7,7 +7,6 @@ import jnim/private/jni_wrapper
 import json
 import locks
 import logging
-import memtools
 import options
 import strformat
 import tables
@@ -109,21 +108,6 @@ template withJEnv(env: untyped, body: untyped): untyped =
 var globalapplock: Lock
 initLock(globalapplock)
 var globalapp {.guard: globalapplock.}: ptr WebviewAndroidApp
-
-proc `$`*(win: WebviewAndroidWindow): string =
-  result = &"WebviewAndroidWindow<{addrstr(win)}>(onReady={win.onReady})"
-
-proc `$`*(win: ref WebviewAndroidWindow): string =
-  result = "ref " & $win[]
-
-proc `$`*(app: WebviewAndroidApp): string =
-  result = &"WebviewAndroidApp<{addrstr(app)}>(url={app.url}, life={app.life}, windows={app.windows.len}, nextWindowId={app.nextWindowId})"
-
-proc `$`*(win: ptr WebviewAndroidApp): string =
-  if win.isNil:
-    result = "WebviewAndroidApp==nil"
-  else:
-    result = "ptr[" & $win[] & "]"
 
 proc newWebviewMobileApp*(): ptr WebviewAndroidApp =
   {.gcsafe.}:
