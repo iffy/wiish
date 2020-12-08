@@ -40,13 +40,17 @@ jobs:
       shell: bash
       run: |
         normpath() {
-          python -c 'import os, sys; print(os.path.abspath(sys.argv[1]) if sys.argv[1] else "")' "$1"
+          varname="$1"
+          if [ ! -z "${!varname}" ]; then
+            export "${1}"="$(python -c 'import os, sys; print(os.path.abspath(sys.argv[1]) if sys.argv[1] else "")' "${!varname}")"
+          fi
         }
-        export ANDROID_HOME="$(normpath "$ANDROID_HOME")"
-        export ANDROID_NDK_HOME="$(normpath "$ANDROID_NDK_HOME")"
-        export ANDROID_NDK_PATH="$(normpath "$ANDROID_NDK_PATH")"
-        export ANDROID_SDK_ROOT="$(normpath "$ANDROID_SDK_ROOT")"
-        env | sort
+        env | grep ANDROID
+        normpath ANDROID_HOME
+        normpath ANDROID_NDK_HOME
+        normpath ANDROID_NDK_PATH
+        normpath ANDROID_SDK_ROOT
+        env | grep ANDROID
         nimble test
     - name: Docs
       if: runner.os == 'Linux'
