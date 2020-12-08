@@ -96,7 +96,10 @@ suite "examples":
 
   teardown:
     let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples/"]
-    sh cmd
+    try:
+      sh cmd
+    except:
+      echo "Error ^ while running: ", $cmd
 
   # Build and check all the examples/
   for example in example_dirs:
