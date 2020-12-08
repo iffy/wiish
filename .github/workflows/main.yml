@@ -21,6 +21,8 @@ jobs:
     env:
       WIISH_BUILD_ANDROID: yes
     steps:
+    - shell: bash
+      run: env | sort
     - uses: actions/checkout@v1
     - uses: iffy/install-nim@v3
       with:
