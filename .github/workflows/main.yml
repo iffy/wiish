@@ -25,19 +25,21 @@ jobs:
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
-    - name: Test
-      run: |
-        nimble refresh -y
-        nimble install -y --depsOnly
-        nimble test
     - name: Install
+      shell: bash
       run: |
         nimble install -y
         wiish init /tmp/foo
+    - name: Doctor
+      shell: bash
+      run: |
+        wiish doctor || true
+    - name: Test
+      shell: bash
+      run: |
+        nimble test
     - name: Docs
       if: runner.os == 'Linux'
       run: |
         ./builddocs.sh
-    - name: Doctor
-      run: |
-        wiish doctor || true
+    
