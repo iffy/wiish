@@ -1,13 +1,13 @@
-[![Build Status](https://travis-ci.org/iffy/wiish.svg?branch=master)](https://travis-ci.org/iffy/wiish)
-[![Windows build status](https://ci.appveyor.com/api/projects/status/hnv03meyx4absx4t/branch/master?svg=true)](https://ci.appveyor.com/project/iffy/wiish/branch/master)
+[![Tests](https://github.com/iffy/wiish/workflows/tests/badge.svg)](https://github.com/iffy/wiish/actions?query=branch%3Amaster)
 
 <div style="text-align:center;"><img src="./logo.png"></div>
 
 [Docs](https://www.iffycan.com/wiish/) | [Changelog](./CHANGELOG.md)
 
-Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
+Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating, cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
 **Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
+
 
 # Quickstart
 
@@ -56,85 +56,53 @@ Wiish provides these main things:
 
 Wiish uses a plugin system to support various GUI methods:
 
-- `wiish/plugins/webview` - For build webview-based apps.
-- `wiish/plugins/sdl2` - For SDL and OpenGL apps.
+- `wiish/plugins/webview` - For webview apps based on [oskca/webview](https://github.com/oskca/webview).
+- `wiish/plugins/sdl2` - For SDL and OpenGL apps based on [nim-lang/sdl2](https://github.com/nim-lang/sdl2).
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
 ## Support
 
-- [ ] macOS
-    - [X] `wiish run`
-        - [X] webview
-        - [X] OpenGL
-        - [X] SDL2
-    - [X] `wiish build --target app`
-        - [X] webview
-        - [X] OpenGL
-        - [X] SDL2
-    - [ ] `wiish build --target dmg`
-- [ ] Windows
-    - [ ] `wiish run`
-        - [ ] webview
-        - [ ] OpenGL
-        - [ ] SDL2
-    - [ ] `wiish build --target exe`
-        - [ ] webview
-        - [ ] OpenGL
-        - [ ] SDL2
-    - [ ] `wiish build --target win-installer`
-- [ ] Linux
-- [ ] iOS
-    - [ ] `wiish run`
-        - [X] webview
-        - [ ] OpenGL (doesn't handle events yet)
-        - [X] SDL2
-    - [ ] `wiish build --target ios-app`
-        - [ ] webview
-        - [ ] OpenGL
-        - [ ] SDL2
-- [ ] Android
-    - [ ] `wiish run`
-        - [X] webview
-        - [ ] OpenGL
-        - [ ] SDL2
-    - [ ] `wiish build --target apk`
-        - [ ] webview
-        - [ ] OpenGL
-        - [ ] SDL2
-- [ ] Mobile dev (runs mobile app on desktop)
+### GUI framework support
 
-- [ ] App icon
-    - [X] macOS
-    - [ ] Windows
-    - [ ] Linux
-    - [X] iOS
-    - [X] Android
-- [ ] `wiish run` logs to stdout
-    - [X] macOS
-    - [ ] Windows
-    - [ ] Linux
-    - [X] iOS
-    - [X] Android
-- [ ] Log to file
-    - [ ] macOS
-    - [ ] Windows
-    - [ ] Linux
-    - [ ] iOS
-    - [ ] Android
-- [ ] Code signing
-    - [ ] macOS .app
-    - [ ] iOS .app
-    - [ ] macOS notarizing
-- [ ] Include static resources in built app
-    - [X] macOS
-    - [ ] Windows
-    - [ ] Linux
-    - [X] iOS
-    - [X] Android
-- [ ] Automatic updates
-- [ ] File associations
-- [ ] Menu bar
+| Product        | webview | OpenGL | SDL2  |
+| -------------- | :-----: | :----: | :---: |
+| macOS `.app`   |    Y    |   Y    |   Y   |
+| Windows `.exe` |         |        |       |
+| Linux binary   |    Y    |        |       |
+| iOS `.app`     |    Y    |   Y    |   Y   |
+| Android `.apk` |    Y    |   Y    |   Y   |
+| mobiledev      |    Y    |        |       |
+
+### GUI-independent features
+
+| Feature                    | macOS | Windows | Linux |  iOS  | Android |
+| -------------------------- | :---: | :-----: | :---: | :---: | :-----: |
+| App icons                  |   Y   |         |       |   Y   |    Y    |
+| `wiish run` logs to stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
+| Log files                  |       |         |       |       |         |
+| Static assets              |   Y   |         |       |   Y   |    Y    |
+| Automatic updating         |       |         |       |   -   |    -    |
+| File associations          |       |         |       |       |         |
+| Menu bar access            |       |         |       |   -   |    -    |
+
+### Distribution formats
+
+| Package           | Supported | Code signing |
+| ----------------- | :-------: | :----------: |
+| macOS `.dmg`      |           |              |
+| Windows Installer |           |              |
+| Linux AppImage    |           |              |
+| iOS `.ipa`        |           |              |
+| Android `.apk`    |           |              |
+
+### Cross-compiling support
+
+| Host system | macOS | Windows | Linux |  iOS  | Android |
+| ----------- | :---: | :-----: | :---: | :---: | :-----: |
+| macOS       |   Y   |         |       |   Y   |    Y    |
+| Windows     |   -   |    Y    |       |   -   |         |
+| Linux       |   -   |         |   Y   |   -   |    Y    |
 
 
 # Examples

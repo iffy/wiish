@@ -116,6 +116,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
       ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
       createDir(dstResources)
       copyDir(srcResources, dstResources)
+      ctx.log &"Copy OK"
   else:
     discard
 

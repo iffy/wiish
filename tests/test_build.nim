@@ -94,12 +94,12 @@ suite "checks":
 
 suite "examples":
 
-  teardown:
-    let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples/"]
+  tearDown:
+    let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples"]
     try:
       sh cmd
     except:
-      echo "Error ^ while running: ", $cmd
+      echo "Error ^ while running: ", cmd.join(" ")
 
   # Build and check all the examples/
   for example in example_dirs:
@@ -115,7 +115,7 @@ suite "examples":
       vtest("ios " & example.extractFilename):
         when defined(macosx):
           withDir example:
-            runWiish "build", "--os", "ios"
+            runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
         else:
           skipReason "only builds on macOS"
       
@@ -130,6 +130,7 @@ suite "init":
 
   vtest "init and build":
     withDir tmpDir():
+      echo absolutePath"."
       addConfigNims()
       runWiish "init", "desktop"
       withDir "desktop":
@@ -138,10 +139,11 @@ suite "init":
   vtest "init and build --os ios":
     when defined(macosx):
       withDir tmpDir():
+        echo absolutePath"."
         addConfigNims()
         runWiish "init", "iostest"
         withDir "iostest":
-          runWiish "build", "--os", "ios"
+          runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
     else:
       skipReason "only builds on macOS"
   
@@ -150,6 +152,7 @@ suite "init":
       skipReason "only builds if WIISH_BUILD_ANDROID is set"
     else:
       withDir tmpDir():
+        echo absolutePath"."
         addConfigNims()
         runWiish "init", "androidtest"
         withDir "androidtest":
