@@ -145,7 +145,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.log &"Building with gradle in {ctx.build_dir} ..."
     withDir(ctx.build_dir):
       # TODO: assembleRelease?
-      let args = [findExe"bash", "gradlew", "assembleDebug", "--console=plain", "--stacktrace", "--info"]
+      let args = [findExe"bash", "gradlew", "assembleDebug", "--console=plain"]
       debug args.join(" ")
       sh(args)
   of Run:
