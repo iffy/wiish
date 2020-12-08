@@ -37,6 +37,7 @@ jobs:
       run: |
         wiish doctor || true
     - name: Fix Windows path
+      # This is needed until https://github.com/actions/virtual-environments/pull/2174/files is included in the GitHub VMs
       if: runner.os == 'Windows'
       shell: powershell
       run: |
@@ -61,7 +62,9 @@ jobs:
         export PATH="${ANDROID_NDK_HOME}:${PATH}"
         export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
         export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+        echo "--------------------- build-local.mk"
         cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
+        echo "---------------------"
         env | grep -i android
         echo $PATH
         wiish doctor || true
