@@ -13,7 +13,7 @@ jobs:
       matrix:
         nimversion: 
           - stable
-          - devel
+          # - devel
         os:
           - ubuntu-latest
           - macOS-latest
