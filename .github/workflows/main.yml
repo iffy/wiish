@@ -18,13 +18,6 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
-        include:
-          - os: macOS-latest
-            android: 'yes'
-          - os: ubuntu-latest
-            android: 'yes'
-          - os: windows-latest
-            android: ''
     steps:
     - shell: bash
       run: env | sort
@@ -50,8 +43,6 @@ jobs:
     #     (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content "${ndkRoot}\ndk-build.cmd"
     #     type "${ndkRoot}\ndk-build.cmd"
     - name: Test
-      env:
-        WIISH_BUILD_ANDROID: ${{ matrix.android }}
       shell: bash
       run: |
         # nim c .github/tounixpath.nim
@@ -74,6 +65,9 @@ jobs:
         # echo "---------------------"
         # env | grep -i android
         # echo $PATH
+        if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
+          export WIISH_BUILD_ANDROID=yes
+        fi
         wiish doctor || true
         nimble test
     - name: Docs
