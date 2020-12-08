@@ -16,15 +16,20 @@ jobs:
           # - devel
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
+          # - macOS-latest
+          # - windows-latest
         include:
           - os: ubuntu-latest
             android_sdk_root: /usr/local/lib/android/sdk
+            android_ndk: /usr/local/lib/android/sdk/platform-tools
     env:
       WIISH_BUILD_ANDROID: yes
     steps:
     - uses: actions/checkout@v1
+    - run: env
+    - run: |
+        find / -name crtbegin_so.o 2>/dev/null
+        find / -name liblog.so 2>/dev/null
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
@@ -37,12 +42,14 @@ jobs:
       shell: bash
       env:
         ANDROID_SDK_ROOT: ${{ matrix.android_sdk_root }}
+        ANDROID_NDK: ${{ matrix.android_ndk }}
       run: |
         wiish doctor || true
     - name: Test
       shell: bash
       env:
         ANDROID_SDK_ROOT: ${{ matrix.android_sdk_root }}
+        ANDROID_NDK: ${{ matrix.android_ndk }}
       run: |
         nimble test
     - name: Docs

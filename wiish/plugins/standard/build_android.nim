@@ -488,7 +488,7 @@ proc checkDoctor*():seq[DoctorResult] =
   if getEnv("ANDROID_SDK_ROOT", "") == "":
     cap.status = NotWorking
     cap.error = "ANDROID_SDK_ROOT not set"
-    cap.fix = "Set ANDROID_SDK_ROOT to the path of the Android sdk."
+    cap.fix = "Install the Android SDK then set ANDROID_SDK_ROOT to the path of the Android sdk."
   else:
     cap.status = Working
   result.add(cap)
@@ -498,7 +498,9 @@ proc checkDoctor*():seq[DoctorResult] =
   if findExe("emulator") == "":
     cap.status = NotWorking
     cap.error = "Could not find 'emulator'"
-    cap.fix = "Download the Android SDK and include sdk/emulator in the PATH"
+    cap.fix = """
+    export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+    """
   else:
     cap.status = Working
   result.add(cap)
@@ -508,7 +510,9 @@ proc checkDoctor*():seq[DoctorResult] =
   if findExe("adb") == "":
     cap.status = NotWorking
     cap.error = "Could not find 'adb'"
-    cap.fix = "Download the Android SDK and include sdk/platform-tools in PATH"
+    cap.fix = """
+    export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+    """
   else:
     cap.status = Working
   result.add(cap)
