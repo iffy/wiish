@@ -24,7 +24,8 @@ proc tmpDir(): string {.used.} =
 proc addConfigNims() =
   var guts: string
   for path in querySettingSeq(searchPaths):
-    guts.add(&"switch(\"path\", \"{path}\")\n")
+    let escaped = path.replace("\\", "\\\\")
+    guts.add(&"switch(\"path\", \"{escaped}\")\n")
   writeFile("config.nims", guts)
   echo "added config.nims:\n", guts
 
