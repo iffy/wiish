@@ -1,6 +1,6 @@
 import os
 import osproc
-import re
+import regex
 import logging
 import strformat
 import strutils

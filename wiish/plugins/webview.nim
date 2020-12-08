@@ -1,5 +1,4 @@
 import os
-import osproc
 import strformat
 import strutils
 import tables

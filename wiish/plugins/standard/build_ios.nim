@@ -6,7 +6,7 @@ import strformat
 import strutils
 # import parsetoml
 # import posix
-import re
+import regex
 import logging
 import sequtils
 # import xmltree
@@ -33,7 +33,11 @@ type
 proc listCodesigningIdentities(): seq[CodeSignIdentity] =
   let output = shoutput("security", "find-identity", "-v", "-p", "codesigning")
   for line in output.splitLines():
-    if line =~ re("\\s+\\d\\)\\s+(.*?)\\s+\"(.*?)\\s\\((.*?)\\)"):
+    match line, rex"""(?x)
+\s+\d\)\s+(.*?)\s+"(.*?)\s\((.*?)\)"
+    """:
+      if matches.len == 0:
+        continue
       var identity = CodeSignIdentity()
       identity.hash = matches[0]
       identity.name = matches[1]
@@ -86,9 +90,9 @@ proc listPossibleSDKVersions(simulator: bool):seq[string] =
   let rootdir = if simulator: simulator_sdk_root else: ios_sdk_root
   for kind, thing in walkDir(rootdir):
     let name = thing.extractFilename
-    if name =~ re".*?(\d+\.\d+)\.sdk":
-      result.add(matches[0])
-
+    match name, rex".*?(\d+\.\d+)\.sdk":
+      if matches.len > 0:
+        result.add(matches[0])
 
 proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Standard iOS Build

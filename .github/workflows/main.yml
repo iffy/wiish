@@ -18,6 +18,8 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
+    env:
+      WIISH_BUILD_ANDROID: yes
     steps:
     - uses: actions/checkout@v1
     - uses: iffy/install-nim@v3
@@ -25,7 +27,7 @@ jobs:
         version: ${{ matrix.nimversion }}
     - name: Test
       run: |
-        nimble refresh -y  
+        nimble refresh -y
         nimble install -y --depsOnly
         nimble test
     - name: Install
@@ -36,3 +38,6 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         ./builddocs.sh
+    - name: Doctor
+      run: |
+        wiish doctor || true
