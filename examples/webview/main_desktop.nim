@@ -4,23 +4,25 @@ import strformat
 import strutils
 import logging
 
+import ./demo
+
 var app = newWebviewDesktopApp()
 let index = resourcePath("index.html").replace(" ", "%20")
 
 app.life.addListener proc(ev: DesktopEvent) =
   case ev.kind
   of desktopAppStarted:
-    debug "App launched"
-    let window = app.newWindow(
+    var win = app.newWindow(
       title = "Wiish Webview Demo",
       url = &"file://{index}"
     )
-    window.onMessage.handle(message):
-      info "app: onMessage: " & message
-      window.sendMessage("Hello from Nim! " & message)
-    window.onReady.handle:
-      info "app: onReady"
-  of desktopAppWillExit:
-    debug "App about to exit"
+    win.onReady.handle:
+      attachSender(proc(msg: string) =
+        win.sendMessage(msg)
+      )
+    win.onMessage.handle(msg):
+      receiveMessage(msg)
+  else:
+    debug "Unhandled lifecycle message: ", $ev
 
 app.start()
