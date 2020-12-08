@@ -15,11 +15,16 @@ jobs:
           - stable
           # - devel
         os:
-          # - ubuntu-latest
-          # - macOS-latest
+          - ubuntu-latest
+          - macOS-latest
           - windows-latest
-    env:
-      WIISH_BUILD_ANDROID: yes
+        include:
+          - os: macOS-latest
+            android: 'yes'
+          - os: ubuntu-latest
+            android: 'yes'
+          - os: windows-latest
+            android: ''
     steps:
     - shell: bash
       run: env | sort
@@ -36,15 +41,17 @@ jobs:
       shell: bash
       run: |
         wiish doctor || true
-    - name: Fix Windows path
-      # This is needed until https://github.com/actions/virtual-environments/pull/2174/files is included in the GitHub VMs
-      if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        $ndkRoot = "C:\Program Files (x86)\Android\android-sdk\ndk-bundle"
-        (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content "${ndkRoot}\ndk-build.cmd"
-        type "${ndkRoot}\ndk-build.cmd"
+    # - name: Fix Windows path
+    #   # This is needed until https://github.com/actions/virtual-environments/pull/2174/files is included in the GitHub VMs
+    #   if: runner.os == 'Windows'
+    #   shell: powershell
+    #   run: |
+    #     $ndkRoot = "C:\Program Files (x86)\Android\android-sdk\ndk-bundle"
+    #     (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content "${ndkRoot}\ndk-build.cmd"
+    #     type "${ndkRoot}\ndk-build.cmd"
     - name: Test
+      env:
+        WIISH_BUILD_ANDROID: ${{ matrix.android }}
       shell: bash
       run: |
         # nim c .github/tounixpath.nim
@@ -59,14 +66,14 @@ jobs:
         # normpath ANDROID_NDK_HOME
         # normpath ANDROID_NDK_PATH
         # normpath ANDROID_SDK_ROOT
-        export PATH="${ANDROID_NDK_HOME}:${PATH}"
-        export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
-        export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
-        echo "--------------------- build-local.mk"
-        cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
-        echo "---------------------"
-        env | grep -i android
-        echo $PATH
+        # export PATH="${ANDROID_NDK_HOME}:${PATH}"
+        # export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+        # export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+        # echo "--------------------- build-local.mk"
+        # cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
+        # echo "---------------------"
+        # env | grep -i android
+        # echo $PATH
         wiish doctor || true
         nimble test
     - name: Docs
