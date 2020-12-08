@@ -39,6 +39,13 @@ jobs:
     - name: Test
       shell: bash
       run: |
+        if which wslpath; then
+          export ANDROID_HOME="$(wslpath -a "$ANDROID_HOME")"
+          export ANDROID_NDK_HOME="$(wslpath -a "$ANDROID_NDK_HOME")"
+          export ANDROID_NDK_PATH="$(wslpath -a "$ANDROID_NDK_PATH")"
+          export ANDROID_SDK_ROOT="$(wslpath -a "$ANDROID_SDK_ROOT")"
+        fi
+        env | sort
         nimble test
     - name: Docs
       if: runner.os == 'Linux'
