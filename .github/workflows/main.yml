@@ -58,7 +58,8 @@ jobs:
         # normpath ANDROID_NDK_HOME
         # normpath ANDROID_NDK_PATH
         # normpath ANDROID_SDK_ROOT
-        # env | grep -i android
+        env | grep -i android
+        echo $PATH
         nimble test
     - name: Docs
       if: runner.os == 'Linux'
