@@ -3,25 +3,22 @@ version       = "0.1.0"
 author        = "Matt Haggard"
 description   = "Why Is It So Hard to make a cross platform app?"
 license       = "MIT"
-# binDir        = "bin"
-# srcDir        = "src"
-skipDirs      = @["dist"]
-installDirs   = @["wiishpkg", "examples"]
-bin           = @["wiish"]
+
+srcDir        = "."
+namedBin      = {"wiishcli":"wiish"}.toTable()
+binDir        = "bin"
+installDirs   = @["wiish", "examples"]
 
 # Dependencies
-
-requires "nim >= 0.19.0"
+requires "nim >= 1.0.6"
 requires "parsetoml >= 0.3.2"
-requires "argparse == 0.10.1" # "https://github.com/iffy/nim-argparse.git"
-# requires "https://github.com/mjendrusch/objc.git"
+requires "argparse >= 2.0.0 & < 3.0.0"
 requires "jnim >= 0.5"
+requires "regex >= 0.18.0 & < 1.0.0"
 
 # Graphics dependencies
 requires "opengl >= 1.2.1"
 requires "webview"
 # requires "glfw >= 0.1.0"
-requires "https://github.com/Vladar4/sdl2_nim.git#master" # nimble install https://github.com/Vladar4/sdl2_nim.git@#master
-# requires "nanovg >= 0.1"
+requires "sdl2 >= 2.0.1 & < 3.0.0"
 requires "https://github.com/yglukhov/darwin"
-# requires "nimx"

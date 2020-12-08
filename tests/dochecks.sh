@@ -1,10 +1,47 @@
 #!/bin/bash
-RC=0
+FAILFILE="/tmp/failurefile"
+OKFILE="/tmp/okfile"
+[ -e "$FAILFILE" ] && rm "$FAILFILE"
+[ -e "$OKFILE" ] && rm "$OKFILE"
 
-set -x
-nim check --os:macosx examples/sdl2/main_desktop.nim || RC=1
-nim check --os:macosx -d:ios --noMain examples/sdl2/main_mobile.nim || RC=1
-nim check --os:windows examples/sdl2/main_desktop.nim || RC=1
-nim check --os:linux examples/sdl2/main_desktop.nim || RC=1
+nimcheck() {
+  echo $*
+  CMD="nim check --hints:off -d:testconcepts $*"
+  if $CMD; then
+    echo "$CMD" >> "$OKFILE"
+  else
+    echo "$CMD" >> "$FAILFILE"
+  fi
+}
 
-exit $RC
+macOS="--os:macosx"
+linux="--os:linux"
+windows="--os:windows"
+ios="--os:macosx -d:ios --threads:on"
+android="--os:linux -d:android --noMain --threads:on"
+mobiledev="-d:wiish_mobiledev"
+
+echo SDL tests
+nimcheck $macOS examples/sdl2/main_desktop.nim
+nimcheck $windows examples/sdl2/main_desktop.nim
+nimcheck $linux examples/sdl2/main_desktop.nim
+
+echo webview tests
+nimcheck $macOS examples/webview/main_desktop.nim
+nimcheck $windows examples/webview/main_desktop.nim
+nimcheck $linux examples/webview/main_desktop.nim
+nimcheck $android examples/webview/main_mobile.nim
+nimcheck $ios examples/webview/main_mobile.nim
+nimcheck $mobiledev examples/webview/main_mobile.nim
+
+if [ -e "$OKFILE" ]; then
+  echo ""
+  echo "The following calls succeeded:"
+  cat "$OKFILE"
+fi
+if [ -e "$FAILFILE" ]; then
+  echo ""
+  echo "The following calls failed:"
+  cat "$FAILFILE"
+  exit 1
+fi

@@ -1,23 +1,23 @@
 ## Hello, World Wiish App
-import wiishpkg/webview_mobile
-import os
-import strformat
+import wiish/plugins/webview/mobile
 import strutils
 import logging
-import times
 
-let index_html = app.resourcePath("index.html").replace(" ", "%20")
+var app = newWebviewMobileApp()
 
-app.launched.handle:
-  debug "app: App launched"
-  app.window.onReady.handle:
-    info "app: onReady"
-    app.window.sendMessage("Looks like you're ready, JS!")
-  app.window.onMessage.handle(message):
-    info "app: onMessage: " & message
-    app.window.sendMessage("Hello from Nim! " & message)
+app.life.addListener proc(ev: MobileEvent) =
+  case ev.kind
+  of WindowAdded:
+    debug "WindowAdded"
+    var win = app.getWindow(ev.windowId)
+    win.onReady.handle:
+      debug "JS is ready"
+      win.sendMessage("Nim knows the JS is ready")
+    win.onMessage.handle(msg):
+      debug "Got JS message: ", $msg
+      win.sendMessage("Hello from Nim! You said " & msg)
+  else:
+    debug "Unhandled message: ", $ev
 
-app.willExit.handle:
-  debug "app: App is exiting"
-
+let index_html = resourcePath("index.html").replace(" ", "%20")
 app.start(url = "file://" & index_html)

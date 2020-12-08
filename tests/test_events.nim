@@ -1,5 +1,5 @@
 import unittest
-import wiishpkg/events
+import wiish/events
 
 suite "events":
   

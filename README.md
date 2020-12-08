@@ -1,13 +1,13 @@
-[![Build Status](https://travis-ci.org/iffy/wiish.svg?branch=master)](https://travis-ci.org/iffy/wiish)
-[![Windows build status](https://ci.appveyor.com/api/projects/status/hnv03meyx4absx4t/branch/master?svg=true)](https://ci.appveyor.com/project/iffy/wiish/branch/master)
+[![Tests](https://github.com/iffy/wiish/workflows/tests/badge.svg)](https://github.com/iffy/wiish/actions?query=branch%3Amaster)
 
 <div style="text-align:center;"><img src="./logo.png"></div>
 
 [Docs](https://www.iffycan.com/wiish/) | [Changelog](./CHANGELOG.md)
 
-Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating,  cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
+Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, package and deploy auto-updating, cross-platform applications for desktop and mobile.  If it succeeds, maybe the name will have to change :)
 
 **Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
+
 
 # Quickstart
 
@@ -25,7 +25,7 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
     - **Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev libgtk-3-dev libwebkit2gtk-4.0-dev`
     - **macOS**: Xcode
-    - **Windows**: no other deps (maybe?)
+    - **Windows**: Don't know yet
 
 4. Create a project and run it:
 
@@ -39,53 +39,71 @@ See `wiish --help` for how to build executables and apps and configure a project
 
 ```
 wiish doctor
-wiish config
-wiish run --ios
-wiish run --android
+wiish run --os ios
+wiish run --os android
 wiish build
 wiish init --base-template opengl my_opengl_app
 ```
 
 # Features
 
-Wiish provides 2 main things:
+Wiish provides these main things:
 
 1. `wiish` - A command line tool for running, building and packaging apps.
-2. `wiishpkg` - A Nim library for making apps.  This is further divided into:
-    - `wiishpkg/webview_desktop` - Library for making Webview-based desktop apps.
-    - `wiishpkg/webview_mobile` - Library for making Webview-based mobile apps.
-    - `wiishpkg/sdlapp` - Library for making SDL and/or OpenGL apps (both desktop and mobile).
-    - `wiishpkg/mobileutil` - Utilities for accessing native modules (e.g. file system)
+2. `wiish` - A Nim library `import wiish/...` for help with making apps.
+
+## Plugins
+
+Wiish uses a plugin system to support various GUI methods:
+
+- `wiish/plugins/webview` - For webview apps based on [oskca/webview](https://github.com/oskca/webview).
+- `wiish/plugins/sdl2` - For SDL and OpenGL apps based on [nim-lang/sdl2](https://github.com/nim-lang/sdl2).
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
-Here is what's currently supported:
+## Support
 
-**Library**
+### GUI framework support
 
-| Feature                | Windows | macOS | Linux | iOS | Android |
-|------------------------|:-------:|:-----:|:-----:|:---:|:-------:|
-| `wiish run`            |         |   Y   |   Y   |  Y  |    Y    |
-| Code signing           |         |       |       |     |         |
-| Log to file            |         |   Y   |       |     |         |
-| Log to console w/ run  |         |   Y   |   Y   |  Y  |    Y    |
-| Package resources      |         |   Y   |       |  Y  |    Y    |
-| Menu bar               |         |       |       |  -  |    -    |
-| Automatic updates      |         |       |       |  -  |    -    |
-| App icon               |         |   Y   |       |  Y  |    Y    |
-| File associations      |         |       |       |  -  |    -    |
+| Product        | webview | OpenGL | SDL2  |
+| -------------- | :-----: | :----: | :---: |
+| macOS `.app`   |    Y    |   Y    |   Y   |
+| Windows `.exe` |         |        |       |
+| Linux binary   |    Y    |        |       |
+| iOS `.app`     |    Y    |   Y    |   Y   |
+| Android `.apk` |    Y    |   Y    |   Y   |
+| mobiledev      |    Y    |        |       |
 
-| `wiish build --target` | OpenGL | SDL2 | Webview | Notes           |
-|------------------------|:------:|:----:|:-------:|-----------------|
-| `android`              |        |      |    Y    | No code signing |
-| `ios`                  |        |      |    Y    | No code signing |
-| `linux`                |        |      |         | No code signing |
-| `mac`                  |        |      |    Y    | No code signing |
-| `mac-dmg`              |        |      |         | No code signing |
-| `win`                  |        |      |         | No code signing |
-| `win-installer`        |        |      |         | No code signing |
+### GUI-independent features
 
-**Y** = complete, **-** = not applicable
+| Feature                    | macOS | Windows | Linux |  iOS  | Android |
+| -------------------------- | :---: | :-----: | :---: | :---: | :-----: |
+| App icons                  |   Y   |         |       |   Y   |    Y    |
+| `wiish run` logs to stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
+| Log files                  |       |         |       |       |         |
+| Static assets              |   Y   |         |       |   Y   |    Y    |
+| Automatic updating         |       |         |       |   -   |    -    |
+| File associations          |       |         |       |       |         |
+| Menu bar access            |       |         |       |   -   |    -    |
+
+### Distribution formats
+
+| Package           | Supported | Code signing |
+| ----------------- | :-------: | :----------: |
+| macOS `.dmg`      |           |              |
+| Windows Installer |           |              |
+| Linux AppImage    |           |              |
+| iOS `.ipa`        |           |              |
+| Android `.apk`    |           |              |
+
+### Cross-compiling support
+
+| Host system | macOS | Windows | Linux |  iOS  | Android |
+| ----------- | :---: | :-----: | :---: | :---: | :-----: |
+| macOS       |   Y   |         |       |   Y   |    Y    |
+| Windows     |   -   |    Y    |       |   -   |         |
+| Linux       |   -   |         |   Y   |   -   |    Y    |
+
 
 # Examples
 
@@ -99,7 +117,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to W
 
 # Webview messaging
 
-Wiish enables you to send/receive strings between JavaScript and your Nim code.
+When using the `wiish/plugins/webview` plugin, you send/receive strings between JavaScript and your Nim like this:
 
 In JavaScript do this:
 
@@ -116,7 +134,7 @@ wiish.onReady = () => {
 In Nim do this:
 
 ```nim
-import wiishpkg/webview_mobile
+import wiish/webview_mobile
 
 app.launched.handle:
     app.window.onReady.handle:

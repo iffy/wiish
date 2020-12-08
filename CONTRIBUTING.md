@@ -23,7 +23,7 @@ If the change fixes a GitHub issue, include that in the change file like this: `
 
 Wiish components are meant to be replaceable and expendable.  For instance:
 
-- You should be able to use the `wiish` command line tool without importing anything from `wiishpkg` in your app.  
+- You should be able to use the `wiish` command line tool without importing anything from `wiish` in your app.  
 
 - If you want to write low-level OpenGL, you should be able to do that.  Or if you want to use a higher-level library, you should be able to do that, too.
 

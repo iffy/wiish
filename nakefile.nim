@@ -8,7 +8,7 @@ import strformat
 import strutils
 import sequtils
 import algorithm
-import wiishpkg/building/buildutil
+import wiish/building/buildutil
 
 proc basename(x:string):string =
   let split = x.splitFile

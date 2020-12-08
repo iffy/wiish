@@ -12,7 +12,7 @@ cat <<EOF > docs/index.html
     <ul>
 EOF
 
-for nimfile in $(ls wiishpkg/*.nim); do
+for nimfile in $(ls wiish/*.nim); do
   echo "Building docs for $nimfile"
   base="$(basename $nimfile | cut -d. -f1)"
   nim doc --project --out:docs $nimfile

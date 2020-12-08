@@ -1,37 +1,41 @@
-## Hello, World Mobile Wiish App
-import sdl2/sdl except log
-import wiishpkg/sdlapp
+## Hello, World, OpenGL Wiish App.
+## Click with the mouse to make the color change.
+import wiish/plugins/sdl2/mobile
 import logging
+import sdl2
 import opengl
 
-from random import randomize, rand
+import std/random
 randomize()
 var
   r = 45/255.0
   g = 52/255.0
   b = 54/255.0
 
-app.launched.handle:
-  # This is run as soon as the application is ready
-  # to start making windows.
-  debug "App launched"
+var app = newSDL2MobileApp()
 
-  # Create a new window.
-  var w = app.newGLWindow(title = "Hello, Wiish!")
+app.life.addListener proc(ev: MobileEvent) =
+  debug "lifecycle: ", $ev.kind
+  case ev.kind
+  of AppStarted:
+    debug "App launched"
+    var w = app.newGLWindow(title = "Hello, Wiish!")
+    w.draw = proc(rect: Rectangle) =
+      glClearColor(r, g, b, 0)
+      glClear(GL_COLOR_BUFFER_BIT)
+
+  of AppWillExit:
+    # Run this code just before the application exits
+    debug "App is exiting"
   
-  # Perform drawing for the window.
-  w.onDraw.handle(rect):
-    glClearColor(r, g, b, 0)
-    glClear(GL_COLOR_BUFFER_BIT)
-
-app.willExit.handle:
-  # Run this code just before the application exits
-  debug "App is exiting"
+  else:
+    discard
 
 app.sdl_event.handle(evt):
-  debug "Event"
+  debug "SDL: ", $evt.kind
   case evt.kind
   of MouseButtonDown:
+    # click to randomly change the color
     r = rand(255).toFloat / 255.0
     g = rand(255).toFloat / 255.0
     b = rand(255).toFloat / 255.0
