@@ -42,22 +42,23 @@ jobs:
       run: |
         $ndkRoot = "C:\Program Files (x86)\Android\android-sdk\ndk-bundle"
         (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd"
+        type "${ndkRoot}\ndk-build.cmd"
     - name: Test
       shell: bash
       run: |
-        nim c .github/tounixpath.nim
-        normpath() {
-          varname="$1"
-          if [ ! -z "${!varname}" ]; then
-            export "${1}"="$(.github/tounixpath "${!varname}")"
-          fi
-        }
-        env | grep -i android
-        normpath ANDROID_HOME
-        normpath ANDROID_NDK_HOME
-        normpath ANDROID_NDK_PATH
-        normpath ANDROID_SDK_ROOT
-        env | grep -i android
+        # nim c .github/tounixpath.nim
+        # normpath() {
+        #   varname="$1"
+        #   if [ ! -z "${!varname}" ]; then
+        #     export "${1}"="$(.github/tounixpath "${!varname}")"
+        #   fi
+        # }
+        # env | grep -i android
+        # normpath ANDROID_HOME
+        # normpath ANDROID_NDK_HOME
+        # normpath ANDROID_NDK_PATH
+        # normpath ANDROID_SDK_ROOT
+        # env | grep -i android
         nimble test
     - name: Docs
       if: runner.os == 'Linux'
