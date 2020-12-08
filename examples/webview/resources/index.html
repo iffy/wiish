@@ -10,59 +10,113 @@
       body {
         margin: 0;
         padding: 0;
+        color: #c7ecee;
+        font-family: Helvetica;
         min-height: 100vh;
-      }
-      section {
-        padding: 1rem;
+        background: linear-gradient(45deg,#130f40, #30336b 100%);
       }
       .buttongrid {
         display: flex;
         flex-wrap: wrap;
+        height: 100vh;
+        justify-content: space-between;
       }
       .button {
-        height: 25vh;
-        width: 50vw;
+        flex-grow: 1;
+        flex-basis: 50%;
         text-align: center;
         font-size: 1rem;
         font-family: sans-serif;
         padding: 1rem;
+        display: flex;
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      section {
+        padding: .5rem;
+        flex-basis: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #messages {
+        font-family: monospace;
+        font-size: 1rem;
+        border: 2px solid #c7ecee;
+        background-color: rgba(199, 236, 238, .2);
+        color: #c7ecee;
+        border-radius: 4px;
+        padding: 1rem;
+        width: 100%;
+        height: 25vh;
+      }
+      .red {
+        background-color:#eb4d4b;
+      }
+      .orange {
+        background-color: #f0932b;
+      }
+      .yellow {
+        background-color: #f9ca24
+      }
+      .green {
+        background-color: #6ab04c
+      }
+      .blue {
+        background-color: #4834d4;
+      }
+      .purple {
+        background-color: #be2edd;
       }
     </style>
   </head>
   <body>
-    <div id="messages">message?</div>
     <div class="buttongrid">
-      <div class="button" style="background-color: green;">green</div>
-      <div class="button" style="background-color: blue;">blue</div>
-      <div class="button" style="background-color: purple;">purple</div>
-      <div class="button" style="background-color: red;">red</div>
-      <div class="button" style="background-color: yellow;">yellow</div>
-      <div class="button" style="background-color: orange;">orange</div>
-      <div class="button" style="background-color: mediumspringgreen;">mint</div>
-      <div class="button" style="background-color: black; color: white;">black</div>
+      <section>
+        Welcome to the Wiish Webview Demo!
+      </section>
+
+      <div class="button red">green</div>
+      <div class="button orange">blue</div>
+      <div class="button yellow">purple</div>
+      <div class="button green">red</div>
+      <div class="button blue">yellow</div>
+      <div class="button purple">orange</div>
+
+      <section>
+        <textarea id="messages"></textarea>
+      </section>
     </div>
+
+    
+
     <script>
+      let colors = {};
       const messages = document.getElementById('messages');
-      function log(msg) {
-        let div = document.createElement('div');
-        div.innerText = msg;
-        messages.appendChild(div);
-        setTimeout(() => {
-          messages.removeChild(div);
-        }, 1999);
-      }
+      document.querySelectorAll(".button").forEach(button => {
+        button.style.opacity = 1.0;
+        button.addEventListener('click', ev => {
+          wiish.sendMessage(JSON.stringify({color: button.innerHTML}));
+          button.style.opacity *= 0.9;
+        })
+      })
       window.wiish = window.wiish || {};
       window.wiish.onReady = () => {
-        log("wiish.onReady");
-        window.wiish.sendMessage("Hello from JavaScript!");
-        log("sent message from JavaScript");
+        // window.wiish.sendMessage("Hello from JavaScript!");
         window.wiish.onMessage(function(msg) {
-          log("got message: " + msg);
+          let data = JSON.parse(msg);
+          if (data.color) {
+            colors[data.color] = data.count;
+          }
+          messages.innerText = JSON.stringify(colors);
         });
-        setInterval(function() {
-          window.wiish.sendMessage("still working" + Date());
-          log("Sent message: " + Date());
-        }, 2000);  
       }
     </script>
   </body>

@@ -493,6 +493,19 @@ proc checkDoctor*():seq[DoctorResult] =
     cap.status = Working
   result.add cap
 
+  # ANDROID_HOME
+  cap = DoctorResult(name: "android/std/ANDROID_HOME")
+  if getEnv("ANDROID_HOME", "") == "":
+    cap.status = NotWorking
+    cap.error = "ANDROID_HOME not set"
+    cap.fix = """Set ANDROID_HOME to the Android SDK location.  This might work:
+      
+    export ANDROID_HOME="$ANDROID_SDK_ROOT"
+    """
+  else:
+    cap.status = Working
+  result.add cap
+
   # ANDROID_NDK_HOME
   cap = DoctorResult(name: "android/std/ANDROID_NDK_HOME")
   if getEnv("ANDROID_NDK_HOME", "") == "":

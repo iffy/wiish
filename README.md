@@ -8,6 +8,8 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 **Wiish is currently ALPHA quality software.**  Don't make anything with it unless you're willing to rewrite it when this package changes.
 
+![Screenshots of macOS, iPhone simulator and Android emulator](img/sample.png)
+
 
 # Quickstart
 
@@ -64,7 +66,7 @@ The GUI component is designed to work separately from other features (e.g. auto-
 ## Support
 
 ### GUI framework support
-
+ 
 | Product        | webview | OpenGL | SDL2  |
 | -------------- | :-----: | :----: | :---: |
 | macOS `.app`   |    Y    |   Y    |   Y   |
