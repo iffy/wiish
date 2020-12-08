@@ -36,6 +36,12 @@ jobs:
       shell: bash
       run: |
         wiish doctor || true
+    - name: Fix Windows path
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        $ndkRoot = "C:\Program Files (x86)\Android\android-sdk\ndk-bundle"
+        (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd"
     - name: Test
       shell: bash
       run: |
