@@ -556,7 +556,7 @@ proc checkDoctor*():seq[DoctorResult] =
   except:
     cap.status = NotWorking
     cap.error = "Could not find 'emulator'"
-    cap.fix = "Fix android/emulator first"
+    cap.fix = "Fix android/std/emulator first"
   result.add cap
   
 

@@ -58,9 +58,13 @@ jobs:
         # normpath ANDROID_NDK_HOME
         # normpath ANDROID_NDK_PATH
         # normpath ANDROID_SDK_ROOT
+        export PATH="${ANDROID_NDK_HOME}:${PATH}"
+        export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+        export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
         cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
         env | grep -i android
         echo $PATH
+        wiish doctor || true
         nimble test
     - name: Docs
       if: runner.os == 'Linux'
