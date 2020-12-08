@@ -24,8 +24,9 @@ proc tmpDir(): string {.used.} =
 proc addConfigNims() =
   var guts: string
   for path in querySettingSeq(searchPaths):
-    guts.add(&"switch(\"path\", \"{path}\")\l")
+    guts.add(&"switch(\"path\", \"{path}\")\n")
   writeFile("config.nims", guts)
+  echo "added config.nims:\n", guts
 
 template vtest(name: string, body: untyped): untyped =
   ## Verbosely labeled test
