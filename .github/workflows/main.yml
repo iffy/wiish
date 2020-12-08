@@ -15,7 +15,7 @@ jobs:
           - stable
           # - devel
         os:
-          - ubuntu-latest
+          # - ubuntu-latest
           # - macOS-latest
           - windows-latest
     env:
@@ -46,12 +46,12 @@ jobs:
             export "${1}"="$(.github/tounixpath "${!varname}")"
           fi
         }
-        env | grep ANDROID
+        env | grep -i android
         normpath ANDROID_HOME
         normpath ANDROID_NDK_HOME
         normpath ANDROID_NDK_PATH
         normpath ANDROID_SDK_ROOT
-        env | grep ANDROID
+        env | grep -i android
         nimble test
     - name: Docs
       if: runner.os == 'Linux'
