@@ -39,12 +39,13 @@ jobs:
     - name: Test
       shell: bash
       run: |
-        if which wslpath; then
-          export ANDROID_HOME="$(wslpath -a "$ANDROID_HOME")"
-          export ANDROID_NDK_HOME="$(wslpath -a "$ANDROID_NDK_HOME")"
-          export ANDROID_NDK_PATH="$(wslpath -a "$ANDROID_NDK_PATH")"
-          export ANDROID_SDK_ROOT="$(wslpath -a "$ANDROID_SDK_ROOT")"
-        fi
+        normpath() {
+          python -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "$1"
+        }
+        export ANDROID_HOME="$(normpath "$ANDROID_HOME")"
+        export ANDROID_NDK_HOME="$(normpath "$ANDROID_NDK_HOME")"
+        export ANDROID_NDK_PATH="$(normpath "$ANDROID_NDK_PATH")"
+        export ANDROID_SDK_ROOT="$(normpath "$ANDROID_SDK_ROOT")"
         env | sort
         nimble test
     - name: Docs
