@@ -491,7 +491,33 @@ proc checkDoctor*():seq[DoctorResult] =
     cap.fix = "Install the Android SDK then set ANDROID_SDK_ROOT to the path of the Android sdk."
   else:
     cap.status = Working
-  result.add(cap)
+  result.add cap
+
+  # ANDROID_NDK_HOME
+  cap = DoctorResult(name: "android/std/ANDROID_NDK_HOME")
+  if getEnv("ANDROID_NDK_HOME", "") == "":
+    cap.status = NotWorking
+    cap.error = "ANDROID_NDK_HOME not set"
+    cap.fix = """Install the Android NDK then set ANDROID_NDK_HOME to the ndk-bundle path. This might work:
+    
+    export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
+    """
+  else:
+    cap.status = Working
+  result.add cap
+
+  # ndk-build
+  cap = DoctorResult(name: "android/std/ndk-build")
+  if findExe"ndk-build" == "":
+    cap.status = NotWorking
+    cap.error = "ndk-build not in PATH"
+    cap.fix = """Add the Android NDK path to the PATH. This might work:
+  
+    export PATH="${ANDROID_NDK_HOME}:${PATH}"
+    """
+  else:
+    cap.status = Working
+  result.add cap
 
   # emulator
   cap = DoctorResult(name: "android/std/emulator")
@@ -503,7 +529,7 @@ proc checkDoctor*():seq[DoctorResult] =
     """
   else:
     cap.status = Working
-  result.add(cap)
+  result.add cap
 
   # adb
   cap = DoctorResult(name: "android/std/sdk-platform-tools")
@@ -515,7 +541,7 @@ proc checkDoctor*():seq[DoctorResult] =
     """
   else:
     cap.status = Working
-  result.add(cap)
+  result.add cap
   
   # devices
   cap = DoctorResult(name: "android/std/devices")
@@ -531,6 +557,6 @@ proc checkDoctor*():seq[DoctorResult] =
     cap.status = NotWorking
     cap.error = "Could not find 'emulator'"
     cap.fix = "Fix android/emulator first"
-  result.add(cap)
+  result.add cap
   
 
