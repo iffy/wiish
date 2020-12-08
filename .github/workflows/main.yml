@@ -39,10 +39,11 @@ jobs:
     - name: Test
       shell: bash
       run: |
+        nim c .github/tounixpath.nim
         normpath() {
           varname="$1"
           if [ ! -z "${!varname}" ]; then
-            export "${1}"="$(python -c 'import os, sys; print(os.path.abspath(sys.argv[1]) if sys.argv[1] else "")' "${!varname}")"
+            export "${1}"="$(.github/tounixpath "${!varname}")"
           fi
         }
         env | grep ANDROID
