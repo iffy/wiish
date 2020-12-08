@@ -17,15 +17,11 @@ jobs:
         os:
           - ubuntu-latest
           # - macOS-latest
-          # - windows-latest
+          - windows-latest
     env:
       WIISH_BUILD_ANDROID: yes
     steps:
     - uses: actions/checkout@v1
-    - run: env
-    - run: |
-        find /usr/local/lib/android -name crtbegin_so.o || echo foo
-        find /usr/local/lib/android -name liblog.so || echo foo
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
