@@ -24,8 +24,8 @@ jobs:
     - uses: actions/checkout@v1
     - run: env
     - run: |
-        find / -name crtbegin_so.o || echo foo
-        find / -name liblog.so || echo foo
+        find /usr/local/lib/android -name crtbegin_so.o || echo foo
+        find /usr/local/lib/android -name liblog.so || echo foo
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
