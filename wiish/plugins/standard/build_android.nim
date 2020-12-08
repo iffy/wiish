@@ -482,6 +482,17 @@ proc doAndroidBuild*(directory:string, config: WiishConfig): string =
 
 proc checkDoctor*():seq[DoctorResult] =
   var cap:DoctorResult
+
+  # ANDROID_SDK_ROOT
+  cap = DoctorResult(name: "android/std/ANDROID_SDK_ROOT")
+  if getEnv("ANDROID_SDK_ROOT", "") == "":
+    cap.status = NotWorking
+    cap.error = "ANDROID_SDK_ROOT not set"
+    cap.fix = "Set ANDROID_SDK_ROOT to the path of the Android sdk."
+  else:
+    cap.status = Working
+  result.add(cap)
+
   # emulator
   cap = DoctorResult(name: "android/std/emulator")
   if findExe("emulator") == "":

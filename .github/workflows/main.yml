@@ -18,6 +18,9 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
+        include:
+          - os: ubuntu-latest
+            android_sdk_root: /usr/local/lib/android/sdk
     env:
       WIISH_BUILD_ANDROID: yes
     steps:
@@ -32,10 +35,14 @@ jobs:
         wiish init /tmp/foo
     - name: Doctor
       shell: bash
+      env:
+        ANDROID_SDK_ROOT: ${{ matrix.android_sdk_root }}
       run: |
         wiish doctor || true
     - name: Test
       shell: bash
+      env:
+        ANDROID_SDK_ROOT: ${{ matrix.android_sdk_root }}
       run: |
         nimble test
     - name: Docs
