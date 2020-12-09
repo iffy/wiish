@@ -23,7 +23,12 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 3. Install other dependencies:
 
-    Run `wiish doctor` to see what you need installed.  It will probably be:
+    ```bash
+    # Tell me what I need to install
+    wiish doctor
+    ```
+    
+    Depending on the GUI you want to use, it might be the following:
 
     - **Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev libgtk-3-dev libwebkit2gtk-4.0-dev`
     - **macOS**: Xcode
@@ -37,11 +42,10 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
     wiish run
     ```
 
-See `wiish --help` for how to build executables and apps and configure a project.  For example:
+See `wiish --help` for more, but here are other examples.  Some only work within a Wiish project:
 
 ```
-wiish doctor
-wiish run --os ios
+wiish run --os ios-simulator
 wiish run --os android
 wiish build
 wiish init --base-template opengl my_opengl_app
@@ -49,32 +53,35 @@ wiish init --base-template opengl my_opengl_app
 
 # Features
 
-Wiish provides these main things:
+Wiish provides:
 
-1. `wiish` - A command line tool for running, building and packaging apps.
-2. `wiish` - A Nim library `import wiish/...` for help with making apps.
+1. A `wiish` command line tool for running, building and packaging apps.
+2. A `wiish` Nim library (i.e. `import wiish/...`) for app-specific helpers (e.g. auto-updating, asset-access, etc...)
+3. Plugins for different GUI frameworks.
 
 ## Plugins
 
-Wiish uses a plugin system to support various GUI methods:
+Wiish uses a plugin system to support various GUI frameworks:
 
 - `wiish/plugins/webview` - For webview apps based on [oskca/webview](https://github.com/oskca/webview).
 - `wiish/plugins/sdl2` - For SDL and OpenGL apps based on [nim-lang/sdl2](https://github.com/nim-lang/sdl2).
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
+It is hoped that more plugins will be introduced for other GUI frameworks.
+
 ## Support
 
 ### GUI framework support
  
-| Product        | webview | OpenGL | SDL2  |
-| -------------- | :-----: | :----: | :---: |
-| macOS `.app`   |    Y    |   Y    |   Y   |
-| Windows `.exe` |         |        |       |
-| Linux binary   |    Y    |        |       |
-| iOS `.app`     |    Y    |   Y    |   Y   |
-| Android `.apk` |    Y    |   Y    |   Y   |
-| mobiledev      |    Y    |        |       |
+| Product   | webview | OpenGL | SDL2  |
+| --------- | :-----: | :----: | :---: |
+| macOS     |    Y    |   Y    |   Y   |
+| Windows   |         |        |       |
+| Linux     |    Y    |        |       |
+| iOS       |    Y    |   Y    |   Y   |
+| Android   |    Y    |   Y    |   Y   |
+| mobiledev |    Y    |        |       |
 
 ### GUI-independent features
 
@@ -96,7 +103,7 @@ The GUI component is designed to work separately from other features (e.g. auto-
 | Windows Installer |           |              |
 | Linux AppImage    |           |              |
 | iOS `.ipa`        |           |              |
-| Android `.apk`    |           |              |
+| Android `.apk`    |     Y     |              |
 
 ### Cross-compiling support
 
@@ -136,13 +143,19 @@ wiish.onReady = () => {
 In Nim do this:
 
 ```nim
-import wiish/webview_mobile
-
-app.launched.handle:
-    app.window.onReady.handle:
-        app.window.sendMessage("Looks like you're ready, JS!")
-    app.window.onMessage.handle(message):
-        app.window.sendMessage("Thanks for the message, JS.")
+import wiish/plugins/webview/desktop
+var app = newWebviewDesktopApp()
+app.life.addListener proc(ev: DesktopEvent) =
+  case ev.kind
+  of desktopAppStarted:
+    var win = app.newWindow(
+      url = some_html_url,
+    )
+    win.onReady.handle:
+      win.sendMessage("Hello JavaScript! -Sincerely Nim")
+    win.onMessage.handle(msg):
+      discard "Handle message from JavaScript"
+app.start()
 ```
 
 
