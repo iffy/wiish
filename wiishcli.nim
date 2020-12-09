@@ -20,6 +20,13 @@ proc baseNimArgs(): seq[string] {.inline.} =
     "-r", WIISHBUILDFILE,
   ]
 
+proc onlyInWiishProject() =
+  ## Quit the process with a warning if this is not being run within
+  ## a wiish project.
+  if not WIISHBUILDFILE.fileExists:
+    stderr.writeLine &"ERROR: {WIISHBUILDFILE} not found. This command can only be run within a wiish project. Create one with: wiish init"
+    quit(1)
+
 proc doInit(directory: string, example: string) =
   ## Create a new Wiish project in the given directory
   let
@@ -66,7 +73,7 @@ let p = newParser("wiish"):
     help("Build an application")
     arg("extra", nargs = -1)
     run:
-      # TODO: handle case where wiish_build.nim dne
+      onlyInWiishProject()
       var args = baseNimArgs()
       args.add "build"
       args.add opts.extra
@@ -77,7 +84,7 @@ let p = newParser("wiish"):
     help("Run the application")
     arg("extra", nargs = -1)
     run:
-      # TODO: handle case where wiish_build.nim dne
+      onlyInWiishProject()
       var args = baseNimArgs()
       args.add "run"
       args.add opts.extra
