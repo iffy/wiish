@@ -10,6 +10,8 @@ import wiish/doctor
 import wiish/plugins/standard/build_ios
 import wiish/plugins/standard/build_android
 
+const datadir = currentSourcePath.parentDir / "webview" / "data"
+
 type
   WiishWebviewPlugin* = ref object
     ## Webview build plugin
@@ -134,7 +136,7 @@ proc androidRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildConte
     if not ctx.build_dir.dirExists():
       ctx.log &"Copying Android template project to {ctx.build_dir}"
       createDir(ctx.build_dir)
-      copyDirWithPermissions(DATADIR()/"android-webview", ctx.build_dir)
+      copyDirWithPermissions(datadir / "android-webview", ctx.build_dir)
 
       # build.gradle
       replaceInFile(ctx.build_dir/"app"/"build.gradle", {

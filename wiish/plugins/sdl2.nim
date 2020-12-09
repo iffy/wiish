@@ -7,6 +7,8 @@ import wiish/doctor
 import wiish/building/buildutil
 import wiish/plugins/standard/build_android
 
+const datadir = currentSourcePath.parentDir / "sdl2" / "data"
+
 type
   WiishSDL2Plugin* = ref object
     ## SDL2 plugin
@@ -62,11 +64,11 @@ proc iosBuildSDLLib(ctx: ref BuildContext, lib = ""): string =
   case lib
   of "":
     libname = "libSDL2.a"
-    xcodeProjDir = DATADIR() / "SDL/Xcode-iOS/SDL"
+    xcodeProjDir = datadir / "SDL/Xcode-iOS/SDL"
     xcodeProjFile = xcodeProjDir / "SDL.xcodeproj"
   of "ttf":
     libname = "libSDL2_ttf.a"
-    xcodeProjDir = DATADIR() / "SDL_TTF/Xcode-iOS"
+    xcodeProjDir = datadir / "SDL_TTF/Xcode-iOS"
     xcodeProjFile = xcodeProjDir / "SDL_ttf.xcodeproj"
   else:
     raise ValueError.newException("Unknown SDL2 library name: " & lib)
@@ -179,7 +181,7 @@ proc androidRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext)
     ctx.logStartStep
     if not ctx.build_dir.dirExists():
       ctx.log &"Copying SDL android project to {ctx.build_dir}"
-      let sdlSrc = DATADIR()/"SDL"
+      let sdlSrc = datadir / "SDL"
       createDir(ctx.build_dir)
       copyDirWithPermissions(sdlSrc/"android-project", ctx.build_dir)
 

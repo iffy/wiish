@@ -7,6 +7,7 @@ import strutils
 import tables
 import parsetoml
 
+import ./common
 import wiish/doctor
 import wiish/building/config
 import wiish/building/buildutil
@@ -114,7 +115,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.log &"Creating icons ..."
     var iconSrcPath:string
     if ctx.config.icon == "":
-      iconSrcPath = DATADIR()/"default.png"
+      iconSrcPath = stdDatadir/"default.png"
     else:
       iconSrcPath = ctx.projectPath/ctx.config.icon
     iconSrcPath.resizePNG(ctx.build_dir/"app"/"src"/"main"/"res"/"mipmap-mdpi"/"ic_launcher.png", 48, 48)
@@ -212,8 +213,8 @@ proc doAndroidBuild*(directory:string, config: WiishConfig): string =
   # let
   #   projectDir = directory/config.dst/"android"/"project"/config.java_package_name
   #   appSrc = directory/config.src
-  #   sdlSrc = DATADIR()/"SDL"
-  #   webviewSrc = DATADIR()/"android-webview"
+  #   sdlSrc = stdDatadir/"SDL"
+  #   webviewSrc = stdDatadir/"android-webview"
   #   # appProject = projectDir/"app"/"jni"/"app"
   #   srcResources = directory/config.resourceDir
   #   dstResources = projectDir/"app"/"src"/"main"/"assets"
@@ -400,7 +401,7 @@ proc doAndroidBuild*(directory:string, config: WiishConfig): string =
 #   debug &"Creating icons ..."
 #   var iconSrcPath:string
 #   if config.icon == "":
-#     iconSrcPath = DATADIR()/"default.png"
+#     iconSrcPath = stdDatadir/"default.png"
 #   else:
 #     iconSrcPath = directory/config.icon
 #   iconSrcPath.resizePNG(projectDir/"app"/"src"/"main"/"res"/"mipmap-mdpi"/"ic_launcher.png", 48, 48)

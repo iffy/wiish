@@ -8,7 +8,7 @@ function getit() {
     NAME="$1"
     TARNAME="${NAME}.tar.gz"
     FETCH_URL="$2/${TARNAME}"
-    DST="src/wiish/building/data/$3"
+    DST="$3"
 
     if ! [ -e "$SDL_NAME" ]; then
         if ! [ -e "$TARNAME" ]; then
@@ -33,5 +33,5 @@ getit "SDL2-2.0.9" "https://www.libsdl.org/release/" "SDL"
 
 ## SDL2_ttf
 getit "SDL2_ttf-2.0.14" "https://www.libsdl.org/projects/SDL_ttf/release/" "SDL_TTF"
-rm -r "src/wiish/building/data/SDL_TTF/Xcode"
+rm -r "SDL_TTF/Xcode"
 
