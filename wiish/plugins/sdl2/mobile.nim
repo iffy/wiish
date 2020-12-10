@@ -20,21 +20,6 @@ proc newSDL2MobileApp*(): SDL2MobileApp =
   new(result)
   result[].life = newEventSource[MobileEvent]()
 
-proc handleEvent*(app: SDL2MobileApp, evt: Event): cint =
-  # app.sdl_event.
-  result = 1
-
-proc nextEvent*(app: SDL2MobileApp, evt: var Event) =
-  ## Get the next SDL event
-  var was_event = false
-  if waitEvent(evt):
-    discard app.handleEvent(evt)
-    was_event = true
-  
-  if was_event:
-    for win in app.windows.values:
-      win.redrawWindow()
-
 template start*(app: SDL2MobileApp) =
   startLogging()
   sdlMain()
