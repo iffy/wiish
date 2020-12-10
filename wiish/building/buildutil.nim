@@ -3,6 +3,8 @@ import osproc
 import strutils
 import tables
 import terminal
+import flippy
+
 import ./config
 when defined(macosx):
   discard
@@ -191,14 +193,4 @@ proc getWiishPackageRoot*():string =
   return wiishPackagePath
 
 proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
-  ## Resize a PNG image
-  when defined(macosx):
-    discard shoutput("sips",
-      "-z", $height, $width,
-      "--out", outfile,
-      "-s", "format", "png",
-      srcfile)
-  else:
-    warn "PNG resizing is not supported on this platform.  Using full-sized image (which may not work)"
-    copyFile(srcfile, outfile)
-    # raise newException(CatchableError, "PNG resizing is not supported on this platform")
+  loadImage(srcfile).resize(width, height).save(outfile)
