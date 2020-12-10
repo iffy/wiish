@@ -49,16 +49,24 @@ import wiish/plugins/standard
 import wiish/plugins/webview
 import wiish/plugins/sdl2
 
-proc runDoctor(): bool =
+proc toSet[T](x: seq[T]): set[T] =
+  for item in x:
+    result.incl(item)
+
+proc runDoctor(plugins: seq[string] = @[], targetOS: set[TargetOS] = {}, targetFormat: set[TargetFormat] = {}): bool =
   ## Run doctor for all the things that come with Wiish
   ## Return true if everything is set, else false
   var results: seq[DoctorResult]
   results.add standard.checkDoctor()
   results.add webview.checkDoctor()
   results.add sdl2.checkDoctor()
+  var valid: seq[DoctorResult]
   for r in results:
-    r.display()
-  result = results.ok()
+    let selected = r.isSelected(targetOS, targetFormat, plugins)
+    r.display(selected)
+    if selected:
+      valid.add(r)
+  result = valid.ok()
 
 let p = newParser("wiish"):
   command "init":
@@ -91,10 +99,30 @@ let p = newParser("wiish"):
       sh args
 
   command "doctor":
-    help("Show what needs to be installed/configured to support various features")
+    help("""
+Show what needs to be installed/configured to support various features.
+You can filter which checks are performed.  For instance, if you only want to
+know what you need to support building for Android, run with
+
+  wiish doctor --os android
+
+Or if you only want to know what you need to do to support building with
+the 'webview' plugin do:
+
+  wiish doctor --plugin webview --plugin standard
+
+""".strip())
+    option("--os", multiple = true, choices = (low(TargetOS)..high(TargetOS)).mapIt($it),
+      help = "If given, only show information relevant to this OS.")
+    option("-t", "--target", multiple = true, choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it),
+      help = "If given, only show information relevant to building the given target.")
+    option("-p", "--plugin", multiple = true,
+      help = "If given, only show information relevant to the given plugins.")
     run:
       echo "oo ee oo ah ah"
-      if not runDoctor():
+      if not runDoctor(opts.plugin,
+          opts.os.mapIt(parseTargetOS(it)).toSet(),
+          opts.target.mapIt(parseTargetFormat(it)).toSet()):
         quit(1)
   
   # command "config":

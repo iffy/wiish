@@ -4,7 +4,7 @@ import strutils
 import tables
 import terminal
 import ./config
-when defined(macos):
+when defined(macosx):
   discard
 else:
   import logging
@@ -127,6 +127,12 @@ proc ios_sdk_path*(ctx: ref BuildContext): string =
 #-------------------------------------------------------------
 # general
 #-------------------------------------------------------------
+proc parseTargetOS*(x: string): TargetOS {.inline.} =
+  parseEnum[TargetOS](x, AutoDetectOS)
+
+proc parseTargetFormat*(x: string): TargetFormat {.inline.} =
+  parseEnum[TargetFormat](x, targetAuto)
+
 template withDir*(dir: string, body: untyped): untyped =
   ## Execute a block of code within another directory.
   let origDir = getCurrentDir().absolutePath

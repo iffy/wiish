@@ -551,71 +551,62 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 
 
 proc checkDoctor*(): seq[DoctorResult] =
-  var cap:DoctorResult
   when defined(macosx):
-    cap = DoctorResult(name: "ios/std/xcode")
-    if findExe("xcrun") == "":
-      cap.status = NotWorking
-      cap.error = "xcode not found"
-      cap.fix = "Install Xcode command line tools"
-    else:
-      cap.status = Working
-    result.add(cap)
-
-    cap = DoctorResult(name: "ios/std/signingkeys")
+    result.dr "standard", "xcode":
+      dr.targetOS = {Ios,IosSimulator}
+      if findExe("xcrun") == "":
+        dr.status = NotWorking
+        dr.error = "xcode not found"
+        dr.fix = "Install Xcode command line tools"
+    
     let identities = listCodesigningIdentities().filterIt(it.fullname.startsWith("iPhone"))
-    if identities.len == 0:
-      cap.status = NotWorking
-      cap.error = "No valid signing keys installed"
-      cap.fix = "Obtain iPhone signing keys from Apple and install them in your keychain."
-    else:
-      cap.status = Working
-    result.add(cap)
+    result.dr "standard", "signing-keys":
+      dr.targetOS = {Ios}
+      if identities.len == 0:
+        dr.status = NotWorking
+        dr.error = "No valid signing keys installed"
+        dr.fix = "Obtain iPhone signing keys from Apple and install them in your keychain."
 
-    cap = DoctorResult(name: "ios/std/chosenkey")
-    if getEnv(CODE_SIGN_IDENTITY_VARNAME, "") == "":
-      cap.status = NotWorking
-      cap.error = "No identity chosen for iOS code signing"
-      cap.fix = &"""Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by
+    result.dr "standard", "chose-signing-key":
+      dr.targetOS = {Ios}
+      if getEnv(CODE_SIGN_IDENTITY_VARNAME, "") == "":
+        dr.status = NotWorking
+        dr.error = "No identity chosen for iOS code signing"
+        dr.fix = &"""Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by
 
-  security find-identity -v -p codesigning"""
-      if identities.len > 0:
-        cap.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
-    else:
-      cap.status = Working
-    result.add(cap)
+    security find-identity -v -p codesigning"""
+        if identities.len > 0:
+          dr.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
 
-    cap = DoctorResult(name: "ios/std/provisioningprofile")
-    if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
-      cap.status = NotWorking
-      cap.error = "No provisioning profile chosen for iOS code signing"
-      cap.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found with
+    result.dr "standard", "provisioning-profile":
+      dr.targetOS = {Ios}
+      if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
+        dr.status = NotWorking
+        dr.error = "No provisioning profile chosen for iOS code signing"
+        dr.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found with
 
-  ls "{PROV_PROFILE_DIR}"
+    ls "{PROV_PROFILE_DIR}"
 
-though they can also be downloaded from Apple."""
-      let possible_profiles = listProvisioningProfiles()
-      if possible_profiles.len == 0:
-        cap.fix.add("""
-You *might* be able to create such a profile by:
-1. Opening Xcode
-2. Creating a blank iOS project
-3. Enabling 'Automatically manage signing'
-4. Building the project once.
+  though they can also be downloaded from Apple."""
+        let possible_profiles = listProvisioningProfiles()
+        if possible_profiles.len == 0:
+          dr.fix.add("""
+  You *might* be able to create such a profile by:
+  1. Opening Xcode
+  2. Creating a blank iOS project
+  3. Enabling 'Automatically manage signing'
+  4. Building the project once.
 
-TODO: come up with less goofy instructions.""")
-      else:
-        cap.fix.add(&""" For instance, this might work:
+  TODO: come up with less goofy instructions.""")
+        else:
+          dr.fix.add(&""" For instance, this might work:
   
-  {PROVISIONING_PROFILE_VARNAME}='{possible_profiles[0]}'""")
-    else:
-      cap.status = Working
-    result.add(cap)
+    {PROVISIONING_PROFILE_VARNAME}='{possible_profiles[0]}'""")
   else:
-    result.add(DoctorResult(
-      name: "ios",
-      error: "iOS can only be built on the macOS operating system",
-      fix: "Give money to Apple to fix this",
-    ))
+    result.dr "standard", "os":
+      dr.targetOS = {Ios,IosSimulator}
+      dr.status = NotWorking
+      dr.error = "iOS can only be built on the macOS operating system"
+      dr.fix = "Give money to Apple to fix this"
   
     

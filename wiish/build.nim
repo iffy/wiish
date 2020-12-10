@@ -11,12 +11,6 @@ import wiish/plugins/standard; export standard
 import ./building/config
 import ./building/buildutil; export buildutil
 
-proc parseTargetOS*(x: string): TargetOS {.inline.} =
-  parseEnum[TargetOS](x, AutoDetectOS)
-
-proc parseTargetFormat*(x: string): TargetFormat {.inline.} =
-  parseEnum[TargetFormat](x, targetAuto)
-
 proc detectTargetOS*(targetFormat: TargetFormat): TargetOS =
   case targetFormat
   of targetRun, targetAuto:

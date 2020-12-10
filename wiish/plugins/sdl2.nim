@@ -249,15 +249,34 @@ proc runStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
     ctx.log "Not yet supported: ", $ctx.targetOS
 
 proc checkDoctor*(): seq[DoctorResult] =
-  for x in ["SDL2", "SDL2_ttf", "SDL2_image", "SDL2_gfx"]:
-    var cap = DoctorResult(name: "sdl2/" & x)
-    when defined(macosx):
-      if fileExists("/usr/local/lib" / "lib" & x & ".dylib"):
-        cap.status = Working
+  var libs = [
+    ("SDL2", true),
+    ("SDL2_ttf", false),
+    ("SDL2_image", false),
+    ("SDL2_gfx", false),
+  ]
+  for x in libs:
+    result.dr "sdl2", "lib" & x[0]:
+      when defined(macosx):
+        dr.targetOS = {Mac}
+        if not fileExists("/usr/local/lib" / "lib" & x[0] & ".dylib"):
+          if x[1]:
+            dr.status = NotWorking
+          else:
+            dr.status = NotWorkingButOptional
+          dr.error = &"Missing the {x[0]} dynamic library"
+          dr.fix = &"Maybe this will work:\l\l  brew install {x[0].toLower()}"
+      elif defined(windows):
+        dr.targetOS = {Windows}
+        if x[1]:
+          dr.status = NotWorking
+        else:
+          dr.status = NotWorkingButOptional
+        dr.error = "Unable to check if library is present"
       else:
-        cap.status = NotWorkingButOptional
-        cap.error = &"Missing the {x} dynamic library"
-        cap.fix = &"Maybe this will work:\l\l  brew install {x.toLower()}"
-    else:
-      cap.error = "Unable to check if library is present"
-    result.add cap
+        dr.targetOS = {Linux}
+        if x[1]:
+          dr.status = NotWorking
+        else:
+          dr.status = NotWorkingButOptional
+        dr.error = "Unable to check if library is present"
