@@ -1,12 +1,13 @@
-import unittest
-import terminal
+import algorithm
 import os
 import osproc
-import strformat
-import strutils
+import random
 import sequtils
 import streams
-import random
+import strformat
+import strutils
+import terminal
+import unittest
 import std/compilesettings
 
 import wiish/building/buildutil
@@ -104,7 +105,7 @@ else:
     ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
   ]
 
-const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path)
+const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
 
 suite "checks":
   for example in example_dirs:
