@@ -132,9 +132,10 @@ suite "checks":
 
 const run_sentinel = "WIISH RUN STARTING"
 
-proc testWiishRun(args: seq[string], sleepTime = 5_000): bool =
+proc testWiishRun(dirname: string, args: seq[string], sleepTime = 5_000): bool =
   var p = startProcess(findExe"wiish", args = args)
   echo "    Running command:"
+  echo "        cd ", dirname
   echo "        wiish ", args.join(" ")
   let err = p.errorStream()
   while true:
@@ -162,24 +163,22 @@ suite "run":
     if fileExists example/"main_desktop.nim":
       vtest(example.extractFilename):
         runMaybe:
-          withDir example:
-            check testWiishRun(@["run"], 5_000)
+          check testWiishRun(example, @["run"], 5_000)
     
     # Mobile checks
     if fileExists example/"main_mobile.nim":
       for (name, args) in mobileBuildSetups:
         vtest(name & " " & example.extractFilename):
           runMaybe:
-            withDir example:
-              var args = @["run"]
-              case name
-              of "android":
-                args.add(@["--os", "android"])
-              of "ios":
-                args.add(@["--os", "ios-simulator"])
-              of "mobiledev":
-                args.add(@["--os", "mobiledev"])
-              check testWiishRun(args, 15_000)
+            var args = @["run"]
+            case name
+            of "android":
+              args.add(@["--os", "android"])
+            of "ios":
+              args.add(@["--os", "ios-simulator"])
+            of "mobiledev":
+              args.add(@["--os", "mobiledev"])
+            check testWiishRun(example, args, 15_000)
 
 suite "examples":
 
