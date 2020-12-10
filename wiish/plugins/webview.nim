@@ -7,7 +7,6 @@ import wiish/building/buildutil
 import wiish/building/config
 import wiish/doctor
 
-import wiish/plugins/standard/build_ios
 import wiish/plugins/standard/build_android
 
 const datadir = currentSourcePath.parentDir / "webview" / "data"

@@ -482,95 +482,80 @@ proc doAndroidBuild*(directory:string, config: WiishConfig): string =
 
 
 proc checkDoctor*():seq[DoctorResult] =
-  var cap:DoctorResult
 
   # ANDROID_SDK_ROOT
-  cap = DoctorResult(name: "android/std/ANDROID_SDK_ROOT")
-  if getEnv("ANDROID_SDK_ROOT", "") == "":
-    cap.status = NotWorking
-    cap.error = "ANDROID_SDK_ROOT not set"
-    cap.fix = "Install the Android SDK then set ANDROID_SDK_ROOT to the path of the Android sdk."
-  else:
-    cap.status = Working
-  result.add cap
+  result.dr "standard", "ANDROID_SDK_ROOT":
+    dr.targetOS = {Android}
+    if getEnv("ANDROID_SDK_ROOT", "") == "":
+      dr.status = NotWorking
+      dr.error = "ANDROID_SDK_ROOT not set"
+      dr.fix = "Install the Android SDK then set ANDROID_SDK_ROOT to the path of the Android sdk."
 
   # ANDROID_HOME
-  cap = DoctorResult(name: "android/std/ANDROID_HOME")
-  if getEnv("ANDROID_HOME", "") == "":
-    cap.status = NotWorking
-    cap.error = "ANDROID_HOME not set"
-    cap.fix = """Set ANDROID_HOME to the Android SDK location.  This might work:
-      
-    export ANDROID_HOME="$ANDROID_SDK_ROOT"
-    """
-  else:
-    cap.status = Working
-  result.add cap
+  result.dr "standard", "ANDROID_HOME":
+    dr.targetOS = {Android}
+    if getEnv("ANDROID_HOME", "") == "":
+      dr.status = NotWorking
+      dr.error = "ANDROID_HOME not set"
+      dr.fix = """Set ANDROID_HOME to the Android SDK location.  This might work:
+        
+      export ANDROID_HOME="$ANDROID_SDK_ROOT"
+      """
 
   # ANDROID_NDK_HOME
-  cap = DoctorResult(name: "android/std/ANDROID_NDK_HOME")
-  if getEnv("ANDROID_NDK_HOME", "") == "":
-    cap.status = NotWorking
-    cap.error = "ANDROID_NDK_HOME not set"
-    cap.fix = """Install the Android NDK then set ANDROID_NDK_HOME to the ndk-bundle path. This might work:
-    
-    export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
-    """
-  else:
-    cap.status = Working
-  result.add cap
+  result.dr "standard", "ANDROID_NDK_HOME":
+    dr.targetOS = {Android}
+    if getEnv("ANDROID_NDK_HOME", "") == "":
+      dr.status = NotWorking
+      dr.error = "ANDROID_NDK_HOME not set"
+      dr.fix = """Install the Android NDK then set ANDROID_NDK_HOME to the ndk-bundle path. This might work:
+      
+      export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
+      """
 
   # ndk-build
-  cap = DoctorResult(name: "android/std/ndk-build")
-  if findExe"ndk-build" == "":
-    cap.status = NotWorking
-    cap.error = "ndk-build not in PATH"
-    cap.fix = """Add the Android NDK path to the PATH. This might work:
-  
-    export PATH="${ANDROID_NDK_HOME}:${PATH}"
-    """
-  else:
-    cap.status = Working
-  result.add cap
+  result.dr "standard", "ndk-build":
+    dr.targetOS = {Android}
+    if findExe"ndk-build" == "":
+      dr.status = NotWorking
+      dr.error = "ndk-build not in PATH"
+      dr.fix = """Add the Android NDK path to the PATH. This might work:
+    
+      export PATH="${ANDROID_NDK_HOME}:${PATH}"
+      """
 
   # emulator
-  cap = DoctorResult(name: "android/std/emulator")
-  if findExe("emulator") == "":
-    cap.status = NotWorking
-    cap.error = "Could not find 'emulator'"
-    cap.fix = """
-    export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
-    """
-  else:
-    cap.status = Working
-  result.add cap
+  result.dr "standard", "emulator":
+    dr.targetOS = {Android}
+    if findExe("emulator") == "":
+      dr.status = NotWorking
+      dr.error = "Could not find 'emulator'"
+      dr.fix = """
+      export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+      """
 
   # adb
-  cap = DoctorResult(name: "android/std/sdk-platform-tools")
-  if findExe("adb") == "":
-    cap.status = NotWorking
-    cap.error = "Could not find 'adb'"
-    cap.fix = """
-    export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
-    """
-  else:
-    cap.status = Working
-  result.add cap
+  result.dr "standard", "sdk-platform-tools":
+    dr.targetOS = {Android}
+    if findExe("adb") == "":
+      dr.status = NotWorking
+      dr.error = "Could not find 'adb'"
+      dr.fix = """
+      export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+      """
   
   # devices
-  cap = DoctorResult(name: "android/std/devices")
-  try:
-    let devices = possibleDevices()
-    if devices.len == 0:
-      cap.status = NotWorking
-      cap.error = "No Android emulation devices found"
-      cap.fix = "Use Android Studio to install a device. XXX need better instructions"
-    else:
-      cap.status = Working
-  except:
-    cap.status = NotWorking
-    cap.error = "Could not find 'emulator'"
-    cap.fix = "Fix android/std/emulator first"
-  result.add cap
+  result.dr "standard", "devices":
+    dr.targetOS = {Android}
+    try:
+      let devices = possibleDevices()
+      if devices.len == 0:
+        dr.status = NotWorking
+        dr.error = "No Android emulation devices found"
+        dr.fix = "Use Android Studio to install a device. XXX need better instructions"
+    except:
+      dr.status = NotWorking
+      dr.error = "Could not find 'emulator'"
+      dr.fix = "Fix emulator first"
   
 
