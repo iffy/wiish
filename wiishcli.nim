@@ -24,7 +24,8 @@ proc onlyInWiishProject() =
   ## Quit the process with a warning if this is not being run within
   ## a wiish project.
   if not WIISHBUILDFILE.fileExists:
-    stderr.writeLine &"ERROR: {WIISHBUILDFILE} not found. This command can only be run within a wiish project. Create one with: wiish init"
+    let pwd = getCurrentDir().absolutePath()
+    stderr.writeLine &"ERROR: {WIISHBUILDFILE} not found in {pwd}. This command can only be run within a wiish project. Create one with: wiish init"
     quit(1)
 
 proc doInit(directory: string, example: string) =

@@ -27,6 +27,8 @@ proc runStep*(b: WiishBuild, step: BuildStep, ctx: ref BuildContext) =
     androidRunStep(step, ctx)
   of MobileDev:
     discard
+  of Linux:
+    ctx.log "Linux not fully supported yet"
   else:
     ctx.log "Not yet supported: ", $ctx.targetOS
   

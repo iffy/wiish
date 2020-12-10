@@ -76,7 +76,10 @@ proc terminateAllChildren(pid: int = 0) =
       if children.len == 0:
         break
       for child in children:
-        sh "kill", $child
+        try:
+          discard shoutput("kill", $child)
+        except:
+          discard
 
 when defined(macosx):
   const desktopBuildSetups = [
@@ -133,30 +136,42 @@ suite "checks":
 
 const run_sentinel = "WIISH RUN STARTING"
 
-proc testWiishRun(dirname: string, args: seq[string], sleepTime = 5_000): bool =
-  var p = startProcess(findExe"wiish", args = args)
+proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   echo "    Running command:"
   echo "        cd ", dirname
   echo "        wiish ", args.join(" ")
-  let err = p.errorStream()
-  while true:
-    let rc = p.peekExitCode()
-    if rc == -1:
-      # still running
-      let line = err.readLine()
-      if run_sentinel in line:
+  withDir dirname:
+    var p = startProcess(findExe"wiish", args = args)
+    let err = p.errorStream()
+    var buf: string
+    while true:
+      let rc = p.peekExitCode()
+      if rc == -1:
+        # still running
+        try:
+          let line = err.readLine()
+          buf.add line & "\l"
+          if run_sentinel in line:
+            break
+        except:
+          echo "Error reading stderr"
+          echo getCurrentExceptionMsg()
+          echo buf
+          raise
+      elif rc == 0:
+        # quit
+        assert false, "wiish run exited prematurely"
+      else:
+        assert false, "wiish run failed"
+    echo &"    Waiting for {sleepSeconds}s to see if it keeps running..."
+    for i in 0..<sleepSeconds:
+      if p.peekExitCode() != -1:
         break
-    elif rc == 0:
-      # quit
-      assert false, "wiish run exited prematurely"
-    else:
-      assert false, "wiish run failed"
-  echo &"    Waiting for {sleepTime}ms to see if it keeps running..."
-  sleep(sleepTime)
-  result = p.peekExitCode() == -1 # it should still be running
-  terminateAllChildren(p.processID())
-  discard p.waitForExit()
-  defer: p.close()
+      sleep(1000)
+    result = p.peekExitCode() == -1 # it should still be running
+    terminateAllChildren(p.processID())
+    discard p.waitForExit()
+    defer: p.close()
 
 suite "run":
   for example in example_dirs:
@@ -164,7 +179,7 @@ suite "run":
     if fileExists example/"main_desktop.nim":
       vtest(example.extractFilename):
         runMaybe:
-          check testWiishRun(example, @["run"], 5_000)
+          check testWiishRun(example, @["run"], 5)
     
     # Mobile checks
     if fileExists example/"main_mobile.nim":
@@ -179,7 +194,7 @@ suite "run":
               args.add(@["--os", "ios-simulator"])
             of "mobiledev":
               args.add(@["--os", "mobiledev"])
-            check testWiishRun(example, args, 15_000)
+            check testWiishRun(example, args, 15)
 
 suite "examples":
 
