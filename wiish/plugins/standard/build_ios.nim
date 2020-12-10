@@ -12,6 +12,7 @@ import sequtils
 # import xmltree
 # import xmlparser
 
+import ./common
 import wiish/doctor
 import wiish/building/config
 import wiish/building/buildutil
@@ -120,14 +121,14 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     sh("ibtool",
       "--output-format", "human-readable-text",
       "--compile", ctx.app_dir/"LaunchScreen.storyboardc",
-      DATADIR()/"ios-util"/"LaunchScreen.storyboard",
+      stdDatadir/"ios-util"/"LaunchScreen.storyboard",
       "--sdk", ctx.ios_sdk_path,
     )
 
     ctx.log &"Creating icons ..."
     var iconSrcPath:string
     if ctx.config.icon == "":
-      iconSrcPath = DATADIR()/"default_square.png"
+      iconSrcPath = stdDatadir/"default_square.png"
     else:
       iconSrcPath = ctx.projectPath / ctx.config.icon
     iconSrcPath.resizePNG(ctx.app_dir/"Icon.png", 180, 180)
@@ -328,14 +329,14 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 #   sh("ibtool",
 #     "--output-format", "human-readable-text",
 #     "--compile", appDir/"LaunchScreen.storyboardc",
-#     DATADIR()/"ios-util"/"LaunchScreen.storyboard",
+#     stdDatadir/"ios-util"/"LaunchScreen.storyboard",
 #     "--sdk", sdkPath,
 #   )
 
 #   debug &"Creating icons ..."
 #   var iconSrcPath:string
 #   if config.icon == "":
-#     iconSrcPath = DATADIR()/"default_square.png"
+#     iconSrcPath = stdDatadir/"default_square.png"
 #   else:
 #     iconSrcPath = directory/config.icon
 #   iconSrcPath.resizePNG(appDir/"Icon.png", 180, 180)

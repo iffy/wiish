@@ -90,12 +90,6 @@ type
     p.name() is string
     p.runStep(BuildStep, ref BuildContext)
 
-
-const
-  NIMBASE_1_0_X* = slurp"data/nimbase-1.0.x.h"
-  NIMBASE_1_2_X* = slurp"data/nimbase-1.2.x.h"
-  NIMBASE_1_4_x* = slurp"data/nimbase-1.4.x.h"
-
 proc viableTargets*(os: TargetOS): set[TargetFormat] =
   ## Return the TargetFormats that can be built for the given TargetOS
   case os
@@ -189,21 +183,6 @@ proc getWiishPackageRoot*():string =
     else:
       wiishPackagePath = path
   return wiishPackagePath
-
-proc DATADIR*():string {.deprecated: "Each plugin should have its own DATADIR".}=
-  ## Return the path to the Wiish library data directory
-  return getWiishPackageRoot()/"wiish"/"building"/"data"
-
-proc getNimLibPath*(): string =
-  ## Return the path to Nim's lib if it can be found
-  let nimPath = findExe("nim")
-  if nimPath == "":
-    # Nim isn't installed or isn't in the PATH
-    return ""
-  let libDir = nimPath.splitPath().head.parentDir/"lib"
-  if libDir.dirExists:
-    return libDir
-  return ""
 
 proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
   ## Resize a PNG image

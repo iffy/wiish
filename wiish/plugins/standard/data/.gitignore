@@ -1,0 +1,5 @@
+SDL/Xcode-iOS/SDL/build
+SDL_TTF/Xcode-iOS/build
+build
+.gradle
+*.class

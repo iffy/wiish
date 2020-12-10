@@ -1,6 +1,7 @@
 import os
 import strformat
 
+import ./common
 import wiish/building/config
 import wiish/building/buildutil
 
@@ -65,7 +66,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
       iconDstPath = ctx.contentsDir/"Resources"/ctx.config.src.splitFile.name & ".icns"
     var iconSrcPath:string
     if ctx.config.icon == "":
-      iconSrcPath = DATADIR()/default_icon
+      iconSrcPath = stdDataDir/default_icon
     else:
       iconSrcPath = ctx.projectPath/ctx.config.icon
     createICNS(iconSrcPath, iconDstPath)
@@ -155,7 +156,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
 #   debug "Generating .icns file ..."
 #   var iconSrcPath:string
 #   if config.icon == "":
-#     iconSrcPath = DATADIR()/default_icon
+#     iconSrcPath = stdDataDir/default_icon
 #   else:
 #     iconSrcPath = directory/config.icon
 #   let iconDstPath = contentsDir/"Resources"/appSrc.splitFile.name & ".icns"
