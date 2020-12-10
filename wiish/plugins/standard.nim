@@ -1,4 +1,6 @@
 ## Entrypoint for standard Wiish build plugin
+import os
+
 import wiish/building/buildutil
 import wiish/doctor
 import ./standard/build_macos
@@ -13,6 +15,9 @@ proc name*(b: WiishBuild): string = "Wiish"
 
 proc runStep*(b: WiishBuild, step: BuildStep, ctx: ref BuildContext) =
   ## Standard Wiish build
+  if ctx.targetFormat == targetRun and step == Run:
+    ctx.log "WIISH RUN STARTING" # This is a signal that tests count on
+    ctx.log "PID ", $getCurrentProcessId()
   case ctx.targetOS
   of Mac:
     macBuild(step, ctx)
@@ -24,6 +29,8 @@ proc runStep*(b: WiishBuild, step: BuildStep, ctx: ref BuildContext) =
     discard
   else:
     ctx.log "Not yet supported: ", $ctx.targetOS
+  
+  
 
 proc checkDoctor*(): seq[DoctorResult] =
   result.add build_ios.checkDoctor()

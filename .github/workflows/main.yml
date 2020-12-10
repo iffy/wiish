@@ -9,6 +9,8 @@ on:
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
+    env:
+      WIISH_TEST_RUN: "1"
     strategy:
       matrix:
         nimversion: 
