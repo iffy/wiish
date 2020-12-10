@@ -1,7 +1,9 @@
 import os
+import osproc
 import strformat
 import strutils
 import tables
+import distros
 
 import wiish/building/buildutil
 import wiish/building/config
@@ -16,6 +18,7 @@ type
     ## Webview build plugin
 
 proc name*(b: WiishWebviewPlugin): string = "WiishWebview"
+
 
 proc macRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview macOS Build
@@ -42,6 +45,27 @@ proc macRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       args.add "-d:wiishDev"
       args.add "-d:ssl"
       args.add "--threads:on"
+      args.add "-r"
+      args.add ctx.main_nim
+      echo args.join(" ")
+      sh args
+  else:
+    discard
+
+proc linuxRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish Webview Linux Build
+  case step
+  of Compile:
+    ctx.logStartStep
+    ctx.log "Linux builds not yet supported"
+  of Run:
+    if ctx.targetFormat in {targetRun}:
+      ctx.logStartStep
+      var args = @[findExe"nim", "c"]
+      args.add ctx.nim_flags
+      args.add "-d:wiishDev"
+      # args.add "-d:ssl"
+      # args.add "--threads:on"
       args.add "-r"
       args.add ctx.main_nim
       echo args.join(" ")
@@ -186,9 +210,26 @@ proc runStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
     b.androidRunStep(step, ctx)
   of MobileDev:
     b.mobiledevRunStep(step, ctx)
+  of Linux:
+    b.linuxRunStep(step, ctx)
   else:
     ctx.log "Not yet supported: ", $ctx.targetOS
 
-
 proc checkDoctor*(): seq[DoctorResult] =
-  discard
+  when defined(linux):
+    # TODO: make this work for other distors
+    let packages = [
+      ("gtk+-3.0", "libgtk-3-dev"),
+      ("webkit2gtk-4.0", "libwebkit2gtk-4.0-dev"),
+    ]
+    for (name, installname) in packages:
+      result.dr "webview", name:
+        dr.targetOS = {Linux}
+        if execCmdEx("pkg-config --cflags " & name).exitCode != 0:
+          dr.status = NotWorking
+          dr.error = &"Missing library {name}"
+          dr.fix = "Maybe this will work:\l\l  "
+          let cmd = foreignDepInstallCmd(installname)
+          if cmd[1]:
+            dr.fix.add "sudo "
+          dr.fix.add cmd[0]
