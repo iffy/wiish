@@ -18,7 +18,6 @@ randomize()
 
 const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
 const examples = example_dirs.mapIt(it.extractFilename())
-let VERBOSE = getEnv("VERBOSE") != ""
 
 const TMPROOT = currentSourcePath.parentDir/"_testtmp"
 if dirExists(TMPROOT):
@@ -77,7 +76,6 @@ proc listAllChildPids(pid: int = 0): seq[string] =
 
 proc terminateAllChildren(pid: int = 0) =
   ## Recursively terminate all child processes.
-  echo "terminateAllChildren start"
   when defined(macosx) or defined(linux):
     # kill gently
     for i in 0..10:
@@ -85,7 +83,6 @@ proc terminateAllChildren(pid: int = 0) =
       let children = listAllChildPids(pid)
       if children.len == 0:
         break
-      echo "attempting to kill children"
       for child in children:
         try:
           discard shoutput("kill", $child)
@@ -97,13 +94,11 @@ proc terminateAllChildren(pid: int = 0) =
       let children = listAllChildPids(pid)
       if children.len == 0:
         break
-      echo "attempting to kill -9 children"
       for child in children:
         try:
           discard shoutput("kill", "-9", $child)
         except:
           discard
-  echo "terminateAllChildren end"
       
 
 #---------------------------------------------------------------
@@ -258,8 +253,6 @@ proc readOutput(s: Stream) {.thread.} =
   while not s.atEnd():
     try:
       let line = s.readLine()
-      if VERBOSE:
-        stderr.writeLine line
       outChan.send(line & "\l")
     except:
       break
@@ -314,7 +307,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         buf.add tried.msg
       else:
         break
-    if not result and not VERBOSE:
+    if not result:
       echo buf
 
 var already_built = false
