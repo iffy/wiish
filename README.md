@@ -59,7 +59,7 @@ Wiish provides:
 2. A `wiish` Nim library (i.e. `import wiish/...`) for app-specific helpers (e.g. auto-updating, asset-access, etc...)
 3. Plugins for different GUI frameworks.
 
-## Plugins
+# Plugins
 
 Wiish uses a plugin system to support various GUI frameworks:
 
@@ -70,30 +70,63 @@ The GUI component is designed to work separately from other features (e.g. auto-
 
 It is hoped that more plugins will be introduced for other GUI frameworks.
 
-## Support
+## Webview Support
 
-### GUI framework support
- 
-| Product   | webview | OpenGL | SDL2  |
-| --------- | :-----: | :----: | :---: |
-| macOS     |    Y    |   Y    |   Y   |
-| Windows   |         |        |       |
-| Linux     |    Y    |        |       |
-| iOS       |    Y    |   Y    |   Y   |
-| Android   |    Y    |   Y    |   Y   |
-| mobiledev |    Y    |        |       |
+| Host OS | Target OS |  Run  | Build | Package |
+| ------- | --------- | :---: | :---: | :-----: |
+| macOS   | macOS     |   Y   |   Y   |         |
+| macOS   | iOS       |   Y   |       |         |
+| macOS   | Android   |   Y   |   Y   |         |
+| macOS   | mobiledev |   Y   |  n/a  |   n/a   |
+| Windows | Windows   |   ?   |       |         |
+| Windows | Android   |   ?   |       |         |
+| Windows | mobiledev |       |  n/a  |   n/a   |
+| Linux   | Linux     |   Y   |       |         |
+| Linux   | Android   |   ?   |       |         |
+| Linux   | mobiledev |       |  n/a  |   n/a   |
+
+## SDL2 Support
+
+| Host OS | Target OS |  Run  | Build | Package |
+| ------- | --------- | :---: | :---: | :-----: |
+| macOS   | macOS     |       |       |         |
+| macOS   | iOS       |       |       |         |
+| macOS   | Android   |       |       |         |
+| macOS   | mobiledev |       |       |         |
+| Windows | Windows   |       |       |         |
+| Windows | Android   |       |       |         |
+| Windows | mobiledev |       |       |         |
+| Linux   | Linux     |       |       |         |
+| Linux   | Android   |       |       |         |
+| Linux   | mobiledev |       |       |         |
+
+## SDL2 + OpenGL Support
+
+| Host OS | Target OS |  Run  | Build | Package |
+| ------- | --------- | :---: | :---: | :-----: |
+| macOS   | macOS     |       |       |         |
+| macOS   | iOS       |       |       |         |
+| macOS   | Android   |       |       |         |
+| macOS   | mobiledev |       |       |         |
+| Windows | Windows   |       |       |         |
+| Windows | Android   |       |       |         |
+| Windows | mobiledev |       |       |         |
+| Linux   | Linux     |       |       |         |
+| Linux   | Android   |       |       |         |
+| Linux   | mobiledev |       |       |         |
+
 
 ### GUI-independent features
 
-| Feature                    | macOS | Windows | Linux |  iOS  | Android |
-| -------------------------- | :---: | :-----: | :---: | :---: | :-----: |
-| App icons                  |   Y   |         |       |   Y   |    Y    |
-| `wiish run` logs to stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
-| Log files                  |       |         |       |       |         |
-| Static assets              |   Y   |         |       |   Y   |    Y    |
-| Automatic updating         |       |         |       |   -   |    -    |
-| File associations          |       |         |       |       |         |
-| Menu bar access            |       |         |       |   -   |    -    |
+| Feature                 | macOS | Windows | Linux |  iOS  | Android |
+| ----------------------- | :---: | :-----: | :---: | :---: | :-----: |
+| App icons               |   Y   |         |       |   Y   |    Y    |
+| `wiish run` logs stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
+| Log files               |       |         |       |       |         |
+| Static assets           |   Y   |         |       |   Y   |    Y    |
+| Automatic updating      |       |         |       |   -   |    -    |
+| File associations       |       |         |       |       |         |
+| Menu bar access         |       |         |       |   -   |    -    |
 
 ### Distribution formats
 
@@ -113,18 +146,18 @@ It is hoped that more plugins will be introduced for other GUI frameworks.
 | Windows     |   -   |    Y    |       |   -   |         |
 | Linux       |   -   |         |   Y   |   -   |    Y    |
 
-
 # Examples
 
 See the [`examples`](./examples) directory for more examples of how to use this library.  You can also initialize a project using these examples with `wiish init`.  See `wiish init --help` for information.
 
-# Developing wiish
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to Wiish development.
+# Plugins
 
+## sdl2
 
+## webview| 
 
-# Webview messaging
+### Messaging
 
 When using the `wiish/plugins/webview` plugin, you send/receive strings between JavaScript and your Nim like this:
 
@@ -162,3 +195,7 @@ app.start()
 # A note on quality
 
 This library works as advertised, but it is a huge mess.  I'm learning as I'm going, and trying to wrangle all these platforms is ridiculous.  I happily welcome suggestions (and pull requests).
+
+# Developing wiish
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to Wiish development.

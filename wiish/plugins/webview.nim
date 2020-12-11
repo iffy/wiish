@@ -1,9 +1,10 @@
 import os
-import osproc
 import strformat
 import strutils
 import tables
-import distros
+when defined(linux):
+  import osproc
+  import distros
 
 import wiish/building/buildutil
 import wiish/building/config

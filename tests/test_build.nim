@@ -6,14 +6,26 @@ import sequtils
 import streams
 import strformat
 import strutils
+import tables
 import terminal
 import unittest
 import std/compilesettings
 
+stderr.writeLine "stdout.endOfFile? ", $stdout.endOfFile()
+
 import wiish/building/buildutil
 import wiishcli
 
+stderr.writeLine("here")
+
 randomize()
+
+stderr.writeLine("here")
+
+const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
+const examples = example_dirs.mapIt(it.extractFilename())
+
+stderr.writeLine("here")
 
 const TMPROOT = currentSourcePath.parentDir/"_testtmp"
 if dirExists(TMPROOT):
@@ -23,6 +35,8 @@ if dirExists(TMPROOT):
 proc tmpDir(): string {.used.} =
   result = TMPROOT / &"wiishtest{random.rand(10000000)}"
   createDir(result)
+
+stderr.writeLine("here 2")
 
 proc addConfigNims() =
   var guts: string
@@ -70,6 +84,7 @@ proc listAllChildPids(pid: int = 0): seq[string] =
       result.add child.parseInt().listAllChildPids()
 
 proc terminateAllChildren(pid: int = 0) =
+  ## Recursively terminate all child processes.
   when defined(macosx) or defined(linux):
     while true:
       let children = listAllChildPids(pid)
@@ -81,55 +96,138 @@ proc terminateAllChildren(pid: int = 0) =
         except:
           discard
 
-when defined(macosx):
-  const desktopBuildSetups = [
-    ("macos", @["--os:macosx"]),
-    ("windows", @["--os:windows"]),
-  ]
-  const mobileBuildSetups = [
-    ("ios", @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc"]),
-    ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
-    ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
-  ]
-elif defined(windows):
-  const desktopBuildSetups = [
-    ("windows", @["--os:windows"]),
-  ]
-  const mobileBuildSetups = [
-    ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
-    ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
-  ]
-else:
-  const desktopBuildSetups = [
-    ("linux", @["--os:linux"]),
-  ]
-  const mobileBuildSetups = [
-    ("android", @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]),
-    ("mobiledev", @["-d:wiish_mobiledev", "--gc:orc"])
-  ]
+#---------------------------------------------------------------
+# Support Tables
+#---------------------------------------------------------------
+type
+  SupportStatus = enum
+    NotWorking
+    NotApplicable
+    Working
 
-const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
+var supportedBranches = initTable[string, SupportStatus]()
+
+proc key(targetOS: TargetOS, example: string, action: string): string =
+  result.add $targetOS
+  result.add "/"
+  result.add example
+  result.add "/"
+  result.add action
+
+proc markSupport(targetOS: TargetOS, example: string, action: string, status = NotWorking) =
+  let key = key(targetOS, example, action)
+  supportedBranches[key] = status
+
+const actions = ["run", "build"]
+
+proc str(status: SupportStatus): string =
+  case status
+  of NotWorking:
+    "X"
+  of NotApplicable:
+    "-"
+  of Working:
+    "OK"
+
+proc displaySupport() =
+  var rows:seq[seq[string]]
+  var col1max = 0
+  var col2max = 0
+  for targetOS in low(TargetOS)..high(TargetOS):
+    if targetOS == AutoDetectOS:
+      continue
+    for example in examples:
+      let run_key = key(targetOS, example, "run")
+      let build_key = key(targetOS, example, "build")
+      let run_status = supportedBranches.getOrDefault(run_key)
+      let build_status = supportedBranches.getOrDefault(build_key)
+      if run_status == NotApplicable and build_status == NotApplicable:
+        continue
+      rows.add @[$targetOS, example, run_status.str(), build_status.str()]
+      col1max = max(col1max, rows[^1][0].len)
+      col2max = max(col2max, rows[^1][1].len)
+  proc pad(x: string, size: int): string =
+    result.add x
+    if x.len < size:
+      result.add " ".repeat(size - x.len)
+  for row in rows:
+    stdout.styledWrite "| " & row[0].pad(col1max)
+    stdout.styledWrite " | " & row[1].pad(col2max)
+    stdout.styledWrite " | " & row[2].pad(2)
+    stdout.styledWrite " | " & row[3].pad(2)
+    stdout.styledWrite " |\l"
+
+stderr.writeLine("here 4")
+
+# The MobileDev target is never built
+for example in examples:
+  markSupport(MobileDev, example, "build", NotApplicable)
+
+#---------------------------------------------------------------
+# Build matrix
+#---------------------------------------------------------------
+when defined(macosx):
+  const THISOS = Mac
+  const buildTargets = {Mac, Windows, IosSimulator, Android, MobileDev}
+  for example in examples:
+    for action in actions:
+      markSupport(Windows, example, action, NotApplicable)
+      markSupport(Linux, example, action, NotApplicable)
+
+elif defined(windows):
+  const THISOS = Windows
+  const buildTargets = {Windows, Android, MobileDev}
+  for example in examples:
+    for action in actions:
+      markSupport(Mac, example, action, NotApplicable)
+      markSupport(Ios, example, action, NotApplicable)
+      markSupport(IosSimulator, example, action, NotApplicable)
+      markSupport(Linux, example, action, NotApplicable)
+
+else:
+  const THISOS = Linux
+  const buildTargets = {Linux, Android, MobileDev}
+  for example in examples:
+    for action in actions:
+      markSupport(Mac, example, action, NotApplicable)
+      markSupport(Ios, example, action, NotApplicable)
+      markSupport(IosSimulator, example, action, NotApplicable)
+      markSupport(Windows, example, action, NotApplicable)
+
+stderr.writeLine("here 6")
 
 suite "checks":
+  stderr.writeLine("here 8")
   for example in example_dirs:
-    # Desktop checks
-    if fileExists example/"main_desktop.nim":
-      for (name, args) in desktopBuildSetups:
-        vtest(name & " " & example.extractFilename):
+    for target in buildTargets:
+      var main_file = ""
+      var args: seq[string]
+      case target
+      of Windows:
+        main_file = "main_desktop.nim"
+        args.add "--os:windows"
+      of Mac:
+        main_file = "main_desktop.nim"
+        args.add "--os:macosx"
+      of Linux:
+        main_file = "main_desktop.nim"
+        args.add "--os:linux"
+      of Android:
+        main_file = "main_mobile.nim"
+        args.add @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]
+      of Ios,IosSimulator:
+        main_file = "main_mobile.nim"
+        args.add @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc"]
+      of MobileDev:
+        main_file = "main_mobile.nim"
+        args.add @["-d:wiish_mobiledev", "--gc:orc"]
+      else:
+        raise ValueError.newException("Unsupported build target: " & $target)
+      if fileExists example/main_file:
+        vtest($target & " " & example.extractFilename):
           var cmd = @["nim", "check", "--hints:off", "-d:testconcepts"]
-          cmd.add(args)
-          cmd.add(example / "main_desktop.nim")
-          let cmdstr = cmd.join(" ")
-          checkpoint "COMMAND: " & cmdstr
-          check execCmd(cmdstr) == 0
-    
-    # Mobile checks
-    if fileExists example/"main_mobile.nim":
-      for (name, args) in mobileBuildSetups:
-        vtest(name & " " & example.extractFilename):
-          var cmd = @["nim", "check", "--hints:off", "-d:testconcepts"]
-          cmd.add(args)
-          cmd.add(example / "main_mobile.nim")
+          cmd.add args
+          cmd.add(example / main_file)
           let cmdstr = cmd.join(" ")
           checkpoint "COMMAND: " & cmdstr
           check execCmd(cmdstr) == 0
@@ -137,11 +235,14 @@ suite "checks":
 const run_sentinel = "WIISH RUN STARTING"
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
+  ## Test a `wiish run` invocation
   echo "    Running command:"
   echo "        cd ", dirname
-  echo "        wiish ", args.join(" ")
+  let wiishbin = ("bin"/"wiish").absolutePath
+  echo "        " & wiishbin & " ", args.join(" ")
   withDir dirname:
-    var p = startProcess(findExe"wiish", args = args)
+    var p = startProcess(wiishbin, args = args)
+    defer: p.close()
     let err = p.errorStream()
     var buf: string
     while true:
@@ -171,32 +272,17 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     result = p.peekExitCode() == -1 # it should still be running
     terminateAllChildren(p.processID())
     discard p.waitForExit()
-    defer: p.close()
+    if not result:
+      echo buf
+
+var already_built = false
 
 suite "run":
-  for example in example_dirs:
-    # Desktop checks
-    if fileExists example/"main_desktop.nim":
-      vtest(example.extractFilename):
-        runMaybe:
-          check testWiishRun(example, @["run"], 5)
-    
-    # Mobile checks
-    if fileExists example/"main_mobile.nim":
-      for (name, args) in mobileBuildSetups:
-        vtest(name & " " & example.extractFilename):
-          runMaybe:
-            var args = @["run"]
-            case name
-            of "android":
-              args.add(@["--os", "android"])
-            of "ios":
-              args.add(@["--os", "ios-simulator"])
-            of "mobiledev":
-              args.add(@["--os", "mobiledev"])
-            check testWiishRun(example, args, 15)
-
-suite "examples":
+  setup:
+    if not already_built:
+      echo "Building wiish binary..."
+      sh "nimble", "build"
+      already_built = true
 
   tearDown:
     let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples"]
@@ -205,30 +291,75 @@ suite "examples":
     except:
       echo "Error ^ while running: ", cmd.join(" ")
 
-  # Build and check all the examples/
   for example in example_dirs:
+    # Desktop
+    if fileExists example/"main_desktop.nim":
+      vtest(example.extractFilename):
+        runMaybe:
+          if testWiishRun(example, @["run"], 5):
+            markSupport(THISOS, example.extractFilename, "run", Working)
+          else:
+            check false
     
-    # Desktop example apps
+    # Mobile
+    if fileExists example/"main_mobile.nim":
+      for name in buildTargets:
+        if name in {Android, Ios, IosSimulator, MobileDev}:
+          vtest($name & " " & example.extractFilename):
+            runMaybe:
+              var args = @["run"]
+              case name
+              of Android:
+                args.add(@["--os", "android"])
+              of Ios,IosSimulator:
+                args.add(@["--os", "ios-simulator"])
+              of MobileDev:
+                args.add(@["--os", "mobiledev"])
+              else:
+                discard
+              if testWiishRun(example, args, 15):
+                markSupport(name, example.extractFilename, "run", Working)
+              else:
+                check false
+
+suite "build":
+  tearDown:
+    let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples"]
+    try:
+      sh cmd
+    except:
+      echo "Error ^ while running: ", cmd.join(" ")
+
+  for example in example_dirs:
+    # Desktop
     if fileExists example/"main_desktop.nim":
       vtest("desktop " & example.extractFilename):
         withDir example:
           runWiish "build"
+          markSupport(THISOS, example.extractFilename, "build", Working)
     
-    # Mobile example apps
+    # Mobile
     if fileExists example/"main_mobile.nim":
-      vtest("ios " & example.extractFilename):
-        when defined(macosx):
+      if IosSimulator in buildTargets:
+        vtest("ios-simulator " & example.extractFilename):
           withDir example:
             runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
-        else:
-          skipReason "only builds on macOS"
+            markSupport(IosSimulator, example.extractFilename, "build", Working)
       
-      vtest("android " & example.extractFilename):
-        androidMaybe:
-          withDir example:
-            runWiish "build", "--os", "android"
+      if Android in buildTargets:
+        vtest("android " & example.extractFilename):
+          androidMaybe:
+            withDir example:
+              runWiish "build", "--os", "android"
+              markSupport(Android, example.extractFilename, "build", Working)
 
 suite "init":
+  setup:
+    let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples"]
+    try:
+      sh cmd
+    except:
+      echo "Error ^ while running: ", cmd.join(" ")
 
   vtest "init and build":
     withDir tmpDir():
@@ -237,23 +368,25 @@ suite "init":
       runWiish "init", "desktop"
       withDir "desktop":
         runWiish "build"
-    
-  vtest "init and build --os ios":
-    when defined(macosx):
+  
+  if Ios in buildTargets or IosSimulator in buildTargets:
+    vtest "init and build --os ios-simulator":
       withDir tmpDir():
         echo absolutePath"."
         addConfigNims()
         runWiish "init", "iostest"
         withDir "iostest":
           runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
-    else:
-      skipReason "only builds on macOS"
-  
-  vtest "init and build android":
-    androidMaybe:
-      withDir tmpDir():
-        echo absolutePath"."
-        addConfigNims()
-        runWiish "init", "androidtest"
-        withDir "androidtest":
-          runWiish "build", "--os", "android"
+
+  if Android in buildTargets:  
+    vtest "init and build --os android":
+      androidMaybe:
+        withDir tmpDir():
+          echo absolutePath"."
+          addConfigNims()
+          runWiish "init", "androidtest"
+          withDir "androidtest":
+            runWiish "build", "--os", "android"
+
+echo "## Support Matrix for " & $THISOS
+displaySupport()
