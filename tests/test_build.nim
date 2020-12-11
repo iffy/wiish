@@ -38,17 +38,17 @@ proc addConfigNims() =
   writeFile("config.nims", guts)
   echo "added config.nims:\n", guts
 
-template androidRunMaybe(): untyped =
-  if not existsEnv("WIISH_RUN_ANDROID"):
-    skipReason "set WIISH_RUN_ANDROID=1 to run this test"
-
-template androidBuildMaybe(): untyped =
-  if not existsEnv("WIISH_BUILD_ANDROID"):
+template androidBuildMaybe(body: untyped): untyped =
+  if existsEnv("WIISH_BUILD_ANDROID"):
+    body
+  else:
     skipReason "set WIISH_BUILD_ANDROID=1 to run this test"
 
-template runMaybe(): untyped =
+template runMaybe(body: untyped): untyped =
   ## Only run this code is WIISH_TEST_RUN is set
-  if not existsEnv("WIISH_TEST_RUN"):
+  if existsEnv("WIISH_TEST_RUN"):
+    body
+  else:
     skipReason "set WIISH_TEST_RUN=1 to run this test"
 
 template vtest(name: string, body: untyped): untyped =
@@ -327,11 +327,11 @@ suite "run":
     # Desktop
     if fileExists example/"main_desktop.nim":
       vtest(example.extractFilename):
-        runMaybe()
-        if testWiishRun(example, @["run"], 5):
-          markSupport(THISOS, example.extractFilename, "run", Working)
-        else:
-          check false
+        runMaybe:
+          if testWiishRun(example, @["run"], 5):
+            markSupport(THISOS, example.extractFilename, "run", Working)
+          else:
+            check false
     
     # Mobile
     if fileExists example/"main_mobile.nim":
@@ -339,23 +339,24 @@ suite "run":
         # if name in {Android, Ios, IosSimulator, MobileDev}:
         if name in {Android}:
           vtest($name & " " & example.extractFilename):
-            if name == Android:
-              androidRunMaybe()
-            runMaybe()
-            var args = @["run"]
-            case name
-            of Android:
-              args.add(@["--os", "android"])
-            of Ios,IosSimulator:
-              args.add(@["--os", "ios-simulator"])
-            of MobileDev:
-              args.add(@["--os", "mobiledev"])
+            if name == Android and not existsEnv("WIISH_RUN_ANDROID"):
+              skipReason "set WIISH_RUN_ANDROID=1 to run this test"
             else:
-              discard
-            if testWiishRun(example, args, 15):
-              markSupport(name, example.extractFilename, "run", Working)
-            else:
-              check false
+              runMaybe:
+                var args = @["run"]
+                case name
+                of Android:
+                  args.add(@["--os", "android"])
+                of Ios,IosSimulator:
+                  args.add(@["--os", "ios-simulator"])
+                of MobileDev:
+                  args.add(@["--os", "mobiledev"])
+                else:
+                  discard
+                if testWiishRun(example, args, 15):
+                  markSupport(name, example.extractFilename, "run", Working)
+                else:
+                  check false
 
 suite "build":
   tearDown:
@@ -383,10 +384,10 @@ suite "build":
       
       if Android in buildTargets:
         vtest("android " & example.extractFilename):
-          androidBuildMaybe()
-          withDir example:
-            runWiish "build", "--os", "android"
-            markSupport(Android, example.extractFilename, "build", Working)
+          androidBuildMaybe:
+            withDir example:
+              runWiish "build", "--os", "android"
+              markSupport(Android, example.extractFilename, "build", Working)
 
 suite "init":
   setup:
@@ -415,13 +416,13 @@ suite "init":
 
   if Android in buildTargets:  
     vtest "init and build --os android":
-      androidBuildMaybe()
-      withDir tmpDir():
-        echo absolutePath"."
-        addConfigNims()
-        runWiish "init", "androidtest"
-        withDir "androidtest":
-          runWiish "build", "--os", "android"
+      androidBuildMaybe:
+        withDir tmpDir():
+          echo absolutePath"."
+          addConfigNims()
+          runWiish "init", "androidtest"
+          withDir "androidtest":
+            runWiish "build", "--os", "android"
 
 echo "## Support Matrix for " & $THISOS
 displaySupport()
