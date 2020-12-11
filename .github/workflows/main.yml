@@ -48,6 +48,14 @@ jobs:
         else
           echo "Nothing yet for Windows"
         fi
+    - name: Install Android Device
+      if: runner.os == 'macOS'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        ndk: 21.0.6113669
+        cmake: 3.10.2.4988404
+        script: env
     - name: Test
       shell: bash
       timeout-minutes: 30

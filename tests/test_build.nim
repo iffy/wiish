@@ -276,6 +276,9 @@ proc waitForDeath(p: Process) =
       discard
     if not p.running():
       return
+  echo "  waiting for finish: ", $p.processID()
+  discard p.waitForExit()
+  echo "  done: ", $p.processID()
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
