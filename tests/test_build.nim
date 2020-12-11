@@ -360,8 +360,7 @@ suite "run":
     # Mobile
     if fileExists example/"main_mobile.nim":
       for name in buildTargets:
-        # if name in {Android, Ios, IosSimulator, MobileDev}:
-        if name in {Android}:
+        if name in {Android, Ios, IosSimulator, MobileDev}:
           vtest($name & " " & example.extractFilename):
             if name == Android and not existsEnv("WIISH_RUN_ANDROID"):
               skipReason "set WIISH_RUN_ANDROID=1 to run this test"

@@ -55,7 +55,7 @@ jobs:
         api-level: 29
         ndk: 21.0.6113669
         cmake: 3.10.2.4988404
-        script: env
+        script: env | sort
     - name: Test
       shell: bash
       timeout-minutes: 30

@@ -17,26 +17,19 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 2. Install Wiish:
 
-    ```
+    ```bash
     nimble install https://github.com/iffy/wiish.git
     ```
 
-3. Install other dependencies:
+3. Find out what other dependencies you need:
 
     ```bash
-    # Tell me what I need to install
     wiish doctor
     ```
-    
-    Depending on the GUI you want to use, it might be the following:
-
-    - **Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev libgtk-3-dev libwebkit2gtk-4.0-dev`
-    - **macOS**: Xcode
-    - **Windows**: Don't know yet
 
 4. Create a project and run it:
 
-    ```
+    ```bash
     wiish init somedir
     cd somedir
     wiish run
@@ -69,6 +62,35 @@ Wiish uses a plugin system to support various GUI frameworks:
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
 It is hoped that more plugins will be introduced for other GUI frameworks.
+
+## Support Matrix
+
+| Host OS | Target OS | Example      |  Run  | Build |
+| ------- | --------- | ------------ | :---: | :---: |
+| windows | android   | opengl       |   X   |   X   |
+| windows | android   | plainwebview |   X   |   X   |
+| windows | android   | sdl2         |   X   |   X   |
+| windows | android   | webview      |   X   |   X   |
+| windows | mobiledev | opengl       |   X   |   -   |
+| windows | mobiledev | plainwebview |   X   |   -   |
+| windows | mobiledev | sdl2         |   X   |   -   |
+| windows | mobiledev | webview      |   X   |   -   |
+| windows | windows   | opengl       |   X   |  OK   |
+| windows | windows   | plainwebview |   X   |  OK   |
+| windows | windows   | sdl2         |   X   |  OK   |
+| windows | windows   | webview      |   X   |  OK   |
+| linux   | android   | opengl       |   X   |  OK   |
+| linux   | android   | plainwebview |   X   |   X   |
+| linux   | android   | sdl2         |   X   |  OK   |
+| linux   | android   | webview      |   X   |  OK   |
+| linux   | mobiledev | opengl       |   X   |   -   |
+| linux   | mobiledev | plainwebview |   X   |   -   |
+| linux   | mobiledev | sdl2         |   X   |   -   |
+| linux   | mobiledev | webview      |   X   |   -   |
+| linux   | linux     | opengl       |   X   |  OK   |
+| linux   | linux     | plainwebview |   X   |  OK   |
+| linux   | linux     | sdl2         |   X   |  OK   |
+| linux   | linux     | webview      |   X   |  OK   |
 
 ## Webview Support
 
