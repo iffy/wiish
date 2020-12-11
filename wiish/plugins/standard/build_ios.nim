@@ -605,7 +605,7 @@ proc checkDoctor*(): seq[DoctorResult] =
   else:
     result.dr "standard", "os":
       dr.targetOS = {Ios,IosSimulator}
-      dr.status = NotWorking
+      dr.status = NotWorkingButOptional
       dr.error = "iOS can only be built on the macOS operating system"
       dr.fix = "Give money to Apple to fix this"
   

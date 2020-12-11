@@ -33,21 +33,27 @@ jobs:
       run: |
         nimble install -y
         wiish init /tmp/foo
-    - name: Doctor
+    - name: Doctor (Pre)
       shell: bash
       run: |
         wiish doctor || true
-    # - name: Fix Windows path
-    #   # This is needed until https://github.com/actions/virtual-environments/pull/2174/files is included in the GitHub VMs
-    #   if: runner.os == 'Windows'
-    #   shell: powershell
-    #   run: |
-    #     $ndkRoot = "C:\Program Files (x86)\Android\android-sdk\ndk-bundle"
-    #     (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content "${ndkRoot}\ndk-build.cmd"
-    #     type "${ndkRoot}\ndk-build.cmd"
+    - name: Install deps
+      shell: bash
+      run: |
+        if [ "$(uname)" == "Darwin" ]; then
+          brew install sdl2 sdl2_ttf sdl2_image sdl2_gfx
+        elif [ "$(uname)" == "Linux" ]; then
+          sudo apt-get install -y libgtk-3-dev
+          sudo apt-get install -y libwebkit2gtk-4.0-dev
+        else
+        fi
     - name: Test
       shell: bash
       run: |
+        export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
+        export PATH="${ANDROID_NDK_HOME}:${PATH}"
+        export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+        export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
         # nim c .github/tounixpath.nim
         # normpath() {
         #   varname="$1"
