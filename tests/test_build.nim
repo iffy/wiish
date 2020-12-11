@@ -77,16 +77,34 @@ proc listAllChildPids(pid: int = 0): seq[string] =
 
 proc terminateAllChildren(pid: int = 0) =
   ## Recursively terminate all child processes.
+  echo "terminateAllChildren start"
   when defined(macosx) or defined(linux):
-    while true:
+    # kill gently
+    for i in 0..10:
+      if i > 0: sleep(200)
       let children = listAllChildPids(pid)
       if children.len == 0:
         break
+      echo "attempting to kill children"
       for child in children:
         try:
           discard shoutput("kill", $child)
         except:
           discard
+    # kill -9
+    for i in 0..10:
+      if i > 0: sleep(200)
+      let children = listAllChildPids(pid)
+      if children.len == 0:
+        break
+      echo "attempting to kill -9 children"
+      for child in children:
+        try:
+          discard shoutput("kill", "-9", $child)
+        except:
+          discard
+  echo "terminateAllChildren end"
+      
 
 #---------------------------------------------------------------
 # Support Tables
