@@ -139,7 +139,7 @@ proc str(status: SupportStatus): string =
   of Working:
     "OK"
 
-proc displaySupport() =
+proc displaySupport(hostOS: TargetOS) =
   var rows:seq[seq[string]]
   var col1max = 0
   var col2max = 0
@@ -160,11 +160,21 @@ proc displaySupport() =
     result.add x
     if x.len < size:
       result.add " ".repeat(size - x.len)
+  stdout.writeLine "| Host OS | Target OS | Example | Run | Build |"
+  stdout.writeLine "|---------|-----------|---------|:---:|:-----:|"
+  proc color(status: string): ForegroundColor =
+    if status == "X":
+      result = fgRed
+    elif status == "OK":
+      result = fgGreen
+    else:
+      result = fgWhite
   for row in rows:
-    stdout.styledWrite "| " & row[0].pad(col1max)
+    stdout.styledWrite "| " & $hostOS
+    stdout.styledWrite " | " & row[0].pad(col1max)
     stdout.styledWrite " | " & row[1].pad(col2max)
-    stdout.styledWrite " | " & row[2].pad(2)
-    stdout.styledWrite " | " & row[3].pad(2)
+    stdout.styledWrite " | ", color(row[2]), row[2].pad(2)
+    stdout.styledWrite " | ", color(row[3]), row[3].pad(2)
     stdout.styledWrite " |\l"
 
 
@@ -369,7 +379,7 @@ suite "build":
   for example in example_dirs:
     # Desktop
     if fileExists example/"main_desktop.nim":
-      vtest("desktop " & example.extractFilename):
+      vtest(example.extractFilename):
         withDir example:
           runWiish "build"
           markSupport(THISOS, example.extractFilename, "build", Working)
@@ -424,5 +434,7 @@ suite "init":
           withDir "androidtest":
             runWiish "build", "--os", "android"
 
+stdout.flushFile()
+stderr.flushFile()
 echo "## Support Matrix for " & $THISOS
-displaySupport()
+displaySupport(THISOS)
