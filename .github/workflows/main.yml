@@ -46,6 +46,7 @@ jobs:
           sudo apt-get install -y libgtk-3-dev
           sudo apt-get install -y libwebkit2gtk-4.0-dev
         else
+          echo "Nothing yet for Windows"
         fi
     - name: Test
       shell: bash
