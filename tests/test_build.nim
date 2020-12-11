@@ -11,21 +11,13 @@ import terminal
 import unittest
 import std/compilesettings
 
-stderr.writeLine "stdout.endOfFile? ", $stdout.endOfFile()
-
 import wiish/building/buildutil
 import wiishcli
 
-stderr.writeLine("here")
-
 randomize()
-
-stderr.writeLine("here")
 
 const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
 const examples = example_dirs.mapIt(it.extractFilename())
-
-stderr.writeLine("here")
 
 const TMPROOT = currentSourcePath.parentDir/"_testtmp"
 if dirExists(TMPROOT):
@@ -36,7 +28,6 @@ proc tmpDir(): string {.used.} =
   result = TMPROOT / &"wiishtest{random.rand(10000000)}"
   createDir(result)
 
-stderr.writeLine("here 2")
 
 proc addConfigNims() =
   var guts: string
@@ -157,7 +148,6 @@ proc displaySupport() =
     stdout.styledWrite " | " & row[3].pad(2)
     stdout.styledWrite " |\l"
 
-stderr.writeLine("here 4")
 
 # The MobileDev target is never built
 for example in examples:
@@ -194,10 +184,8 @@ else:
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Windows, example, action, NotApplicable)
 
-stderr.writeLine("here 6")
 
 suite "checks":
-  stderr.writeLine("here 8")
   for example in example_dirs:
     for target in buildTargets:
       var main_file = ""
@@ -234,6 +222,16 @@ suite "checks":
 
 const run_sentinel = "WIISH RUN STARTING"
 
+var outChan: Channel[string]
+outChan.open()
+
+proc readOutput(s: Stream) {.thread.} =
+  while not s.atEnd():
+    try:
+      outChan.send(s.readLine() & "\l")
+    except:
+      break
+
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
   echo "    Running command:"
@@ -241,17 +239,20 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   let wiishbin = ("bin"/"wiish").absolutePath
   echo "        " & wiishbin & " ", args.join(" ")
   withDir dirname:
-    var p = startProcess(wiishbin, args = args)
+    var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
     defer: p.close()
-    let err = p.errorStream()
+    let outs = p.outputStream()
+    var readerThread: Thread[Stream]
+    readerThread.createThread(readOutput, outs)
+
     var buf: string
     while true:
       let rc = p.peekExitCode()
       if rc == -1:
         # still running
         try:
-          let line = err.readLine()
-          buf.add line & "\l"
+          let line = outChan.recv()
+          buf.add line
           if run_sentinel in line:
             break
         except:
@@ -272,6 +273,13 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     result = p.peekExitCode() == -1 # it should still be running
     terminateAllChildren(p.processID())
     discard p.waitForExit()
+    readerThread.joinThread()
+    while true:
+      let tried = outChan.tryRecv()
+      if tried.dataAvailable:
+        buf.add tried.msg
+      else:
+        break
     if not result:
       echo buf
 
@@ -304,7 +312,8 @@ suite "run":
     # Mobile
     if fileExists example/"main_mobile.nim":
       for name in buildTargets:
-        if name in {Android, Ios, IosSimulator, MobileDev}:
+        # if name in {Android, Ios, IosSimulator, MobileDev}:
+        if name in {Android}:
           vtest($name & " " & example.extractFilename):
             runMaybe:
               var args = @["run"]
