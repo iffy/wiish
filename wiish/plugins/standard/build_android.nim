@@ -161,9 +161,9 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.log "Building app ..."
     let apkPath = ctx.output_path
 
-    ctx.log "Opening emulator ..."
+    ctx.log "Finding running emulator devices ..."
     let device_list = runningDevices()
-    ctx.log &"devices: {device_list.repr}"
+    ctx.log &"Running devices: {device_list.repr}"
     if device_list.len == 0:
       ctx.log "No running devices. Let's start one..."
       let emulator_bin = findExe("emulator")

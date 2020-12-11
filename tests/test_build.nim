@@ -53,11 +53,11 @@ template runMaybe(body: untyped): untyped =
 template vtest(name: string, body: untyped): untyped =
   ## Verbosely labeled test
   test(name):
-    stderr.styledWriteLine(fgCyan, "  [START] ", name, resetStyle)
+    stdout.styledWriteLine(fgCyan, "  [START] ", name, resetStyle)
     body
 
 template skipReason(reason: string): untyped =
-  stderr.styledWriteLine(fgYellow, "    SKIP REASON: " & reason, resetStyle)
+  stdout.styledWriteLine(fgYellow, "    SKIP REASON: " & reason, resetStyle)
   skip
 
 proc listAllChildPids(pid: int = 0): seq[string] =
@@ -257,6 +257,26 @@ proc readOutput(s: Stream) {.thread.} =
     except:
       break
 
+proc waitForDeath(p: Process) =
+  for i in 0..10:
+    if i > 0: sleep(1000)
+    try:
+      echo "  terminating pid: ", $p.processID()
+      p.terminate()
+    except:
+      discard
+    if not p.running():
+      return
+  for i in 0..10:
+    if i > 0: sleep(1000)
+    try:
+      echo "  killing pid: ", $p.processID()
+      p.kill()
+    except:
+      discard
+    if not p.running():
+      return
+
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
   echo "    Running command:"
@@ -297,9 +317,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       sleep(1000)
     result = p.peekExitCode() == -1 # it should still be running
     terminateAllChildren(p.processID())
-    p.terminate()
-    echo &"    Waiting for process to exit"
-    discard p.waitForExit()
+    p.waitForDeath()
     readerThread.joinThread()
     while true:
       let tried = outChan.tryRecv()
