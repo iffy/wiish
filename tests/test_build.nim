@@ -18,6 +18,7 @@ randomize()
 
 const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
 const examples = example_dirs.mapIt(it.extractFilename())
+let VERBOSE = getEnv("VERBOSE") != ""
 
 const TMPROOT = currentSourcePath.parentDir/"_testtmp"
 if dirExists(TMPROOT):
@@ -228,7 +229,10 @@ outChan.open()
 proc readOutput(s: Stream) {.thread.} =
   while not s.atEnd():
     try:
-      outChan.send(s.readLine() & "\l")
+      let line = s.readLine()
+      if VERBOSE:
+        stderr.writeLine line
+      outChan.send(line & "\l")
     except:
       break
 
@@ -280,7 +284,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         buf.add tried.msg
       else:
         break
-    if not result:
+    if not result and not VERBOSE:
       echo buf
 
 var already_built = false

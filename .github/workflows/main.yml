@@ -11,6 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       WIISH_TEST_RUN: "1"
+      VERBOSE: "1"
     strategy:
       fail-fast: false
       matrix:
