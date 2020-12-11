@@ -38,17 +38,17 @@ proc addConfigNims() =
   writeFile("config.nims", guts)
   echo "added config.nims:\n", guts
 
-template androidMaybe(body: untyped): untyped =
-  if existsEnv("WIISH_BUILD_ANDROID"):
-    body
-  else:
+template androidRunMaybe(): untyped =
+  if not existsEnv("WIISH_RUN_ANDROID"):
+    skipReason "set WIISH_RUN_ANDROID=1 to run this test"
+
+template androidBuildMaybe(): untyped =
+  if not existsEnv("WIISH_BUILD_ANDROID"):
     skipReason "set WIISH_BUILD_ANDROID=1 to run this test"
 
-template runMaybe(body: untyped): untyped =
+template runMaybe(): untyped =
   ## Only run this code is WIISH_TEST_RUN is set
-  if existsEnv("WIISH_TEST_RUN"):
-    body
-  else:
+  if not existsEnv("WIISH_TEST_RUN"):
     skipReason "set WIISH_TEST_RUN=1 to run this test"
 
 template vtest(name: string, body: untyped): untyped =
@@ -185,7 +185,7 @@ when defined(macosx):
 
 elif defined(windows):
   const THISOS = Windows
-  const buildTargets = {Windows, Android, MobileDev}
+  const buildTargets = {Windows, MobileDev}
   for example in examples:
     for action in actions:
       markSupport(Mac, example, action, NotApplicable)
@@ -294,6 +294,8 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       sleep(1000)
     result = p.peekExitCode() == -1 # it should still be running
     terminateAllChildren(p.processID())
+    p.terminate()
+    echo &"    Waiting for process to exit"
     discard p.waitForExit()
     readerThread.joinThread()
     while true:
@@ -325,11 +327,11 @@ suite "run":
     # Desktop
     if fileExists example/"main_desktop.nim":
       vtest(example.extractFilename):
-        runMaybe:
-          if testWiishRun(example, @["run"], 5):
-            markSupport(THISOS, example.extractFilename, "run", Working)
-          else:
-            check false
+        runMaybe()
+        if testWiishRun(example, @["run"], 5):
+          markSupport(THISOS, example.extractFilename, "run", Working)
+        else:
+          check false
     
     # Mobile
     if fileExists example/"main_mobile.nim":
@@ -337,21 +339,23 @@ suite "run":
         # if name in {Android, Ios, IosSimulator, MobileDev}:
         if name in {Android}:
           vtest($name & " " & example.extractFilename):
-            runMaybe:
-              var args = @["run"]
-              case name
-              of Android:
-                args.add(@["--os", "android"])
-              of Ios,IosSimulator:
-                args.add(@["--os", "ios-simulator"])
-              of MobileDev:
-                args.add(@["--os", "mobiledev"])
-              else:
-                discard
-              if testWiishRun(example, args, 15):
-                markSupport(name, example.extractFilename, "run", Working)
-              else:
-                check false
+            if name == Android:
+              androidRunMaybe()
+            runMaybe()
+            var args = @["run"]
+            case name
+            of Android:
+              args.add(@["--os", "android"])
+            of Ios,IosSimulator:
+              args.add(@["--os", "ios-simulator"])
+            of MobileDev:
+              args.add(@["--os", "mobiledev"])
+            else:
+              discard
+            if testWiishRun(example, args, 15):
+              markSupport(name, example.extractFilename, "run", Working)
+            else:
+              check false
 
 suite "build":
   tearDown:
@@ -379,10 +383,10 @@ suite "build":
       
       if Android in buildTargets:
         vtest("android " & example.extractFilename):
-          androidMaybe:
-            withDir example:
-              runWiish "build", "--os", "android"
-              markSupport(Android, example.extractFilename, "build", Working)
+          androidBuildMaybe()
+          withDir example:
+            runWiish "build", "--os", "android"
+            markSupport(Android, example.extractFilename, "build", Working)
 
 suite "init":
   setup:
@@ -411,13 +415,13 @@ suite "init":
 
   if Android in buildTargets:  
     vtest "init and build --os android":
-      androidMaybe:
-        withDir tmpDir():
-          echo absolutePath"."
-          addConfigNims()
-          runWiish "init", "androidtest"
-          withDir "androidtest":
-            runWiish "build", "--os", "android"
+      androidBuildMaybe()
+      withDir tmpDir():
+        echo absolutePath"."
+        addConfigNims()
+        runWiish "init", "androidtest"
+        withDir "androidtest":
+          runWiish "build", "--os", "android"
 
 echo "## Support Matrix for " & $THISOS
 displaySupport()

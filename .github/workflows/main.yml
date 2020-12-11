@@ -77,7 +77,10 @@ jobs:
         # echo "---------------------"
         # env | grep -i android
         # echo $PATH
-        if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
+        if [ "$(uname)" == "Darwin" ]; then
+          export WIISH_BUILD_ANDROID=yes
+          export WIISH_RUN_ANDROID=yes
+        elif [ "$(uname)" == "Linux" ]; then
           export WIISH_BUILD_ANDROID=yes
         fi
         wiish doctor || true
