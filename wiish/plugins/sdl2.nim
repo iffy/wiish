@@ -290,7 +290,7 @@ proc checkDoctor*(): seq[DoctorResult] =
             dr.status = NotWorkingButOptional
           dr.error = &"Missing library {name}"
           dr.fix = "Maybe this will work:\l\l  "
-          let cmd = foreignDepInstallCmd(installName.getOrDefault(name, name))
+          let cmd = foreignDepInstallCmd(installNames.getOrDefault(name, name))
           if cmd[1]:
             dr.fix.add "sudo "
           dr.fix.add cmd[0]
