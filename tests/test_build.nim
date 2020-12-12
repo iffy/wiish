@@ -263,19 +263,21 @@ proc waitForDeath(p: Process) =
     try:
       echo "  terminating pid: ", $p.processID()
       p.terminate()
+      echo "  terminated  pid: ", $p.processID()
     except:
       discard
     if not p.running():
-      return
+      break
   for i in 0..10:
     if i > 0: sleep(1000)
     try:
       echo "  killing pid: ", $p.processID()
       p.kill()
+      echo "  killed  pid: ", $p.processID()
     except:
       discard
     if not p.running():
-      return
+      break
   echo "  waiting for finish: ", $p.processID()
   discard p.waitForExit()
   echo "  done: ", $p.processID()

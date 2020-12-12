@@ -58,7 +58,7 @@ jobs:
         script: env | sort
     - name: Test
       shell: bash
-      timeout-minutes: 30
+      timeout-minutes: 60
       run: |
         export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
         export PATH="${ANDROID_NDK_HOME}:${PATH}"
