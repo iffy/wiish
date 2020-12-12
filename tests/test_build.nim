@@ -155,7 +155,7 @@ proc displaySupport(hostOS: TargetOS) =
     result.add x
     if x.len < size:
       result.add " ".repeat(size - x.len)
-  stdout.writeLine "| Host OS | Target OS | Example | Run | Build |"
+  stdout.writeLine "| Host OS | `--os` | Example | `wiish run` | `wiish build` |"
   stdout.writeLine "|---------|-----------|---------|:---:|:-----:|"
   proc color(status: string): ForegroundColor =
     if status == "X":

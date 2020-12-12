@@ -50,7 +50,7 @@ Wiish provides:
 
 1. A `wiish` command line tool for running, building and packaging apps.
 2. A `wiish` Nim library (i.e. `import wiish/...`) for app-specific helpers (e.g. auto-updating, asset-access, etc...)
-3. Plugins for different GUI frameworks.
+3. Plugins for different GUI frameworks: `import wiish/plugins/...`
 
 # Plugins
 
@@ -65,78 +65,52 @@ It is hoped that more plugins will be introduced for other GUI frameworks.
 
 ## Support Matrix
 
-| Host OS | Target OS | Example      |  Run  | Build |
-| ------- | --------- | ------------ | :---: | :---: |
-| windows | android   | opengl       |   X   |   X   |
-| windows | android   | plainwebview |   X   |   X   |
-| windows | android   | sdl2         |   X   |   X   |
-| windows | android   | webview      |   X   |   X   |
-| windows | mobiledev | opengl       |   X   |   -   |
-| windows | mobiledev | plainwebview |   X   |   -   |
-| windows | mobiledev | sdl2         |   X   |   -   |
-| windows | mobiledev | webview      |   X   |   -   |
-| windows | windows   | opengl       |   X   |  OK   |
-| windows | windows   | plainwebview |   X   |  OK   |
-| windows | windows   | sdl2         |   X   |  OK   |
-| windows | windows   | webview      |   X   |  OK   |
-| linux   | android   | opengl       |   X   |  OK   |
-| linux   | android   | plainwebview |   X   |   X   |
-| linux   | android   | sdl2         |   X   |  OK   |
-| linux   | android   | webview      |   X   |  OK   |
-| linux   | mobiledev | opengl       |   X   |   -   |
-| linux   | mobiledev | plainwebview |   X   |   -   |
-| linux   | mobiledev | sdl2         |   X   |   -   |
-| linux   | mobiledev | webview      |   X   |   -   |
-| linux   | linux     | opengl       |   X   |  OK   |
-| linux   | linux     | plainwebview |   X   |  OK   |
-| linux   | linux     | sdl2         |   X   |  OK   |
-| linux   | linux     | webview      |   X   |  OK   |
-
-## Webview Support
-
-| Host OS | Target OS |  Run  | Build | Package |
-| ------- | --------- | :---: | :---: | :-----: |
-| macOS   | macOS     |   Y   |   Y   |         |
-| macOS   | iOS       |   Y   |       |         |
-| macOS   | Android   |   Y   |   Y   |         |
-| macOS   | mobiledev |   Y   |  n/a  |   n/a   |
-| Windows | Windows   |   ?   |       |         |
-| Windows | Android   |   ?   |       |         |
-| Windows | mobiledev |       |  n/a  |   n/a   |
-| Linux   | Linux     |   Y   |       |         |
-| Linux   | Android   |   ?   |       |         |
-| Linux   | mobiledev |       |  n/a  |   n/a   |
-
-## SDL2 Support
-
-| Host OS | Target OS |  Run  | Build | Package |
-| ------- | --------- | :---: | :---: | :-----: |
-| macOS   | macOS     |       |       |         |
-| macOS   | iOS       |       |       |         |
-| macOS   | Android   |       |       |         |
-| macOS   | mobiledev |       |       |         |
-| Windows | Windows   |       |       |         |
-| Windows | Android   |       |       |         |
-| Windows | mobiledev |       |       |         |
-| Linux   | Linux     |       |       |         |
-| Linux   | Android   |       |       |         |
-| Linux   | mobiledev |       |       |         |
-
-## SDL2 + OpenGL Support
-
-| Host OS | Target OS |  Run  | Build | Package |
-| ------- | --------- | :---: | :---: | :-----: |
-| macOS   | macOS     |       |       |         |
-| macOS   | iOS       |       |       |         |
-| macOS   | Android   |       |       |         |
-| macOS   | mobiledev |       |       |         |
-| Windows | Windows   |       |       |         |
-| Windows | Android   |       |       |         |
-| Windows | mobiledev |       |       |         |
-| Linux   | Linux     |       |       |         |
-| Linux   | Android   |       |       |         |
-| Linux   | mobiledev |       |       |         |
-
+| Host OS | `--os`     | Example      |        `wiish run`         |       `wiish build`        |
+| ------- | ------------- | ------------ | :----------------: | :----------------: |
+| windows | android       | opengl       |        :x:         |        :x:         |
+| windows | android       | plainwebview |        :x:         |        :x:         |
+| windows | android       | sdl2         |        :x:         |        :x:         |
+| windows | android       | webview      |        :x:         |        :x:         |
+| windows | mobiledev     | opengl       |        :x:         |         -          |
+| windows | mobiledev     | plainwebview |        :x:         |         -          |
+| windows | mobiledev     | sdl2         |        :x:         |         -          |
+| windows | mobiledev     | webview      |        :x:         |         -          |
+| windows | windows       | opengl       |        :x:         | :white_check_mark: |
+| windows | windows       | plainwebview |        :x:         | :white_check_mark: |
+| windows | windows       | sdl2         |        :x:         | :white_check_mark: |
+| windows | windows       | webview      |        :x:         | :white_check_mark: |
+| linux   | android       | opengl       |        :x:         | :white_check_mark: |
+| linux   | android       | plainwebview |        :x:         |        :x:         |
+| linux   | android       | sdl2         |        :x:         | :white_check_mark: |
+| linux   | android       | webview      |        :x:         | :white_check_mark: |
+| linux   | mobiledev     | opengl       |        :x:         |         -          |
+| linux   | mobiledev     | plainwebview |        :x:         |         -          |
+| linux   | mobiledev     | sdl2         |        :x:         |         -          |
+| linux   | mobiledev     | webview      |        :x:         |         -          |
+| linux   | linux         | opengl       |        :x:         | :white_check_mark: |
+| linux   | linux         | plainwebview |        :x:         | :white_check_mark: |
+| linux   | linux         | sdl2         |        :x:         | :white_check_mark: |
+| linux   | linux         | webview      |        :x:         | :white_check_mark: |
+| mac     | android       | opengl       | :white_check_mark: | :white_check_mark: |
+| mac     | android       | plainwebview |        :x:         |        :x:         |
+| mac     | android       | sdl2         | :white_check_mark: | :white_check_mark: |
+| mac     | android       | webview      | :white_check_mark: | :white_check_mark: |
+| mac     | ios           | opengl       |        :x:         |        :x:         |
+| mac     | ios           | plainwebview |        :x:         |        :x:         |
+| mac     | ios           | sdl2         |        :x:         |        :x:         |
+| mac     | ios           | webview      |        :x:         |        :x:         |
+| mac     | ios-simulator | opengl       |        :x:         | :white_check_mark: |
+| mac     | ios-simulator | plainwebview |        :x:         |        :x:         |
+| mac     | ios-simulator | sdl2         |        :x:         | :white_check_mark: |
+| mac     | ios-simulator | webview      |        :x:         | :white_check_mark: |
+| mac     | mobiledev     | opengl       |        :x:         |         -          |
+| mac     | mobiledev     | plainwebview |        :x:         |         -          |
+| mac     | mobiledev     | sdl2         |        :x:         |         -          |
+| mac     | mobiledev     | webview      | :white_check_mark: |         -          |
+| mac     | mac           | opengl       | :white_check_mark: | :white_check_mark: |
+| mac     | mac           | plainwebview | :white_check_mark: | :white_check_mark: |
+| mac     | mac           | sdl2         | :white_check_mark: | :white_check_mark: |
+| mac     | mac           | webview      | :white_check_mark: | :white_check_mark: |
 
 ### GUI-independent features
 
@@ -155,18 +129,12 @@ It is hoped that more plugins will be introduced for other GUI frameworks.
 | Package           | Supported | Code signing |
 | ----------------- | :-------: | :----------: |
 | macOS `.dmg`      |           |              |
+| Windows Portable  |           |              |
 | Windows Installer |           |              |
-| Linux AppImage    |           |              |
+| Linux `.AppImage` |           |              |
 | iOS `.ipa`        |           |              |
 | Android `.apk`    |     Y     |              |
 
-### Cross-compiling support
-
-| Host system | macOS | Windows | Linux |  iOS  | Android |
-| ----------- | :---: | :-----: | :---: | :---: | :-----: |
-| macOS       |   Y   |         |       |   Y   |    Y    |
-| Windows     |   -   |    Y    |       |   -   |         |
-| Linux       |   -   |         |   Y   |   -   |    Y    |
 
 # Examples
 
