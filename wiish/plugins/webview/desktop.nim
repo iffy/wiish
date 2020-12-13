@@ -1,5 +1,6 @@
 ## Module for making desktop Webview applications.
 ## Import from here regardless of the operating system
+static: echo "HELLO FROM wiish/plugins/webview/desktop"
 import webview
 import strutils
 import logging
