@@ -28,15 +28,6 @@ jobs:
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
-    - name: Install
-      shell: bash
-      run: |
-        nimble install -y
-        wiish init /tmp/foo
-    - name: Doctor (Pre)
-      shell: bash
-      run: |
-        wiish doctor || true
     - name: Install deps
       shell: bash
       run: |
@@ -48,6 +39,15 @@ jobs:
         else
           echo "Nothing yet for Windows"
         fi
+    - name: Install
+      shell: bash
+      run: |
+        nimble install -y
+        wiish init /tmp/foo
+    - name: Doctor (Pre)
+      shell: bash
+      run: |
+        wiish doctor || true
     - name: Install Android Device
       if: runner.os == 'macOS'
       uses: reactivecircus/android-emulator-runner@v2
