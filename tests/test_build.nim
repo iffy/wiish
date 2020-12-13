@@ -28,8 +28,8 @@ proc tmpDir(): string {.used.} =
   result = TMPROOT / &"wiishtest{random.rand(10000000)}"
   createDir(result)
 
-
 proc addConfigNims() =
+  ## Add a config.nims file to the current directory
   var guts: string
   for path in querySettingSeq(searchPaths):
     let escaped = path.replace("\\", "\\\\")
@@ -59,6 +59,21 @@ template vtest(name: string, body: untyped): untyped =
 template skipReason(reason: string): untyped =
   stdout.styledWriteLine(fgYellow, "    SKIP REASON: " & reason, resetStyle)
   skip
+
+const desktop_mains = ["main_desktop.nim", "main.nim"]
+const mobile_mains = ["main_mobile.nim", "main.nim"]
+proc desktopMain(root: string): string =
+  ## Return the main.nim for a desktop app in the given dir
+  for name in desktop_mains:
+    if fileExists(root / name):
+      return root / name
+
+proc mobileMain(root: string): string =
+  ## Return the main.nim for a mobile app in the given dir
+  for name in mobile_mains:
+    if fileExists(root / name):
+      return root / name
+
 
 proc listAllChildPids(pid: int = 0): seq[string] =
   ## Return a list of all child pids of the current process
@@ -208,6 +223,11 @@ else:
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Windows, example, action, NotApplicable)
 
+# plainwebview doesn't work on mobile
+for action in actions:
+  markSupport(Android, "plainwebview", action, NotApplicable)
+  markSupport(Ios, "plainwebview", action, NotApplicable)
+  markSupport(IosSimulator, "plainwebview", action, NotApplicable)
 
 suite "checks":
   for example in example_dirs:
@@ -216,30 +236,30 @@ suite "checks":
       var args: seq[string]
       case target
       of Windows:
-        main_file = "main_desktop.nim"
+        main_file = desktopMain(example)
         args.add "--os:windows"
       of Mac:
-        main_file = "main_desktop.nim"
+        main_file = desktopMain(example)
         args.add "--os:macosx"
       of Linux:
-        main_file = "main_desktop.nim"
+        main_file = desktopMain(example)
         args.add "--os:linux"
       of Android:
-        main_file = "main_mobile.nim"
+        main_file = mobileMain(example)
         args.add @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]
       of Ios,IosSimulator:
-        main_file = "main_mobile.nim"
+        main_file = mobileMain(example)
         args.add @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc"]
       of MobileDev:
-        main_file = "main_mobile.nim"
+        main_file = mobileMain(example)
         args.add @["-d:wiish_mobiledev", "--gc:orc"]
       else:
         raise ValueError.newException("Unsupported build target: " & $target)
-      if fileExists example/main_file:
+      if main_file != "":
         vtest($target & " " & example.extractFilename):
           var cmd = @["nim", "check", "--hints:off", "-d:testconcepts"]
           cmd.add args
-          cmd.add(example / main_file)
+          cmd.add(main_file)
           let cmdstr = cmd.join(" ")
           checkpoint "COMMAND: " & cmdstr
           check execCmd(cmdstr) == 0

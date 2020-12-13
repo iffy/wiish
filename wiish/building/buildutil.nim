@@ -61,6 +61,8 @@ type
     nim_flags*: seq[string]
       ## Flags that should be set when compiling Nim code.
       ## Includes the flags from the config.
+    nim_run_flags*: seq[string]
+      ## Flags that should be set when running Nim code for targetRun
 
   BuildStep* = enum
     ## List of steps that are executed during a build

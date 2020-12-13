@@ -13,18 +13,18 @@ type
   SDL2MobileApp* = ref object
     windows*: Table[int, SDL2Window]
     nextWindowId*: int
-    life*: EventSource[MobileEvent]
+    life*: EventSource[LifeEvent]
     sdlEvent*: EventSource[sdl2.Event]
 
 proc newSDL2MobileApp*(): SDL2MobileApp =
   new(result)
-  result[].life = newEventSource[MobileEvent]()
+  result[].life = newEventSource[LifeEvent]()
 
 template start*(app: SDL2MobileApp) =
   startLogging()
   sdlMain()
   var evt = sdl2.defaultEvent
-  app.life.emit(MobileEvent(kind: AppStarted))
+  app.life.emit(LifeEvent(kind: AppStarted))
   while true:
     nextEvent(app, evt)
     case evt.kind
@@ -32,8 +32,8 @@ template start*(app: SDL2MobileApp) =
       break
     else:
       discard
-  app.life.emit(MobileEvent(kind: AppWillExit))
+  app.life.emit(LifeEvent(kind: AppWillExit))
   sdl2.quit()
   quit(0)
   
-isConcept(IMobileApp, newSDL2MobileApp())
+# isConcept(IMobileApp, newSDL2MobileApp())

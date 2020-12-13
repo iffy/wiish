@@ -9,7 +9,7 @@ discard ttfInit()
 
 var app = newSDL2MobileApp()
 
-app.life.addListener proc(ev: MobileEvent) =
+app.life.addListener proc(ev: LifeEvent) =
   case ev.kind
   of AppStarted:
     debug "App launched"

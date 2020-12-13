@@ -24,7 +24,7 @@ import wiish/baseapp ; export baseapp
 type
   WebviewIosApp* = ref object of RootObj
     url*: string
-    life*: EventSource[MobileEvent]
+    life*: EventSource[LifeEvent]
     windows: Table[int, WebviewIosWindow]
     nextWindowId: int
   
@@ -38,12 +38,12 @@ var globalapplock {.global.}: Lock
 initLock(globalapplock)
 var globalapp {.global, guard: globalapplock.} : WebviewIosApp
 
-proc newWebviewMobileApp*(): WebviewIosApp =
+proc newWebviewApp*(): WebviewIosApp =
   new(result)
-  result.life = newEventSource[MobileEvent]()
+  result.life = newEventSource[LifeEvent]()
   result.windows = initTable[int, WebviewIosWindow]()
 
-proc newWindow(app: WebviewIosApp): WebviewIosWindow =
+proc newWindow*(app: WebviewIosApp, url: string, title = ""): WebviewIosWindow =
   new(result)
   result.onReady = newEventSource[bool]()
   result.onMessage = newEventSource[string]()
@@ -61,10 +61,10 @@ proc nim_nextWindowId*(): cint {.exportc.} =
 proc nim_windowCreated*(windowId: cint, controller: pointer) {.exportc.} =
   ## A new window in iOS land.  Add it to the list
   globalapplock.withLock:
-    var win = globalapp.newWindow()
+    var win = globalapp.newWindow("", "")
     win.wiishController = some(controller)
     globalapp.windows[windowId.int] = win
-    globalapp.life.emit(MobileEvent(kind: WindowAdded, windowId: windowId.int))
+    globalapp.life.emit(LifeEvent(kind: WindowAdded, windowId: windowId.int))
 
 proc evalJavaScript*(win:WebviewIosWindow, js:string) =
   ## Evaluate some JavaScript in the webview
@@ -152,24 +152,24 @@ proc doLog(x:cstring) {.exportc.} =
 
 proc nim_didFinishLaunching() {.exportc.} =
   globalapplock.withLock:
-    globalapp.life.emit(MobileEvent(kind: AppStarted))
+    globalapp.life.emit(LifeEvent(kind: AppStarted))
 
 proc nim_windowWillBackground(windowId: cint) {.exportc.} =
   globalapplock.withLock:
     ## TODO: when multi-scene is supported, change the windowId appropriately
-    globalapp.life.emit(MobileEvent(kind: WindowWillBackground, windowId: windowId.int))
+    globalapp.life.emit(LifeEvent(kind: WindowWillBackground, windowId: windowId.int))
 
 proc nim_windowWillForeground(windowId: cint) {.exportc.} =
   globalapplock.withLock:
-    globalapp.life.emit(MobileEvent(kind: WindowWillForeground, windowId: windowId.int))
+    globalapp.life.emit(LifeEvent(kind: WindowWillForeground, windowId: windowId.int))
 
 proc nim_windowDidForeground(windowId: cint) {.exportc.} =
   globalapplock.withLock:
-    globalapp.life.emit(MobileEvent(kind: WindowDidForeground, windowId: windowId.int))
+    globalapp.life.emit(LifeEvent(kind: WindowDidForeground, windowId: windowId.int))
 
 proc nim_applicationWillTerminate() {.exportc.} =
   globalapplock.withLock:
-    globalapp.life.emit(MobileEvent(kind: AppWillExit))
+    globalapp.life.emit(LifeEvent(kind: AppWillExit))
 
 
 proc nim_signalJSMessagesReady(windowId: cint) {.exportc.} =
@@ -188,7 +188,7 @@ proc getInitURL(): cstring {.exportc.} =
   globalapplock.withLock:
     result = globalapp.url
 
-proc start*(app: WebviewIosApp, url: string) =
+proc start*(app: WebviewIosApp, url = "", title = "") =
   ## Start the webview app at the given URL.
   startLogging()
   globalapplock.withLock:

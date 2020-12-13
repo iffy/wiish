@@ -17,6 +17,19 @@ type
 
 proc name*(b: WiishSDL2Plugin): string {.inline.} = "WiishSDL2"
 
+
+proc desktopRun*(b: WiishSDL2Plugin, ctx: ref BuildContext) =
+  if ctx.targetFormat in {targetRun}:
+    ctx.logStartStep()
+    var args = @[findExe"nim", "c"]
+    args.add ctx.nim_flags
+    args.add ctx.nim_run_flags
+    args.add "-r"
+    args.add ctx.main_nim
+    echo args.join(" ")
+    sh args
+
+
 #-------------------------------------------------------------
 # macOS
 #-------------------------------------------------------------
@@ -38,17 +51,7 @@ proc macRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
       args.add(ctx.main_nim)
       sh(args)
   of Run:
-    if ctx.targetFormat in {targetRun}:
-      ctx.logStartStep
-      var args = @[findExe"nim", "c"]
-      args.add ctx.config.nimFlags
-      args.add "-d:wiishDev"
-      args.add "-d:ssl"
-      args.add "--threads:on"
-      args.add "-r"
-      args.add ctx.main_nim
-      echo args.join(" ")
-      sh args
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -233,6 +236,16 @@ include $(BUILD_SHARED_LIBRARY)
   else:
     discard
 
+#-------------------------------------------------------------
+# MobileDev
+#-------------------------------------------------------------
+proc mobiledevRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish SDL mobiledev run
+  case step
+  of Run:
+    b.desktopRun(ctx)
+  else:
+    discard
 
 #-------------------------------------------------------------
 # General
@@ -247,7 +260,10 @@ proc runStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
     b.iosRunStep(step, ctx)
   of Android:
     b.androidRunStep(step, ctx)
+  of MobileDev:
+    b.mobiledevRunStep(step, ctx)
   else:
+    echo "HEY"
     ctx.log "Not yet supported: ", $ctx.targetOS
 
 proc checkDoctor*(): seq[DoctorResult] =

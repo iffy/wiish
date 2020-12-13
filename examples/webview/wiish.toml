@@ -1,12 +1,12 @@
 [main]
 version      = "0.1.0"
+src          = "main.nim"
 dst          = "dist"
 windowFormat = "webview"
 resourceDir  = "resources"
 
 [desktop]
 name        = "Wiish Webview Demo"
-src         = "main_desktop.nim"
 # Path to an image file to use for the application icon.
 # The file will automatically be converted to the correct
 # format.
@@ -14,7 +14,6 @@ icon        = ""
 
 [mobile]
 name        = "WiishWebview"
-src         = "main_mobile.nim"
 icon        = ""
 
 [macos]

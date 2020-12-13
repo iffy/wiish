@@ -1,40 +1,29 @@
 ## Module for making desktop Webview applications.
 ## Import from here regardless of the operating system
 import webview
-import macros
 import strutils
 import logging
 import asyncdispatch
 import tables
 import json
+import std/exitprocs
 
 import wiish/events ; export events
 import wiish/logsetup
 import wiish/baseapp ; export baseapp
 import wiish/common ; export common
 
-type
-  IWebviewWindow* = concept win
-    ## This is the interface required for a webview window
-    win.onReady is EventSource[bool]
-    win.onMessage is EventSource[string]
-  
-  IWebviewDesktopApp* = concept app
-    ## These are the things needed for a webview desktop app
-    app is IDesktopApp
-    newWebviewDesktopApp() is ref typeof app
-    app.start()
-    app.life is EventSource[DesktopEvent]
-    app.newWindow(url = string, title = string) is IWebviewWindow
-    app.getWindow(int) is IWebviewWindow
+const
+  DEFAULT_WIDTH = when wiish_mobiledev: 375 else: 640
+  DEFAULT_HEIGHT = when wiish_mobiledev: 667 else: 480
 
 type
-  WebviewDesktopApp* = object
-    windows: Table[int, ref WebviewWindow]
-    life*: EventSource[DesktopEvent]
+  WebviewApp* = ref object
+    windows: Table[int, WebviewWindow]
+    life*: EventSource[LifeEvent]
     nextWindowId: int
   
-  WebviewWindow* = object
+  WebviewWindow* = ref object
     webview*: Webview
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
@@ -82,12 +71,12 @@ window.wiish.sendMessage = function(message) {
 if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }
 """
 
-proc newWebviewDesktopApp*(): ref WebviewDesktopApp =
+proc newWebviewApp*(): WebviewApp =
   new(result)
-  result[].life = newEventSource[DesktopEvent]()
-  result[].windows = initTable[int, ref WebviewWindow]()
+  result[].life = newEventSource[LifeEvent]()
+  result[].windows = initTable[int, WebviewWindow]()
 
-proc newWindow*(app: ref WebviewDesktopApp, title:string = "", url:string = "", width=640, height=480): ref WebviewWindow =
+proc newWindow*(app: WebviewApp, title:string = "", url:string = "", width=DEFAULT_WIDTH, height=DEFAULT_HEIGHT): WebviewWindow =
   ## Create a new webview window
   new(result)
   let w = result
@@ -112,18 +101,27 @@ proc newWindow*(app: ref WebviewDesktopApp, title:string = "", url:string = "", 
   let windowId = app.nextWindowId
   app.nextWindowId.inc()
   app.windows[windowId] = result
+  app.life.emit(LifeEvent(kind: WindowAdded, windowId: windowId))
+  when wiish_mobiledev:
+    app.life.emit(LifeEvent(kind: WindowWillForeground, windowId: windowId))
+    app.life.emit(LifeEvent(kind: WindowDidForeground, windowId: windowId))
 
-proc sendMessage*(win: ref WebviewWindow, message: string) =
+proc getWindow*(app: WebviewApp, windowId: int): WebviewWindow =
+  app.windows[windowId]
+
+proc sendMessage*(win: WebviewWindow, message: string) =
   ## Send a message from Nim to JS
   # logging.debug "sendMessage not yet implemented"
   win.webview.dispatch(proc() =
     discard win.webview.eval("wiish._handleMessage(" & $ %message & ");")
   )
 
-proc start*(app: ref WebviewDesktopApp) =
+proc start*(app: WebviewApp, url = "", title = "") =
   ## Start the application loop
   startLogging()
-  app.life.emit(DesktopEvent(kind: desktopAppStarted))
+  app.life.emit(LifeEvent(kind: AppStarted))
+  if url != "":
+    discard app.newWindow(title = title, url = url)
   var keepgoing = true
   while keepgoing:
     # Run window loops
@@ -135,8 +133,10 @@ proc start*(app: ref WebviewDesktopApp) =
       drain()
     except ValueError:
       discard
-  app.life.emit(DesktopEvent(kind: desktopAppWillExit))
+  addExitProc proc() =
+    for windowId in app.windows.keys:
+      app.life.emit(LifeEvent(kind: WindowClosed, windowId: windowId))
+    app.life.emit(LifeEvent(kind: AppWillExit))
 
-
-# isConcept(IDesktopApp, newWebviewDesktopApp())
-# isConcept(IWebviewDesktopApp, newWebviewDesktopApp())
+# isConcept(IDesktopApp, newWebviewApp())
+# isConcept(IWebviewApp, newWebviewApp())

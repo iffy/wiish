@@ -6,6 +6,38 @@ when defined(linux):
   import osproc
   import distros
 
+#-------------------------------------------------------------------
+# Importing for app
+#-------------------------------------------------------------------
+import wiish/baseapp
+import wiish/common; export common
+
+type
+  IWebviewWindow* = concept win
+    ## This is the interface required for a webview window
+    win.onReady is EventSource[bool]
+    win.onMessage is EventSource[string]
+  
+  IWebviewApp* = concept app
+    ## These are the things needed for a webview desktop app
+    # app is IBaseApp
+    newWebviewApp() is ref typeof app
+    app.start(url = string)
+    app.start()
+    app.life is EventSource[LifeEvent]
+    app.newWindow(url = string, title = string) is IWebviewWindow
+    app.getWindow(int) is IWebviewWindow
+
+when wiish_ios:
+  import ./webview/webview_ios; export webview_ios
+elif wiish_android:
+  import ./webview/webview_android; export webview_android
+else:
+  import ./webview/desktop; export desktop
+
+#-------------------------------------------------------------------
+# Building
+#-------------------------------------------------------------------
 import wiish/building/buildutil
 import wiish/building/config
 import wiish/doctor
@@ -20,6 +52,16 @@ type
 
 proc name*(b: WiishWebviewPlugin): string = "WiishWebview"
 
+proc desktopRun*(b: WiishWebviewPlugin, ctx: ref BuildContext) =
+  if ctx.targetFormat in {targetRun}:
+    ctx.logStartStep()
+    var args = @[findExe"nim", "c"]
+    args.add ctx.nim_flags
+    args.add ctx.nim_run_flags
+    args.add "-r"
+    args.add ctx.main_nim
+    echo args.join(" ")
+    sh args
 
 proc macRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview macOS Build
@@ -39,17 +81,7 @@ proc macRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       args.add(ctx.main_nim)
       sh(args)
   of Run:
-    if ctx.targetFormat in {targetRun}:
-      ctx.logStartStep()
-      var args = @[findExe"nim", "c"]
-      args.add ctx.nim_flags
-      args.add "-d:wiishDev"
-      args.add "-d:ssl"
-      args.add "--threads:on"
-      args.add "-r"
-      args.add ctx.main_nim
-      echo args.join(" ")
-      sh args
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -60,17 +92,7 @@ proc linuxRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext
     ctx.logStartStep
     ctx.log "Linux builds not yet supported"
   of Run:
-    if ctx.targetFormat in {targetRun}:
-      ctx.logStartStep
-      var args = @[findExe"nim", "c"]
-      args.add ctx.nim_flags
-      args.add "-d:wiishDev"
-      # args.add "-d:ssl"
-      # args.add "--threads:on"
-      args.add "-r"
-      args.add ctx.main_nim
-      echo args.join(" ")
-      sh args
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -78,18 +100,7 @@ proc mobiledevRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildCon
   ## Wiish Webview mobile dev run
   case step
   of Run:
-    ctx.logStartStep
-    var args = @[
-      findExe"nim", "c",
-      "-d:wiish_mobiledev", # TODO: get this from the ctx
-      "-d:wiish_webview",
-    ]
-    args.add ctx.config.nimFlags
-    args.add "-r"
-    args.add ctx.main_nim
-    withDir ctx.projectPath.absolutePath:
-      ctx.log args.join(" ")
-      sh args
+    b.desktopRun(ctx)
   else:
     discard
 

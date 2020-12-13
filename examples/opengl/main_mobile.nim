@@ -14,7 +14,7 @@ var
 
 var app = newSDL2MobileApp()
 
-app.life.addListener proc(ev: MobileEvent) =
+app.life.addListener proc(ev: LifeEvent) =
   debug "lifecycle: ", $ev.kind
   case ev.kind
   of AppStarted:

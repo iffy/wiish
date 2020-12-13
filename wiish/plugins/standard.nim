@@ -18,6 +18,7 @@ proc runStep*(b: WiishBuild, step: BuildStep, ctx: ref BuildContext) =
   if ctx.targetFormat == targetRun and step == Run:
     ctx.log "WIISH RUN STARTING" # This is a signal that tests count on
     ctx.log "PID ", $getCurrentProcessId()
+    ctx.nim_run_flags.add "-d:wiish_dev"
   case ctx.targetOS
   of Mac:
     macBuild(step, ctx)
@@ -26,7 +27,8 @@ proc runStep*(b: WiishBuild, step: BuildStep, ctx: ref BuildContext) =
   of Android:
     androidRunStep(step, ctx)
   of MobileDev:
-    discard
+    if step == Setup:
+      ctx.nim_run_flags.add "-d:wiish_mobiledev"
   of Linux:
     ctx.log "Linux not fully supported yet"
   else:

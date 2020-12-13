@@ -11,10 +11,10 @@ type
 
   IWebviewMobileApp* = concept app
     ## This is the interface required for a webview mobile app
-    app is IMobileApp
+    app is IBaseApp
     newWebviewMobileApp() is ref IWebviewMobileApp
     app.start(url = string)
-    app.life is EventSource[MobileEvent]
+    app.life is EventSource[LifeEvent]
     app.getWindow(int) is ref IWebviewWindow
 
 when wiish_dev and wiish_mobile:

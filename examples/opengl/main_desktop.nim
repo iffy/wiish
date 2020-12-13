@@ -14,18 +14,20 @@ var
 
 var app = newSDL2DesktopApp()
 
-app.life.addListener proc(ev: DesktopEvent) =
+app.life.addListener proc(ev: LifeEvent) =
   case ev.kind
-  of desktopAppStarted:
+  of AppStarted:
     debug "App launched"
     var w = app.newGLWindow(title = "Hello, Wiish!")
     w.draw = proc(rect: Rectangle) =
       glClearColor(r, g, b, 0)
       glClear(GL_COLOR_BUFFER_BIT)
 
-  of desktopAppWillExit:
+  of AppWillExit:
     # Run this code just before the application exits
     debug "App is exiting"
+  else:
+    discard
 
 app.sdl_event.handle(evt):
   debug "Event"
