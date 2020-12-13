@@ -555,7 +555,7 @@ proc checkDoctor*():seq[DoctorResult] =
         dr.fix = "Use Android Studio to install a device. XXX need better instructions"
     except:
       dr.status = NotWorking
-      dr.error = "Could not find 'emulator'"
+      dr.error = "Could not find any emulation devices"
       dr.fix = "Fix emulator first"
   
 
