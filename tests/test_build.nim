@@ -270,12 +270,9 @@ var outChan: Channel[string]
 outChan.open()
 
 proc readOutput(s: Stream) {.thread.} =
-  while not s.atEnd():
-    try:
-      let line = s.readLine()
-      outChan.send(line & "\l")
-    except:
-      break
+  var line: string
+  while s.readLine(line):
+    outChan.send(line & "\l")
 
 proc waitForDeath(p: Process) =
   for i in 0..10:
@@ -300,6 +297,8 @@ proc waitForDeath(p: Process) =
       break
   echo "  waiting for finish: ", $p.processID()
   discard p.waitForExit()
+  echo "  closing process: ", $p.processID()
+  p.close()
   echo "  done: ", $p.processID()
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
@@ -342,8 +341,11 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       sleep(1000)
     result = p.peekExitCode() == -1 # it should still be running
     terminateAllChildren(p.processID())
+    echo "waiting for death"
     p.waitForDeath()
+    echo "waiting for reader thread..."
     readerThread.joinThread()
+    echo "clearing out reader channel..."
     while true:
       let tried = outChan.tryRecv()
       if tried.dataAvailable:
@@ -352,6 +354,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         break
     if not result:
       echo buf
+  echo "run done"
 
 var already_built = false
 
@@ -371,7 +374,7 @@ suite "run":
 
   for example in example_dirs:
     # Desktop
-    if fileExists example/"main_desktop.nim":
+    if desktopMain(example) != "":
       vtest(example.extractFilename):
         runMaybe:
           if testWiishRun(example, @["run"], 5):
@@ -380,7 +383,7 @@ suite "run":
             check false
     
     # Mobile
-    if fileExists example/"main_mobile.nim":
+    if mobileMain(example) != "":
       for name in buildTargets:
         if name in {Android, Ios, IosSimulator, MobileDev}:
           vtest($name & " " & example.extractFilename):
