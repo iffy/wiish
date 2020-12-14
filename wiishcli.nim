@@ -125,7 +125,11 @@ the 'webview' plugin do:
       if not runDoctor(opts.plugin,
           opts.os.mapIt(parseTargetOS(it)).toSet(),
           opts.target.mapIt(parseTargetFormat(it)).toSet()):
+        echo "failed"
         quit(1)
+      else:
+        echo "ting tang walla walla bing bang!"
+        echo "ok"
   
   # command "config":
   #   help("Display a full config file")

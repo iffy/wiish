@@ -29,7 +29,7 @@ proc writeColored(text: string, color: ForegroundColor, fh: File = stdout) =
 
 proc ok*(res: DoctorResult): bool =
   ## Return true if the item is Working
-  res.status == Working
+  res.status in {Working, NotWorkingButOptional}
 
 proc ok*(res: seq[DoctorResult]): bool =
   ## Return true if ALL the items are Working
