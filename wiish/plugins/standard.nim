@@ -31,5 +31,5 @@ proc runStep*(b: WiishBuild, step: BuildStep, ctx: ref BuildContext) =
   of Linux:
     ctx.log "Linux not fully supported yet"
   else:
-    ctx.log "Not yet supported: ", $ctx.targetOS
+    raise ValueError.newException("Not yet supported: " & $ctx.targetOS)
   

@@ -415,14 +415,15 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       echo buf
 
 var wiish_bin_built = false
-
+proc ensureWiishBin() =
+  if not wiish_bin_built:
+    echo "Building wiish binary..."
+    sh "nimble", "build"
+    wiish_bin_built = true
 
 suite "run":
   setup:
-    if not wiish_bin_built:
-      echo "Building wiish binary..."
-      sh "nimble", "build"
-      wiish_bin_built = true
+    ensureWiishBin()
 
   tearDown:
     let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples"]

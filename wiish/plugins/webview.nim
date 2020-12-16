@@ -221,5 +221,5 @@ proc runStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   of Linux:
     b.linuxRunStep(step, ctx)
   else:
-    ctx.log "Not yet supported: ", $ctx.targetOS
+    raise ValueError.newException("Not yet supported: " & $ctx.targetOS)
 
