@@ -261,5 +261,5 @@ proc runStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
   of MobileDev:
     b.mobiledevRunStep(step, ctx)
   else:
-    raise ValueError.newException("Not yet supported: ", $ctx.targetOS)
+    raise ValueError.newException("Not yet supported: " & $ctx.targetOS)
 
