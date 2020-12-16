@@ -1,4 +1,5 @@
 # ignore files without extensions (e.g. binaries)
 *
 !/**/
-!*.*_testtmp
+!*.*
+_testtmp
