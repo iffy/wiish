@@ -73,7 +73,6 @@ proc mobileMain(root: string): string =
     if fileExists(root / name):
       return root / name
 
-
 proc listAllChildPids(pid: int = 0): seq[string] =
   ## Return a list of all child pids of the current process
   ## There's probably all kinds of race conditions and problems with
@@ -94,7 +93,8 @@ proc terminateAllChildren(pid: int = 0) =
     # kill gently
     for i in 0..10:
       if i > 0: sleep(200)
-      let children = listAllChildPids(pid)
+      let children = listAllChildPids(pid).reversed()
+      echo "terminating children: ", $children
       if children.len == 0:
         break
       for child in children:
@@ -105,7 +105,7 @@ proc terminateAllChildren(pid: int = 0) =
     # kill -9
     for i in 0..10:
       if i > 0: sleep(200)
-      let children = listAllChildPids(pid)
+      let children = listAllChildPids(pid).reversed()
       if children.len == 0:
         break
       for child in children:

@@ -1,12 +1,14 @@
-import distros
 import os
-import osproc
 import strformat
 import strutils
 import tables
 
 import wiish/building/buildutil
 import wiish/doctor
+
+when defined(linux):
+  import distros
+  import osproc
 
 proc checkDoctor*(): seq[DoctorResult] =
   when defined(linux):
