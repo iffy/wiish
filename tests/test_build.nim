@@ -10,9 +10,14 @@ import tables
 import terminal
 import unittest
 import std/compilesettings
+import std/exitprocs
+
+import ./formatter
 
 import wiish/building/buildutil
 import wiishcli
+
+useCustomUnittestFormatter()
 
 randomize()
 
@@ -35,7 +40,7 @@ proc addConfigNims() =
     let escaped = path.replace("\\", "\\\\")
     guts.add(&"switch(\"path\", \"{escaped}\")\n")
   writeFile("config.nims", guts)
-  echo "added config.nims:\n", guts
+  stdout.writeLine("added config.nims:\n" & guts)
 
 template androidBuildMaybe(body: untyped): untyped =
   if existsEnv("WIISH_BUILD_ANDROID"):
@@ -50,15 +55,9 @@ template runMaybe(body: untyped): untyped =
   else:
     skipReason "set WIISH_TEST_RUN=1 to run this test"
 
-template vtest(name: string, body: untyped): untyped =
-  ## Verbosely labeled test
-  test(name):
-    stdout.styledWriteLine(fgCyan, "  [START] ", name, resetStyle)
-    body
-
 template skipReason(reason: string): untyped =
-  stdout.styledWriteLine(fgYellow, "    SKIP REASON: " & reason, resetStyle)
-  skip
+  # stdout.styledWriteLine(fgYellow, reason, resetStyle)
+  doSkip(reason)
 
 const desktop_mains = ["main_desktop.nim", "main.nim"]
 const mobile_mains = ["main_mobile.nim", "main.nim"]
@@ -237,10 +236,10 @@ suite "checks":
       case target
       of Windows:
         main_file = desktopMain(example)
-        args.add "--os:windows"
+        args.add @["--os:windows", "-d:appName=test.app"]
       of Mac:
         main_file = desktopMain(example)
-        args.add "--os:macosx"
+        args.add @["--os:macosx", "-d:appName=test.app"]
       of Linux:
         main_file = desktopMain(example)
         args.add "--os:linux"
@@ -249,21 +248,21 @@ suite "checks":
         args.add @["--os:linux", "-d:android", "--noMain", "--threads:on", "--gc:orc"]
       of Ios,IosSimulator:
         main_file = mobileMain(example)
-        args.add @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc"]
+        args.add @["--os:macosx", "-d:ios", "--threads:on", "--gc:orc", "-d:appBundleIdentifier=test.app"]
       of MobileDev:
         main_file = mobileMain(example)
         args.add @["-d:wiish_mobiledev", "--gc:orc"]
       else:
         raise ValueError.newException("Unsupported build target: " & $target)
       if main_file != "":
-        vtest($target & " " & example.extractFilename):
+        test($target & " " & example.extractFilename):
           var cmd = @["nim", "check", "--hints:off", "-d:testconcepts"]
           cmd.add args
           cmd.add(main_file)
           let cmdstr = cmd.join(" ")
           checkpoint "COMMAND: " & cmdstr
           check execCmd(cmdstr) == 0
-
+  
 const run_sentinel = "WIISH RUN STARTING"
 
 var outChan: Channel[string]
@@ -271,8 +270,11 @@ outChan.open()
 
 proc readOutput(s: Stream) {.thread.} =
   var line: string
-  while s.readLine(line):
-    outChan.send(line & "\l")
+  try:
+    while s.readLine(line):
+      outChan.send(line & "\l")
+  except:
+    echo "Ignoring error reading line: ", getCurrentExceptionMsg()
 
 proc waitForDeath(p: Process) =
   for i in 0..10:
@@ -325,7 +327,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
           if run_sentinel in line:
             break
         except:
-          echo "Error reading stderr"
+          echo "Error reading subprocess output"
           echo getCurrentExceptionMsg()
           echo buf
           raise
@@ -354,7 +356,6 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         break
     if not result:
       echo buf
-  echo "run done"
 
 var already_built = false
 
@@ -375,7 +376,7 @@ suite "run":
   for example in example_dirs:
     # Desktop
     if desktopMain(example) != "":
-      vtest(example.extractFilename):
+      test(example.extractFilename):
         runMaybe:
           if testWiishRun(example, @["run"], 5):
             markSupport(THISOS, example.extractFilename, "run", Working)
@@ -386,7 +387,7 @@ suite "run":
     if mobileMain(example) != "":
       for name in buildTargets:
         if name in {Android, Ios, IosSimulator, MobileDev}:
-          vtest($name & " " & example.extractFilename):
+          test($name & " " & example.extractFilename):
             if name == Android and not existsEnv("WIISH_RUN_ANDROID"):
               skipReason "set WIISH_RUN_ANDROID=1 to run this test"
             else:
@@ -417,7 +418,7 @@ suite "build":
   for example in example_dirs:
     # Desktop
     if fileExists example/"main_desktop.nim":
-      vtest(example.extractFilename):
+      test(example.extractFilename):
         withDir example:
           runWiish "build"
           markSupport(THISOS, example.extractFilename, "build", Working)
@@ -425,17 +426,17 @@ suite "build":
     # Mobile
     if fileExists example/"main_mobile.nim":
       if IosSimulator in buildTargets:
-        vtest("ios-simulator " & example.extractFilename):
+        test("ios-simulator " & example.extractFilename):
           withDir example:
             runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
             markSupport(IosSimulator, example.extractFilename, "build", Working)
       
-      if Android in buildTargets:
-        vtest("android " & example.extractFilename):
-          androidBuildMaybe:
-            withDir example:
-              runWiish "build", "--os", "android"
-              markSupport(Android, example.extractFilename, "build", Working)
+      # if Android in buildTargets:
+      #   test("android " & example.extractFilename):
+      #     androidBuildMaybe:
+      #       withDir example:
+      #         runWiish "build", "--os", "android"
+      #         markSupport(Android, example.extractFilename, "build", Working)
 
 suite "init":
   setup:
@@ -445,7 +446,7 @@ suite "init":
     except:
       echo "Error ^ while running: ", cmd.join(" ")
 
-  vtest "init and build":
+  test "init and build":
     withDir tmpDir():
       echo absolutePath"."
       addConfigNims()
@@ -454,7 +455,7 @@ suite "init":
         runWiish "build"
   
   if Ios in buildTargets or IosSimulator in buildTargets:
-    vtest "init and build --os ios-simulator":
+    test "init and build --os ios-simulator":
       withDir tmpDir():
         echo absolutePath"."
         addConfigNims()
@@ -463,7 +464,7 @@ suite "init":
           runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
 
   if Android in buildTargets:  
-    vtest "init and build --os android":
+    test "init and build --os android":
       androidBuildMaybe:
         withDir tmpDir():
           echo absolutePath"."

@@ -7,7 +7,7 @@ import flippy
 
 import ./config
 when defined(macosx):
-  discard
+  import posix
 else:
   import logging
 
@@ -149,11 +149,19 @@ template withDir*(dir: string, body: untyped): untyped =
 
 proc sh*(args:varargs[string, `$`]) =
   ## Run a process, failing the program if it fails
-  var p = startProcess(command = args[0],
-    args = args[1..^1],
-    options = {poUsePath, poParentStreams})
-  if p.waitForExit() != 0:
-    raise newException(CatchableError, "Error running process")
+  when defined(macosx):
+    let origStdoutFlags = fcntl(stdout.getFileHandle(), F_GETFL)
+  try:
+    var p = startProcess(command = args[0],
+      args = args[1..^1],
+      options = {poUsePath, poParentStreams})
+    if p.waitForExit() != 0:
+      raise newException(CatchableError, "Error running process")
+  finally:
+    when defined(macosx):
+      discard fcntl(stdout.getFileHandle(), F_SETFL, origStdoutFlags)
+    else:
+      discard
 
 proc shoutput*(args:varargs[string, `$`]):string =
   ## Run a process and return the output as a string
