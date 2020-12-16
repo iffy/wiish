@@ -50,5 +50,5 @@ proc checkDoctor*(): seq[DoctorResult] =
   elif defined(windows):
     result.dr "sdl2", "libSDL2":
       dr.status = NotWorkingButOptional
-      dr.error &"Wiish currently can't detect if libSDL2 is installed on Windows"
+      dr.error = &"Wiish currently can't detect if libSDL2 is installed on Windows"
       dr.fix = &"Submit a PR to github.com/iffy/wiish with tips on how to do this on Windows."
