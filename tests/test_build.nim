@@ -73,7 +73,7 @@ proc mobileMain(root: string): string =
     if fileExists(root / name):
       return root / name
 
-proc listAllChildPids(pid: int = 0): seq[string] =
+proc listAllChildPids(pid: int = 0): seq[int] =
   ## Return a list of all child pids of the current process
   ## There's probably all kinds of race conditions and problems with
   ## this method.  If someone has a better cross-platform way
@@ -84,35 +84,54 @@ proc listAllChildPids(pid: int = 0): seq[string] =
     for child in childpids:
       if child == "":
         continue
-      result.add $child
+      result.add child.parseInt()
       result.add child.parseInt().listAllChildPids()
+
+proc isAlive(pid: int): bool =
+  when defined(macosx) or defined(linux):
+    try:
+      discard shoutput("kill", "-0", $pid)
+      result = true
+    except:
+      result = false
 
 proc terminateAllChildren(pid: int = 0) =
   ## Recursively terminate all child processes.
+  echo "Terminating children of: ", $pid
   when defined(macosx) or defined(linux):
-    # kill gently
-    for i in 0..10:
-      if i > 0: sleep(200)
-      let children = listAllChildPids(pid).reversed()
-      echo "terminating children: ", $children
-      if children.len == 0:
-        break
+    var round1 = pid.listAllChildPids()
+    var round2: seq[int]
+    while round1.len > 0:
+      var child = round1[0]
+      round1.delete(0, 0)
+      var children = listAllChildPids(child)
       for child in children:
-        try:
-          discard shoutput("kill", $child)
-        except:
-          discard
-    # kill -9
-    for i in 0..10:
-      if i > 0: sleep(200)
-      let children = listAllChildPids(pid).reversed()
-      if children.len == 0:
+        if child notin round1 and child notin round2:
+          round1.add(child)
+      try:
+        echo "kill ", $child
+        discard shoutput("kill", $child)
+      except:
         break
+      if child.isAlive():
+        round2.add(child)
+
+    while round2.len > 0:
+      sleep(100)
+      var child = round2[0]
+      round2.delete(0, 0)
+      if not child.isAlive():
+        continue
+      var children = listAllChildPids(child)
       for child in children:
-        try:
-          discard shoutput("kill", "-9", $child)
-        except:
-          discard
+        if child notin round2:
+          round2.add(child)
+      try:
+        echo "kill -9 ", $child
+        discard shoutput("kill", "-9", $child)
+      except:
+        discard
+  echo "Done terminating children of: ", $pid
       
 
 #---------------------------------------------------------------
@@ -138,6 +157,31 @@ proc markSupport(targetOS: TargetOS, example: string, action: string, status = N
   let key = key(targetOS, example, action)
   supportedBranches[key] = status
 
+proc supportStatus(targetOS: TargetOS, example: string, action: string): SupportStatus =
+  supportedBranches.getOrDefault(key(targetOS, example, action), NotWorking)
+
+template forMatrix(targetOS: TargetOS, example: string, action: string, body: untyped): untyped =
+  block:
+    let expectedStatus = supportStatus(targetOS, example, action)
+    try:
+      if expectedStatus == NotApplicable:
+        discard
+      else:
+        body
+        markSupport(targetOS, example, action, Working)
+    except:
+      case expectedStatus
+      of NotWorking:
+        setProgramResult 1
+        raise
+      of NotApplicable:
+        echo "Failed, but expected NotApplicable"
+      of Planned:
+        echo "Failed, but not expected to pass yet"
+      of Working:
+        markSupport(targetOS, example, action, NotWorking)
+      
+
 const actions = ["run", "build"]
 
 proc str(status: SupportStatus): string =
@@ -155,6 +199,8 @@ proc displaySupport(hostOS: TargetOS) =
   var rows:seq[seq[string]]
   var col1max = 0
   var col2max = 0
+  var col3max = 0
+  var col4max = 0
   for targetOS in low(TargetOS)..high(TargetOS):
     if targetOS == AutoDetectOS:
       continue
@@ -165,9 +211,13 @@ proc displaySupport(hostOS: TargetOS) =
       let build_status = supportedBranches.getOrDefault(build_key)
       if run_status == NotApplicable and build_status == NotApplicable:
         continue
+      if run_status == NotWorking or build_status == NotWorking:
+        setProgramResult 1
       rows.add @[$targetOS, example, run_status.str(), build_status.str()]
       col1max = max(col1max, rows[^1][0].len)
       col2max = max(col2max, rows[^1][1].len)
+      col3max = max(col3max, rows[^1][2].len)
+      col4max = max(col4max, rows[^1][3].len)
   proc pad(x: string, size: int): string =
     result.add x
     if x.len < size:
@@ -187,8 +237,8 @@ proc displaySupport(hostOS: TargetOS) =
     stdout.styledWrite "| " & $hostOS
     stdout.styledWrite " | " & row[0].pad(col1max)
     stdout.styledWrite " | " & row[1].pad(col2max)
-    stdout.styledWrite " | ", color(row[2]), row[2].pad(2)
-    stdout.styledWrite " | ", color(row[3]), row[3].pad(2)
+    stdout.styledWrite " | ", color(row[2]), row[2].pad(col3max)
+    stdout.styledWrite " | ", color(row[3]), row[3].pad(col4max)
     stdout.styledWrite " |\l"
 
 
@@ -233,6 +283,7 @@ else:
 
 # plainwebview doesn't work on mobile
 for action in actions:
+  markSupport(MobileDev, "plainwebview", action, NotApplicable)
   markSupport(Android, "plainwebview", action, NotApplicable)
   markSupport(Ios, "plainwebview", action, NotApplicable)
   markSupport(IosSimulator, "plainwebview", action, NotApplicable)
@@ -366,14 +417,15 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     if not result:
       echo buf
 
-var already_built = false
+var wiish_bin_built = false
+
 
 suite "run":
   setup:
-    if not already_built:
+    if not wiish_bin_built:
       echo "Building wiish binary..."
       sh "nimble", "build"
-      already_built = true
+      wiish_bin_built = true
 
   tearDown:
     let cmd = @["git", "clean", "-X", "-d", "-f", "--", "examples"]
@@ -387,34 +439,30 @@ suite "run":
     if desktopMain(example) != "":
       test(example.extractFilename):
         runMaybe:
-          if testWiishRun(example, @["run"], 5):
-            markSupport(THISOS, example.extractFilename, "run", Working)
-          else:
-            check false
+          forMatrix(THISOS, example.extractFilename, "run"):
+            doAssert testWiishRun(example, @["run"], 5)
     
     # Mobile
     if mobileMain(example) != "":
-      for name in buildTargets:
-        if name in {Android, Ios, IosSimulator, MobileDev}:
-          test($name & " " & example.extractFilename):
-            if name == Android and not existsEnv("WIISH_RUN_ANDROID"):
+      for targetOS in buildTargets:
+        if targetOS in {Android, Ios, IosSimulator, MobileDev}:
+          test($targetOS & " " & example.extractFilename):
+            if targetOS == Android and not existsEnv("WIISH_RUN_ANDROID"):
               skipReason "set WIISH_RUN_ANDROID=1 to run this test"
             else:
               runMaybe:
-                var args = @["run"]
-                case name
-                of Android:
-                  args.add(@["--os", "android"])
-                of Ios,IosSimulator:
-                  args.add(@["--os", "ios-simulator"])
-                of MobileDev:
-                  args.add(@["--os", "mobiledev"])
-                else:
-                  discard
-                if testWiishRun(example, args, 15):
-                  markSupport(name, example.extractFilename, "run", Working)
-                else:
-                  check false
+                forMatrix(targetOS, example.extractFilename, "run"):
+                  var args = @["run"]
+                  case targetOS
+                  of Android:
+                    args.add(@["--os", "android"])
+                  of Ios,IosSimulator:
+                    args.add(@["--os", "ios-simulator"])
+                  of MobileDev:
+                    args.add(@["--os", "mobiledev"])
+                  else:
+                    discard
+                  doAssert testWiishRun(example, args, 15)
 
 suite "build":
   tearDown:
@@ -426,26 +474,27 @@ suite "build":
 
   for example in example_dirs:
     # Desktop
-    if fileExists example/"main_desktop.nim":
+    if desktopMain(example) != "":
       test(example.extractFilename):
         withDir example:
-          runWiish "build"
-          markSupport(THISOS, example.extractFilename, "build", Working)
+          forMatrix(THISOS, example.extractFilename, "build"):
+            runWiish "build"
     
     # Mobile
-    if fileExists example/"main_mobile.nim":
+    if mobileMain(example) != "":
       if IosSimulator in buildTargets:
         test("ios-simulator " & example.extractFilename):
           withDir example:
-            runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
-            markSupport(IosSimulator, example.extractFilename, "build", Working)
+            forMatrix(IosSimulator, example.extractFilename, "build"):
+              runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
+            
       
       if Android in buildTargets:
         test("android " & example.extractFilename):
           androidBuildMaybe:
             withDir example:
-              runWiish "build", "--os", "android"
-              markSupport(Android, example.extractFilename, "build", Working)
+              forMatrix(Android, example.extractFilename, "build"):
+                runWiish "build", "--os", "android"
 
 suite "init":
   setup:

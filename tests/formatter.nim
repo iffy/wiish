@@ -10,6 +10,7 @@ type
     currentSuite: string
     currentTest: string
     currentSkip: string
+    progResult: int
     lastStdout: int64
     lastStderr: int64
     failedTests: seq[string]
@@ -18,8 +19,6 @@ type
   
   SkipTestError* = object of CatchableError
 
-const SPACING = 40
-
 proc newMyFormatter(): MyFormatter =
   MyFormatter(startTime: now())
 
@@ -27,8 +26,7 @@ proc mkPreline(suiteName: string, testName: string, prefix = ""): string =
   result.add prefix
   if suiteName != "":
     result.add suiteName & "::"
-  result.add testName
-  result.add " ".repeat(max(SPACING - result.len, 0))
+  result.add testName & " "
 
 method suiteStarted*(formatter: MyFormatter, suiteName: string) =
   formatter.currentSuite = suiteName
@@ -54,6 +52,7 @@ method failureOccurred*(formatter: MyFormatter, checkpoints: seq[string], stackT
     msg = msg.substr(0, msg.len - " [SkipTestError]".len)
     formatter.currentSkip = msg
   else:
+    formatter.progResult = 1
     stdout.styledWriteLine fgRed, "\nFAILURE >>>"
     for item in checkpoints:
       stdout.writeLine(item)
@@ -70,7 +69,7 @@ method testEnded*(formatter: MyFormatter, testResult: TestResult) =
   else:
     stdout.writeLine ""
   let preline = mkPreline(testResult.suiteName, testResult.testName, prefix = "")
-  stdout.write preline
+  # stdout.write preline
   
   var fullname = ""
   if testResult.suiteName != "":
@@ -83,13 +82,18 @@ method testEnded*(formatter: MyFormatter, testResult: TestResult) =
   
   case status
   of OK:
-    stdout.styledWriteLine fgGreen, "[OK]"
+    stdout.styledWrite fgGreen, "[OK] "
+    stdout.writeLine preline
     formatter.okTests.inc()
   of FAILED:
-    stdout.styledWriteLine fgRed, "[FAILED]"  
+    stdout.styledWrite fgRed, "[FAILED] "
+    stdout.writeLine preline
     formatter.failedTests.add fullname
+    formatter.progResult = 1
   of SKIPPED:
-    stdout.styledWriteLine fgYellow, "[SKIPPED] ", styleDim, formatter.currentSkip
+    stdout.styledWrite fgYellow, "[SKIPPED] "
+    stdout.write preline
+    stdout.styledWriteLine styleDim, " ", formatter.currentSkip
     formatter.skippedTests.add fullname
   if bytesWritten > 0:
     echo "-".repeat(terminalWidth())
@@ -108,7 +112,7 @@ proc summary*(formatter: MyFormatter): string =
   result.add $formatter.okTests & " ok"
   if formatter.failedTests.len > 0:
     result.add ", " & $formatter.failedTests.len & " failed"
-  result.add " (" & $(now() - formatter.startTime) & ")"
+  result.add " (" & $(now() - formatter.startTime).inSeconds() & "s)"
 
 proc useCustomUnittestFormatter*() =
   var formatter = newMyFormatter()
@@ -123,3 +127,4 @@ proc useCustomUnittestFormatter*() =
       for name in formatter.failedTests:
         echo "  ", name
     echo formatter.summary()
+    setProgramResult formatter.progResult
