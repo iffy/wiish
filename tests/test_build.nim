@@ -378,8 +378,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
 
     var buf: string
     while true:
-      let rc = p.peekExitCode()
-      if rc == -1:
+      if p.running():
         # still running
         try:
           let line = outChan.recv()
@@ -391,17 +390,15 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
           echo getCurrentExceptionMsg()
           echo buf
           raise
-      elif rc == 0:
-        # quit
-        assert false, "wiish run exited prematurely"
       else:
-        assert false, "wiish run failed"
+        echo "wiish command exited prematurely"
+        break
     echo &"    Waiting for {sleepSeconds}s to see if it keeps running..."
     for i in 0..<sleepSeconds:
-      if p.peekExitCode() != -1:
+      if not p.running():
         break
       sleep(1000)
-    result = p.peekExitCode() == -1 # it should still be running
+    result = p.running() # it should still be running
     terminateAllChildren(p.processID())
     echo "waiting for death"
     p.waitForDeath()
