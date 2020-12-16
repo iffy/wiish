@@ -122,6 +122,7 @@ type
   SupportStatus = enum
     NotWorking
     NotApplicable
+    Planned
     Working
 
 var supportedBranches = initTable[string, SupportStatus]()
@@ -142,11 +143,13 @@ const actions = ["run", "build"]
 proc str(status: SupportStatus): string =
   case status
   of NotWorking:
-    "X"
+    "No"
   of NotApplicable:
     "-"
   of Working:
-    "OK"
+    "Yes"
+  of Planned:
+    "Planned"
 
 proc displaySupport(hostOS: TargetOS) =
   var rows:seq[seq[string]]
@@ -172,10 +175,12 @@ proc displaySupport(hostOS: TargetOS) =
   stdout.writeLine "| Host OS | `--os` | Example | `wiish run` | `wiish build` |"
   stdout.writeLine "|---------|-----------|---------|:---:|:-----:|"
   proc color(status: string): ForegroundColor =
-    if status == "X":
+    if status == "No":
       result = fgRed
-    elif status == "OK":
+    elif status == "Yes":
       result = fgGreen
+    elif status == "Planned":
+      result = fgYellow
     else:
       result = fgWhite
   for row in rows:
@@ -201,6 +206,7 @@ when defined(macosx):
     for action in actions:
       markSupport(Windows, example, action, NotApplicable)
       markSupport(Linux, example, action, NotApplicable)
+      markSupport(Ios, example, action, Planned)
 
 elif defined(windows):
   const THISOS = Windows
@@ -211,6 +217,7 @@ elif defined(windows):
       markSupport(Ios, example, action, NotApplicable)
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Linux, example, action, NotApplicable)
+    markSupport(Windows, example, "build", Planned) # Building for Windows doesn't work yet
 
 else:
   const THISOS = Linux
@@ -221,6 +228,8 @@ else:
       markSupport(Ios, example, action, NotApplicable)
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Windows, example, action, NotApplicable)
+      markSupport(Android, example, action, Planned)
+    markSupport(Linux, example, "build", Planned) # Building for Linux doesn't work yet
 
 # plainwebview doesn't work on mobile
 for action in actions:
@@ -431,12 +440,12 @@ suite "build":
             runWiish "build", "--os", "ios-simulator", "--target", "ios-app"
             markSupport(IosSimulator, example.extractFilename, "build", Working)
       
-      # if Android in buildTargets:
-      #   test("android " & example.extractFilename):
-      #     androidBuildMaybe:
-      #       withDir example:
-      #         runWiish "build", "--os", "android"
-      #         markSupport(Android, example.extractFilename, "build", Working)
+      if Android in buildTargets:
+        test("android " & example.extractFilename):
+          androidBuildMaybe:
+            withDir example:
+              runWiish "build", "--os", "android"
+              markSupport(Android, example.extractFilename, "build", Working)
 
 suite "init":
   setup:
