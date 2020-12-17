@@ -62,7 +62,7 @@ jobs:
         set -x
         which Simulator || echo 'Simulator not found'
         xcrun simctl list devices 'iphone 11' --json
-        SIM_UDID=$(xcrun simctl list devices 'iphone 11' --json | jq --raw-output '.devices[] | select(length > 0)[0].udid')
+        SIM_UDID=$(nim c -r .github/ios_devices.nim | head -n 1)
         echo $SIM_UDID
         open -a Simulator --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
