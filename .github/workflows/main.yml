@@ -61,7 +61,8 @@ jobs:
       run: |
         set -x
         xcrun simctl list devices 'iphone 11' --json
-        SIM_UDID=$(nim c -r .github/ios_devices.nim | head -n 1)
+        nim c .github/ios_devices.nim
+        SIM_UDID=$(.github/ios_devices | head -n 1)
         echo $SIM_UDID
         open -a /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
