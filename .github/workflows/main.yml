@@ -60,11 +60,10 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         set -x
-        which Simulator || echo 'Simulator not found'
         xcrun simctl list devices 'iphone 11' --json
         SIM_UDID=$(nim c -r .github/ios_devices.nim | head -n 1)
         echo $SIM_UDID
-        open -a Simulator --args -CurrentDeviceUDID $SIM_UDID
+        open -a /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
       shell: bash
       timeout-minutes: 60
