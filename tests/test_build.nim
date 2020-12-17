@@ -1,16 +1,17 @@
 import algorithm
+import logging
 import os
 import osproc
 import random
 import sequtils
+import std/compilesettings
+import std/exitprocs
 import streams
 import strformat
 import strutils
 import tables
 import terminal
 import unittest
-import std/compilesettings
-import std/exitprocs
 
 import ./formatter
 
@@ -24,9 +25,10 @@ randomize()
 const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
 const examples = example_dirs.mapIt(it.extractFilename())
 
+
 const TMPROOT = currentSourcePath.parentDir/"_testtmp"
 if dirExists(TMPROOT):
-  echo "removing old test dir ", TMPROOT
+  info "removing old test dir ", TMPROOT
   removeDir(TMPROOT)
 
 proc tmpDir(): string {.used.} =
@@ -97,7 +99,7 @@ proc isAlive(pid: int): bool =
 
 proc terminateAllChildren(pid: int = 0) =
   ## Recursively terminate all child processes.
-  echo "Terminating children of: ", $pid
+  debug "Terminating children of: ", $pid
   when defined(macosx) or defined(linux):
     var round1 = pid.listAllChildPids()
     var round2: seq[int]
@@ -109,7 +111,7 @@ proc terminateAllChildren(pid: int = 0) =
         if child notin round1 and child notin round2:
           round1.add(child)
       try:
-        echo "kill ", $child
+        debug "kill ", $child
         discard shoutput("kill", $child)
       except:
         break
@@ -127,11 +129,11 @@ proc terminateAllChildren(pid: int = 0) =
         if child notin round2:
           round2.add(child)
       try:
-        echo "kill -9 ", $child
+        debug "kill -9 ", $child
         discard shoutput("kill", "-9", $child)
       except:
         discard
-  echo "Done terminating children of: ", $pid
+  debug "Done terminating children of: ", $pid
       
 
 #---------------------------------------------------------------
@@ -332,17 +334,18 @@ proc readOutput(s: Stream) {.thread.} =
   var line: string
   try:
     while s.readLine(line):
+      debug line
       outChan.send(line & "\l")
   except:
-    echo "Ignoring error reading line: ", getCurrentExceptionMsg()
+    warn "Ignoring error reading line: ", getCurrentExceptionMsg()
 
 proc waitForDeath(p: Process) =
   for i in 0..10:
     if i > 0: sleep(1000)
     try:
-      echo "  terminating pid: ", $p.processID()
+      debug "  terminating pid: ", $p.processID()
       p.terminate()
-      echo "  terminated  pid: ", $p.processID()
+      debug "  terminated  pid: ", $p.processID()
     except:
       discard
     if not p.running():
@@ -350,25 +353,25 @@ proc waitForDeath(p: Process) =
   for i in 0..10:
     if i > 0: sleep(1000)
     try:
-      echo "  killing pid: ", $p.processID()
+      debug "  killing pid: ", $p.processID()
       p.kill()
-      echo "  killed  pid: ", $p.processID()
+      debug "  killed  pid: ", $p.processID()
     except:
       discard
     if not p.running():
       break
-  echo "  waiting for finish: ", $p.processID()
+  debug "  waiting for finish: ", $p.processID()
   discard p.waitForExit()
-  echo "  closing process: ", $p.processID()
+  debug "  closing process: ", $p.processID()
   p.close()
-  echo "  done: ", $p.processID()
+  debug "  done: ", $p.processID()
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
-  echo "    Running command:"
-  echo "        cd ", dirname
+  info "    Running command:"
+  info "        cd ", dirname
   let wiishbin = ("bin"/"wiish").absolutePath
-  echo "        " & wiishbin & " ", args.join(" ")
+  info "        " & wiishbin & " ", args.join(" ")
   withDir dirname:
     var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
     defer: p.close()
@@ -386,25 +389,25 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
           if run_sentinel in line:
             break
         except:
-          echo "Error reading subprocess output"
-          echo getCurrentExceptionMsg()
-          echo buf
+          warn "Error reading subprocess output"
+          warn getCurrentExceptionMsg()
+          info buf
           raise
       else:
-        echo "wiish command exited prematurely"
+        warn "wiish command exited prematurely"
         break
-    echo &"    Waiting for {sleepSeconds}s to see if it keeps running..."
+    info &"    Waiting for {sleepSeconds}s to see if it keeps running..."
     for i in 0..<sleepSeconds:
       if not p.running():
         break
       sleep(1000)
     result = p.running() # it should still be running
     terminateAllChildren(p.processID())
-    echo "waiting for death"
+    debug "waiting for death"
     p.waitForDeath()
-    echo "waiting for reader thread..."
+    debug "waiting for reader thread..."
     readerThread.joinThread()
-    echo "clearing out reader channel..."
+    debug "clearing out reader channel..."
     while true:
       let tried = outChan.tryRecv()
       if tried.dataAvailable:
@@ -412,12 +415,12 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       else:
         break
     if not result:
-      echo buf
+      info buf
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
   if not wiish_bin_built:
-    echo "Building wiish binary..."
+    info "Building wiish binary..."
     sh "nimble", "build"
     wiish_bin_built = true
 
@@ -430,7 +433,7 @@ suite "run":
     try:
       sh cmd
     except:
-      echo "Error ^ while running: ", cmd.join(" ")
+      warn "Error ^ while running: ", cmd.join(" ")
 
   for example in example_dirs:
     # Desktop
@@ -468,7 +471,7 @@ suite "build":
     try:
       sh cmd
     except:
-      echo "Error ^ while running: ", cmd.join(" ")
+      warn "Error ^ while running: ", cmd.join(" ")
 
   for example in example_dirs:
     # Desktop
@@ -500,11 +503,11 @@ suite "init":
     try:
       sh cmd
     except:
-      echo "Error ^ while running: ", cmd.join(" ")
+      warn "Error ^ while running: ", cmd.join(" ")
 
   test "init and build":
     withDir tmpDir():
-      echo absolutePath"."
+      info absolutePath"."
       addConfigNims()
       runWiish "init", "desktop"
       withDir "desktop":
@@ -513,7 +516,7 @@ suite "init":
   if Ios in buildTargets or IosSimulator in buildTargets:
     test "init and build --os ios-simulator":
       withDir tmpDir():
-        echo absolutePath"."
+        info absolutePath"."
         addConfigNims()
         runWiish "init", "iostest"
         withDir "iostest":
@@ -523,7 +526,7 @@ suite "init":
     test "init and build --os android":
       androidBuildMaybe:
         withDir tmpDir():
-          echo absolutePath"."
+          info absolutePath"."
           addConfigNims()
           runWiish "init", "androidtest"
           withDir "androidtest":
@@ -531,5 +534,6 @@ suite "init":
 
 stdout.flushFile()
 stderr.flushFile()
-echo "## Support Matrix for " & $THISOS
+
+info "\n## Support Matrix for " & $THISOS
 displaySupport(THISOS)

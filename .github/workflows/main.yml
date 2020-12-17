@@ -56,6 +56,15 @@ jobs:
         ndk: 21.0.6113669
         cmake: 3.10.2.4988404
         script: env | sort
+    - name: Initialize iOS Device
+      if: runner.os == 'macOS'
+      run: |
+        set -x
+        which Simulator || echo 'Simulator not found'
+        xcrun simctl list devices 'iphone 11' --json
+        SIM_UDID=$(xcrun simctl list devices 'iphone 11' --json | jq --raw-output '.devices[] | select(length > 0)[0].udid')
+        echo $SIM_UDID
+        open -a Simulator --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
       shell: bash
       timeout-minutes: 60
@@ -90,8 +99,14 @@ jobs:
         elif [ "$(uname)" == "Linux" ]; then
           export WIISH_BUILD_ANDROID=yes
         fi
+        export VERBOSE=1
         wiish doctor || true
         nimble test
+    - name: Build log
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        cat tests/test.log
     - name: Docs
       if: runner.os == 'Linux'
       run: |
