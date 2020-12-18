@@ -85,8 +85,7 @@ proc linuxRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext
   ## Wiish Webview Linux Build
   case step
   of Compile:
-    ctx.logStartStep
-    ctx.log "Linux builds not yet supported"
+    raise ValueError.newException("Linux webview building not supported yet")
   of Run:
     b.desktopRun(ctx)
   else:

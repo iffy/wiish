@@ -111,11 +111,6 @@ jobs:
         else
           nimble test
         fi
-    - name: Build log
-      if: ${{ always() }}
-      shell: bash
-      run: |
-        cat tests/test.log
     - name: Docs
       if: runner.os == 'Linux'
       run: |
