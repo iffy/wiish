@@ -373,18 +373,23 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   let wiishbin = ("bin"/"wiish").absolutePath
   info "        " & wiishbin & " ", args.join(" ")
   withDir dirname:
+    echo "about to go"
     var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
     defer: p.close()
     let outs = p.outputStream()
     var readerThread: Thread[Stream]
     readerThread.createThread(readOutput, outs)
-
+    echo "started readerThread"
     var buf: string
     while true:
+      echo "while true:"
       if p.running():
+        echo "running true"
         # still running
         try:
+          echo "waiting to receive line..."
           let line = outChan.recv()
+          echo "got line"
           buf.add line
           if run_sentinel in line:
             break
@@ -394,6 +399,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
           info buf
           raise
       else:
+        echo "early exit"
         warn "wiish command exited prematurely"
         break
     info &"    Waiting for {sleepSeconds}s to see if it keeps running..."
