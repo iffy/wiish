@@ -79,59 +79,62 @@ proc listAllChildPids(pid: int = 0): seq[int] =
   ## There's probably all kinds of race conditions and problems with
   ## this method.  If someone has a better cross-platform way
   ## to kill all descendent processes, please add it here.
-  when defined(macosx) or defined(linux):
-    var pid = if pid == 0: getCurrentProcessId() else: pid
-    let childpids = (shoutput("pgrep", "-P", $pid)).strip().splitLines()
-    for child in childpids:
-      if child == "":
-        continue
-      result.add child.parseInt()
-      result.add child.parseInt().listAllChildPids()
+  if findExe"pgrep":
+    echo "WARNING: no `pgrep` executable found"
+  var pid = if pid == 0: getCurrentProcessId() else: pid
+  let childpids = (shoutput("pgrep", "-P", $pid)).strip().splitLines()
+  for child in childpids:
+    if child == "":
+      continue
+    result.add child.parseInt()
+    result.add child.parseInt().listAllChildPids()
 
 proc isAlive(pid: int): bool =
-  when defined(macosx) or defined(linux):
-    try:
-      discard shoutput("kill", "-0", $pid)
-      result = true
-    except:
-      result = false
+  if findExe"kill":
+    echo "WARNING: no `kill` executable found"
+  try:
+    discard shoutput("kill", "-0", $pid)
+    result = true
+  except:
+    result = false
 
 proc terminateAllChildren(pid: int = 0) =
   ## Recursively terminate all child processes.
   echo "Terminating children of: ", $pid
-  when defined(macosx) or defined(linux):
-    var round1 = pid.listAllChildPids()
-    var round2: seq[int]
-    while round1.len > 0:
-      var child = round1[0]
-      round1.delete(0, 0)
-      var children = listAllChildPids(child)
-      for child in children:
-        if child notin round1 and child notin round2:
-          round1.add(child)
-      try:
-        echo "kill ", $child
-        discard shoutput("kill", $child)
-      except:
-        break
-      if child.isAlive():
-        round2.add(child)
+  if findExe"kill" == "":
+    echo "WARNING: no `kill` executable found"
+  var round1 = pid.listAllChildPids()
+  var round2: seq[int]
+  while round1.len > 0:
+    var child = round1[0]
+    round1.delete(0, 0)
+    var children = listAllChildPids(child)
+    for child in children:
+      if child notin round1 and child notin round2:
+        round1.add(child)
+    try:
+      echo "kill ", $child
+      discard shoutput("kill", $child)
+    except:
+      break
+    if child.isAlive():
+      round2.add(child)
 
-    while round2.len > 0:
-      sleep(100)
-      var child = round2[0]
-      round2.delete(0, 0)
-      if not child.isAlive():
-        continue
-      var children = listAllChildPids(child)
-      for child in children:
-        if child notin round2:
-          round2.add(child)
-      try:
-        echo "kill -9 ", $child
-        discard shoutput("kill", "-9", $child)
-      except:
-        discard
+  while round2.len > 0:
+    sleep(100)
+    var child = round2[0]
+    round2.delete(0, 0)
+    if not child.isAlive():
+      continue
+    var children = listAllChildPids(child)
+    for child in children:
+      if child notin round2:
+        round2.add(child)
+    try:
+      echo "kill -9 ", $child
+      discard shoutput("kill", "-9", $child)
+    except:
+      discard
   echo "Done terminating children of: ", $pid
       
 
