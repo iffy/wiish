@@ -68,7 +68,7 @@ jobs:
         open -a /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
       shell: bash
-      timeout-minutes: 30
+      timeout-minutes: 6
       run: |
         set -x
         export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
@@ -105,6 +105,8 @@ jobs:
         wiish doctor || true
 
         if [ "$(uname)" == "Linux" ]; then
+          # Maybe this?
+          # https://github.community/t/cant-run-sdl2-no-available-video-device/17190/2
           xvfb-run nimble test
         else
           nimble test
