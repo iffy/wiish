@@ -13,6 +13,31 @@ var VERBOSE = getEnv("VERBOSE", "") != ""
 var consoleThreshold = if VERBOSE: lvlAll else: lvlInfo
 
 type
+  FlushingConsoleLogger = ref object of Logger
+    useStderr: bool
+
+method log*(logger: FlushingConsoleLogger, level: Level, args: varargs[string, `$`]) =
+  ## Copied from std/unittest.ConsoleLogger
+  if level >= logger.levelThreshold:
+    let ln = substituteLog(logger.fmtStr, level, args)
+    try:
+      var handle = stdout
+      if logger.useStderr:
+        handle = stderr
+      writeLine(handle, ln)
+      flushFile(handle)
+    except IOError:
+      discard
+
+proc newFlushingConsoleLogger*(levelThreshold = lvlAll, fmtStr = defaultFmtStr,
+    useStderr = false): FlushingConsoleLogger =
+  ## Copied from std/unittest.ConsoleLogger
+  new result
+  result.fmtStr = fmtStr
+  result.levelThreshold = levelThreshold
+  result.useStderr = useStderr
+
+type
   MyFormatter = ref object of OutputFormatter
     startTime: DateTime
     currentSuite: string
@@ -130,7 +155,7 @@ proc summary*(formatter: MyFormatter): string =
 proc useCustomUnittestFormatter*() =
   var formatter = newMyFormatter()
   addOutputFormatter(formatter)
-  var consoleLog = newConsoleLogger(levelThreshold=consoleThreshold)
+  var consoleLog = newFlushingConsoleLogger(levelThreshold=consoleThreshold)
   echo "consoleLog threshold: ", $consoleThreshold
   var fileLog = newFileLogger(currentSourcePath.parentDir()/"test.log", levelThreshold=lvlAll, fmtStr=verboseFmtStr)
   addHandler(consoleLog)
