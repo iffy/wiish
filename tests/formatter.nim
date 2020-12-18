@@ -1,41 +1,9 @@
-import logging
 import os
 import std/exitprocs
 import strutils
 import terminal
 import times
 import unittest
-
-#----------------------------------------------------------------------
-# logging
-#----------------------------------------------------------------------
-var VERBOSE = getEnv("VERBOSE", "") != ""
-var consoleThreshold = if VERBOSE: lvlAll else: lvlInfo
-
-type
-  FlushingConsoleLogger = ref object of Logger
-    useStderr: bool
-
-method log*(logger: FlushingConsoleLogger, level: Level, args: varargs[string, `$`]) =
-  ## Copied from std/unittest.ConsoleLogger
-  if level >= logger.levelThreshold:
-    let ln = substituteLog(logger.fmtStr, level, args)
-    try:
-      var handle = stdout
-      if logger.useStderr:
-        handle = stderr
-      writeLine(handle, ln)
-      flushFile(handle)
-    except IOError:
-      discard
-
-proc newFlushingConsoleLogger*(levelThreshold = lvlAll, fmtStr = defaultFmtStr,
-    useStderr = false): FlushingConsoleLogger =
-  ## Copied from std/unittest.ConsoleLogger
-  new result
-  result.fmtStr = fmtStr
-  result.levelThreshold = levelThreshold
-  result.useStderr = useStderr
 
 type
   MyFormatter = ref object of OutputFormatter
@@ -65,7 +33,6 @@ method suiteStarted*(formatter: MyFormatter, suiteName: string) =
   formatter.currentSuite = suiteName
   stdout.styledWriteLine styleBright, "=".repeat(terminalWidth())
   stdout.styledWriteLine styleBright, suiteName & "::"
-  debug "suite started: ", suiteName
 
 method testStarted*(formatter: MyFormatter, testName: string) =
   var preline = mkPreline(formatter.currentSuite, testName, prefix = "START ")
@@ -76,7 +43,6 @@ method testStarted*(formatter: MyFormatter, testName: string) =
     formatter.lastStderr = stderr.getFilePos()
   except:
     discard
-  debug preline
 
 method failureOccurred*(formatter: MyFormatter, checkpoints: seq[string], stackTrace: string) =
   if "[SkipTestError]" in checkpoints[^1]:
@@ -120,19 +86,16 @@ method testEnded*(formatter: MyFormatter, testResult: TestResult) =
     stdout.styledWrite fgGreen, "[OK] "
     stdout.writeLine preline
     formatter.okTests.inc()
-    debug "[OK] ", preline
   of FAILED:
     stdout.styledWrite fgRed, "[FAILED] "
     stdout.writeLine preline
     formatter.failedTests.add fullname
     formatter.progResult = 1
-    debug "[FAILED] ", preline
   of SKIPPED:
     stdout.styledWrite fgYellow, "[SKIPPED] "
     stdout.write preline
     stdout.styledWriteLine styleDim, " ", formatter.currentSkip
     formatter.skippedTests.add fullname
-    debug "[SKIPPED] ", preline
   if bytesWritten > 0:
     echo "-".repeat(terminalWidth())
   formatter.currentTest = ""
@@ -155,23 +118,14 @@ proc summary*(formatter: MyFormatter): string =
 proc useCustomUnittestFormatter*() =
   var formatter = newMyFormatter()
   addOutputFormatter(formatter)
-  var consoleLog = newFlushingConsoleLogger(levelThreshold=consoleThreshold)
-  echo "consoleLog threshold: ", $consoleThreshold
-  var fileLog = newFileLogger(currentSourcePath.parentDir()/"test.log", levelThreshold=lvlAll, fmtStr=verboseFmtStr)
-  addHandler(consoleLog)
-  addHandler(fileLog)
-  debug "logtest: debug"
-  info "logtest: info"
-  warn "logtest: warn"
-  error "logtest: error"
   addExitProc proc() =
     if formatter.skippedTests.len > 0:
-      info "SKIPPED TESTS:"
+      echo "SKIPPED TESTS:"
       for name in formatter.skippedTests:
-        info "  ", name
+        echo "  ", name
     if formatter.failedTests.len > 0:
-      info "FAILED TESTS:"
+      echo "FAILED TESTS:"
       for name in formatter.failedTests:
-        info "  ", name
-    info formatter.summary()
+        echo "  ", name
+    echo formatter.summary()
     setProgramResult formatter.progResult
