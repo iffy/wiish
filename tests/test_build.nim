@@ -529,8 +529,8 @@ suite "init":
       echo absolutePath"."
       addConfigNims()
       runWiish "init", "desktop"
-      if buildTarget in {Linux, Windows}:
-        skipReason "Building on " & $buildTarget & " not supported yet"
+      if THISOS in {Linux, Windows}:
+        skipReason "Building on " & $THISOS & " not supported yet"
       else:
         withDir "desktop":
           runWiish "build"
