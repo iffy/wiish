@@ -69,6 +69,7 @@ jobs:
       shell: bash
       timeout-minutes: 5
       run: |
+        set -x
         export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
         export PATH="${ANDROID_NDK_HOME}:${PATH}"
         export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"

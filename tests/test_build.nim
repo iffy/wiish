@@ -18,6 +18,8 @@ import ./formatter
 import wiish/building/buildutil
 import wiishcli
 
+echo "test_build.nim start"
+
 useCustomUnittestFormatter()
 
 randomize()
@@ -368,6 +370,7 @@ proc waitForDeath(p: Process) =
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
+  echo "testWiishRun", dirname, " ", args, " ", $sleepSeconds
   info "    Running command:"
   info "        cd ", dirname
   let wiishbin = ("bin"/"wiish").absolutePath
@@ -441,9 +444,13 @@ suite "run":
     # Desktop
     if desktopMain(example) != "":
       test(example.extractFilename):
+        echo "test run:: ", example
         runMaybe:
+          echo "runMaybe worked"
           forMatrix(THISOS, example.extractFilename, "run"):
+            echo "in Matrix for", $THISOS, " ", example.extractFilename, " run"
             doAssert testWiishRun(example, @["run"], 5)
+            echo "after assert"
     
     # Mobile
     if mobileMain(example) != "":
