@@ -79,7 +79,7 @@ proc listAllChildPids(pid: int = 0): seq[int] =
   ## There's probably all kinds of race conditions and problems with
   ## this method.  If someone has a better cross-platform way
   ## to kill all descendent processes, please add it here.
-  if findExe"pgrep":
+  if findExe"pgrep" == "":
     echo "WARNING: no `pgrep` executable found"
   var pid = if pid == 0: getCurrentProcessId() else: pid
   let childpids = (shoutput("pgrep", "-P", $pid)).strip().splitLines()
@@ -90,7 +90,7 @@ proc listAllChildPids(pid: int = 0): seq[int] =
     result.add child.parseInt().listAllChildPids()
 
 proc isAlive(pid: int): bool =
-  if findExe"kill":
+  if findExe"kill" == "":
     echo "WARNING: no `kill` executable found"
   try:
     discard shoutput("kill", "-0", $pid)
