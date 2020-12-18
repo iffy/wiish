@@ -74,21 +74,36 @@ proc mobileMain(root: string): string =
     if fileExists(root / name):
       return root / name
 
-proc listAllChildPids(pid: int = 0): seq[int] =
-  ## Return a list of all child pids of the current process
+proc listAllDescendentPids(pid: int = 0): seq[int] =
+  ## Return a list of all descendent pids of the current process
   ## There's probably all kinds of race conditions and problems with
   ## this method.  If someone has a better cross-platform way
   ## to kill all descendent processes, please add it here.
-  if findExe"pgrep" == "":
-    echo "WARNING: no `pgrep` executable found"
   var pid = if pid == 0: getCurrentProcessId() else: pid
-  let childpids = (shoutput("pgrep", "-P", $pid)).strip().splitLines()
-  for child in childpids:
-    if child == "":
+  let allpids = (shoutput("ps", "-a", "-x", "-o", "ppid,pid")).strip().splitLines()
+  var tree = initTable[int, seq[int]]()
+  for line in allpids:
+    try:
+      let parts = line.strip().splitWhitespace()
+      let parent = parts[0].parseInt()
+      let child = parts[1].parseInt()
+      if not tree.hasKey(parent):
+        tree[parent] = newSeq[int]()
+      tree[parent].add(child)
+    except:
+      discard
+  var stack = @[pid]
+  while stack.len > 0:
+    let p = stack.pop()
+    if p in result:
       continue
-    result.add child.parseInt()
-    result.add child.parseInt().listAllChildPids()
-
+    result.add p
+    if tree.hasKey(p):
+      # is a parent
+      for child in tree[p]:
+        stack.add(child)
+  result.del(0) # don't include the root pid
+  
 proc isAlive(pid: int): bool =
   if findExe"kill" == "":
     echo "WARNING: no `kill` executable found"
@@ -103,12 +118,12 @@ proc terminateAllChildren(pid: int = 0) =
   echo "Terminating children of: ", $pid
   if findExe"kill" == "":
     echo "WARNING: no `kill` executable found"
-  var round1 = pid.listAllChildPids()
+  var round1 = pid.listAllDescendentPids()
   var round2: seq[int]
   while round1.len > 0:
     var child = round1[0]
     round1.delete(0, 0)
-    var children = listAllChildPids(child)
+    var children = listAllDescendentPids(child)
     for child in children:
       if child notin round1 and child notin round2:
         round1.add(child)
@@ -126,7 +141,7 @@ proc terminateAllChildren(pid: int = 0) =
     round2.delete(0, 0)
     if not child.isAlive():
       continue
-    var children = listAllChildPids(child)
+    var children = listAllDescendentPids(child)
     for child in children:
       if child notin round2:
         round2.add(child)
