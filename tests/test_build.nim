@@ -389,7 +389,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         try:
           echo "waiting to receive line..."
           let line = outChan.recv()
-          echo "got line"
+          echo "got line: ", line
           buf.add line
           if run_sentinel in line:
             break
