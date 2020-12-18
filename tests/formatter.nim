@@ -131,6 +131,7 @@ proc useCustomUnittestFormatter*() =
   var formatter = newMyFormatter()
   addOutputFormatter(formatter)
   var consoleLog = newConsoleLogger(levelThreshold=consoleThreshold)
+  echo "consoleLog threshold: ", $consoleThreshold
   var fileLog = newFileLogger(currentSourcePath.parentDir()/"test.log", levelThreshold=lvlAll, fmtStr=verboseFmtStr)
   addHandler(consoleLog)
   addHandler(fileLog)

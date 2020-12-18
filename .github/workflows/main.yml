@@ -19,8 +19,8 @@ jobs:
           # - devel
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
+          # - macOS-latest
+          # - windows-latest
     steps:
     - shell: bash
       run: env | sort
