@@ -135,6 +135,10 @@ proc useCustomUnittestFormatter*() =
   var fileLog = newFileLogger(currentSourcePath.parentDir()/"test.log", levelThreshold=lvlAll, fmtStr=verboseFmtStr)
   addHandler(consoleLog)
   addHandler(fileLog)
+  debug "logtest: debug"
+  info "logtest: info"
+  warn "logtest: warn"
+  error "logtest: error"
   addExitProc proc() =
     if formatter.skippedTests.len > 0:
       info "SKIPPED TESTS:"

@@ -67,7 +67,7 @@ jobs:
         open -a /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
       shell: bash
-      timeout-minutes: 60
+      timeout-minutes: 5
       run: |
         export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
         export PATH="${ANDROID_NDK_HOME}:${PATH}"

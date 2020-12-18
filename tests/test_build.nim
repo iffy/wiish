@@ -419,7 +419,9 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
+  echo "Ensuring wiish cli built..."
   if not wiish_bin_built:
+    echo "Building wiish binary..."
     info "Building wiish binary..."
     sh "nimble", "build"
     wiish_bin_built = true
