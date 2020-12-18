@@ -9,8 +9,6 @@ on:
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
-    env:
-      WIISH_TEST_RUN: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -75,31 +73,13 @@ jobs:
         export PATH="${ANDROID_NDK_HOME}:${PATH}"
         export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
         export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
-        # nim c .github/tounixpath.nim
-        # normpath() {
-        #   varname="$1"
-        #   if [ ! -z "${!varname}" ]; then
-        #     export "${1}"="$(.github/tounixpath "${!varname}")"
-        #   fi
-        # }
-        # env | grep -i android
-        # normpath ANDROID_HOME
-        # normpath ANDROID_NDK_HOME
-        # normpath ANDROID_NDK_PATH
-        # normpath ANDROID_SDK_ROOT
-        # export PATH="${ANDROID_NDK_HOME}:${PATH}"
-        # export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
-        # export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
-        # echo "--------------------- build-local.mk"
-        # cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
-        # echo "---------------------"
-        # env | grep -i android
-        # echo $PATH
         if [ "$(uname)" == "Darwin" ]; then
           export WIISH_BUILD_ANDROID=yes
           export WIISH_RUN_ANDROID=yes
+          export WIISH_TEST_RUN=yes
         elif [ "$(uname)" == "Linux" ]; then
           export WIISH_BUILD_ANDROID=yes
+          export WIISH_TEST_RUN=yes
         fi
         export VERBOSE=1
         wiish doctor || true
@@ -116,3 +96,25 @@ jobs:
       run: |
         ./builddocs.sh
     
+
+# Saving for later in case we do Android testing on Windows
+# nim c .github/tounixpath.nim
+# normpath() {
+#   varname="$1"
+#   if [ ! -z "${!varname}" ]; then
+#     export "${1}"="$(.github/tounixpath "${!varname}")"
+#   fi
+# }
+# env | grep -i android
+# normpath ANDROID_HOME
+# normpath ANDROID_NDK_HOME
+# normpath ANDROID_NDK_PATH
+# normpath ANDROID_SDK_ROOT
+# export PATH="${ANDROID_NDK_HOME}:${PATH}"
+# export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+# export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+# echo "--------------------- build-local.mk"
+# cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
+# echo "---------------------"
+# env | grep -i android
+# echo $PATH
