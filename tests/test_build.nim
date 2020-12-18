@@ -378,7 +378,6 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     let outs = p.outputStream()
     var readerThread: Thread[Stream]
     readerThread.createThread(readOutput, outs)
-    var buf: string
     while true:
       if p.running():
         # still running
@@ -387,7 +386,6 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
           if tried.dataAvailable:
             let line = tried.msg  
             echo line
-            buf.add line
             if run_sentinel in line:
               break
           else:
@@ -395,7 +393,6 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         except:
           warn "Error reading subprocess output"
           warn getCurrentExceptionMsg()
-          info buf
           raise
       else:
         warn "wiish command exited prematurely"
@@ -415,11 +412,9 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     while true:
       let tried = outChan.tryRecv()
       if tried.dataAvailable:
-        buf.add tried.msg
+        echo tried.msg
       else:
         break
-    if not result:
-      info buf
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
