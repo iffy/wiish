@@ -385,7 +385,8 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
           let tried = outChan.tryRecv()
           if tried.dataAvailable:
             let line = tried.msg  
-            echo line
+            stdout.write line
+            stdout.flushFile()
             if run_sentinel in line:
               break
           else:
