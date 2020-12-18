@@ -45,6 +45,7 @@ jobs:
         elif [ "$(uname)" == "Linux" ]; then
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
           sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-gfx-dev
+          sudo apt install -y xvfb
         else
           echo "Nothing yet for Windows"
         fi
@@ -65,10 +66,6 @@ jobs:
         SIM_UDID=$(.github/ios_devices | head -n 1)
         echo $SIM_UDID
         open -a /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app --args -CurrentDeviceUDID $SIM_UDID
-    - name: Install X Server
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt install -y xserver-xorg-video-dummy
     - name: Test
       shell: bash
       timeout-minutes: 30
@@ -103,11 +100,15 @@ jobs:
           export WIISH_RUN_ANDROID=yes
         elif [ "$(uname)" == "Linux" ]; then
           export WIISH_BUILD_ANDROID=yes
-          (Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile /tmp/0.log -config .github/xorg.conf :0 2>&1 >> /tmp/xorg.log) &
         fi
         export VERBOSE=1
         wiish doctor || true
-        nimble test
+
+        if [ "$(uname)" == "Linux" ]; then
+          xvfb-run nimble test
+        else
+          nimble test
+        fi
     - name: Build log
       if: ${{ always() }}
       shell: bash
