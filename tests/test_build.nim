@@ -439,7 +439,7 @@ suite "run":
   for example in example_dirs:
     # Desktop
     if desktopMain(example) != "":
-      test(example.extractFilename):
+      test($THISOS & " " & example.extractFilename):
         runMaybe:
           forMatrix(THISOS, example.extractFilename, "run"):
             doAssert testWiishRun(example, @["run"], 5)
@@ -477,7 +477,7 @@ suite "build":
   for example in example_dirs:
     # Desktop
     if desktopMain(example) != "":
-      test(example.extractFilename):
+      test($THISOS & " " & example.extractFilename):
         withDir example:
           forMatrix(THISOS, example.extractFilename, "build"):
             runWiish "build"
