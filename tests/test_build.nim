@@ -529,8 +529,11 @@ suite "init":
       echo absolutePath"."
       addConfigNims()
       runWiish "init", "desktop"
-      withDir "desktop":
-        runWiish "build"
+      if buildTarget in {Linux, Windows}:
+        skipReason "Building on " & $buildTarget & " not supported yet"
+      else:
+        withDir "desktop":
+          runWiish "build"
   
   if Ios in buildTargets or IosSimulator in buildTargets:
     test "init and build --os ios-simulator":
