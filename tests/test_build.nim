@@ -330,10 +330,10 @@ const run_sentinel = "WIISH RUN STARTING"
 var outChan: Channel[string]
 outChan.open()
 
-proc readOutput(fh: FileHandle) {.thread.} =
+proc readOutput(s: Stream) {.thread.} =
   var line: string
   try:
-    while fh.readLine(line):
+    while s.readLine(line):
       debug line
       outChan.send(line & "\l")
   except:
