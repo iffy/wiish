@@ -19,8 +19,8 @@ jobs:
           # - devel
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
+          # - macOS-latest
+          # - windows-latest
     steps:
     - shell: bash
       run: env | sort
@@ -45,6 +45,7 @@ jobs:
         elif [ "$(uname)" == "Linux" ]; then
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
           sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-gfx-dev
+          sudo apt install -y xvfb
         else
           echo "Nothing yet for Windows"
         fi
@@ -69,6 +70,7 @@ jobs:
       shell: bash
       timeout-minutes: 60
       run: |
+        set -x
         export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
         export PATH="${ANDROID_NDK_HOME}:${PATH}"
         export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
@@ -101,12 +103,14 @@ jobs:
         fi
         export VERBOSE=1
         wiish doctor || true
-        nimble test
-    - name: Build log
-      if: ${{ always() }}
-      shell: bash
-      run: |
-        cat tests/test.log
+
+        if [ "$(uname)" == "Linux" ]; then
+          # Maybe this?
+          # https://github.community/t/cant-run-sdl2-no-available-video-device/17190/2
+          xvfb-run nimble test
+        else
+          nimble test
+        fi
     - name: Docs
       if: runner.os == 'Linux'
       run: |

@@ -54,6 +54,34 @@ proc macRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
     discard
 
 #-------------------------------------------------------------
+# Linux
+#-------------------------------------------------------------
+proc linuxRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish SDL2 Linux Build
+  case step
+  of Compile:
+    if ctx.targetFormat != targetRun:
+      raise ValueError.newException("Linux SDL2 building not supported yet")
+  of Run:
+    b.desktopRun(ctx)
+  else:
+    discard
+
+#-------------------------------------------------------------
+# Windows
+#-------------------------------------------------------------
+proc windowsRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish SDL2 Windows Build
+  case step
+  of Compile:
+    if ctx.targetFormat != targetRun:
+      raise ValueError.newException("Windows SDL2 building not supported yet")
+  of Run:
+    b.desktopRun(ctx)
+  else:
+    discard
+
+#-------------------------------------------------------------
 # iOS
 #-------------------------------------------------------------
 proc iosBuildSDLLib(ctx: ref BuildContext, lib = ""): string =
@@ -260,6 +288,10 @@ proc runStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
     b.androidRunStep(step, ctx)
   of MobileDev:
     b.mobiledevRunStep(step, ctx)
+  of Linux:
+    b.linuxRunStep(step, ctx)
+  of Windows:
+    b.windowsRunStep(step, ctx)
   else:
     raise ValueError.newException("Not yet supported: " & $ctx.targetOS)
 

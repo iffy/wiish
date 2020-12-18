@@ -1,5 +1,4 @@
 import algorithm
-import logging
 import os
 import osproc
 import random
@@ -28,7 +27,7 @@ const examples = example_dirs.mapIt(it.extractFilename())
 
 const TMPROOT = currentSourcePath.parentDir/"_testtmp"
 if dirExists(TMPROOT):
-  info "removing old test dir ", TMPROOT
+  echo "removing old test dir ", TMPROOT
   removeDir(TMPROOT)
 
 proc tmpDir(): string {.used.} =
@@ -99,7 +98,7 @@ proc isAlive(pid: int): bool =
 
 proc terminateAllChildren(pid: int = 0) =
   ## Recursively terminate all child processes.
-  debug "Terminating children of: ", $pid
+  echo "Terminating children of: ", $pid
   when defined(macosx) or defined(linux):
     var round1 = pid.listAllChildPids()
     var round2: seq[int]
@@ -111,7 +110,7 @@ proc terminateAllChildren(pid: int = 0) =
         if child notin round1 and child notin round2:
           round1.add(child)
       try:
-        debug "kill ", $child
+        echo "kill ", $child
         discard shoutput("kill", $child)
       except:
         break
@@ -129,11 +128,11 @@ proc terminateAllChildren(pid: int = 0) =
         if child notin round2:
           round2.add(child)
       try:
-        debug "kill -9 ", $child
+        echo "kill -9 ", $child
         discard shoutput("kill", "-9", $child)
       except:
         discard
-  debug "Done terminating children of: ", $pid
+  echo "Done terminating children of: ", $pid
       
 
 #---------------------------------------------------------------
@@ -334,18 +333,17 @@ proc readOutput(s: Stream) {.thread.} =
   var line: string
   try:
     while s.readLine(line):
-      debug line
-      outChan.send(line & "\l")
+      outChan.send(line)
   except:
-    warn "Ignoring error reading line: ", getCurrentExceptionMsg()
+    echo "Ignoring error reading line: ", getCurrentExceptionMsg()
 
 proc waitForDeath(p: Process) =
   for i in 0..10:
     if i > 0: sleep(1000)
     try:
-      debug "  terminating pid: ", $p.processID()
+      echo "  terminating pid: ", $p.processID()
       p.terminate()
-      debug "  terminated  pid: ", $p.processID()
+      echo "  terminated  pid: ", $p.processID()
     except:
       discard
     if not p.running():
@@ -353,74 +351,77 @@ proc waitForDeath(p: Process) =
   for i in 0..10:
     if i > 0: sleep(1000)
     try:
-      debug "  killing pid: ", $p.processID()
+      echo "  killing pid: ", $p.processID()
       p.kill()
-      debug "  killed  pid: ", $p.processID()
+      echo "  killed  pid: ", $p.processID()
     except:
       discard
     if not p.running():
       break
-  debug "  waiting for finish: ", $p.processID()
+  echo "  waiting for finish: ", $p.processID()
   discard p.waitForExit()
-  debug "  closing process: ", $p.processID()
+  echo "  closing process: ", $p.processID()
   p.close()
-  debug "  done: ", $p.processID()
+  echo "  done: ", $p.processID()
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
-  info "    Running command:"
-  info "        cd ", dirname
+  echo "    Running command:"
+  echo "        cd ", dirname
   let wiishbin = ("bin"/"wiish").absolutePath
-  info "        " & wiishbin & " ", args.join(" ")
+  echo "        " & wiishbin & " ", args.join(" ")
   withDir dirname:
     var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
     defer: p.close()
+    let pid = $p.processID()
+    stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, wiishbin, " ", args.join(" ")
     let outs = p.outputStream()
     var readerThread: Thread[Stream]
     readerThread.createThread(readOutput, outs)
-
-    var buf: string
     while true:
       if p.running():
         # still running
         try:
-          let line = outChan.recv()
-          buf.add line
-          if run_sentinel in line:
-            break
+          let tried = outChan.tryRecv()
+          if tried.dataAvailable:
+            let line = tried.msg  
+            stdout.styledWriteLine styleDim, pid, ": ", resetStyle, line
+            stdout.flushFile()
+            if run_sentinel in line:
+              break
+          else:
+            sleep(10)
         except:
-          warn "Error reading subprocess output"
-          warn getCurrentExceptionMsg()
-          info buf
+          echo "Error reading subprocess output"
+          echo getCurrentExceptionMsg()
           raise
       else:
-        warn "wiish command exited prematurely"
+        echo "wiish command exited prematurely"
         break
-    info &"    Waiting for {sleepSeconds}s to see if it keeps running..."
+    echo &"    Waiting for {sleepSeconds}s to see if it keeps running..."
     for i in 0..<sleepSeconds:
       if not p.running():
         break
       sleep(1000)
     result = p.running() # it should still be running
     terminateAllChildren(p.processID())
-    debug "waiting for death"
+    echo "waiting for death"
     p.waitForDeath()
-    debug "waiting for reader thread..."
+    echo "waiting for reader thread..."
     readerThread.joinThread()
-    debug "clearing out reader channel..."
+    echo "clearing out reader channel..."
     while true:
       let tried = outChan.tryRecv()
       if tried.dataAvailable:
-        buf.add tried.msg
+        stdout.styledWriteLine styleDim, pid, ": ", resetStyle, tried.msg
       else:
         break
-    if not result:
-      info buf
+    stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
   if not wiish_bin_built:
-    info "Building wiish binary..."
+    echo "Building wiish binary..."
     sh "nimble", "build"
     wiish_bin_built = true
 
@@ -433,12 +434,12 @@ suite "run":
     try:
       sh cmd
     except:
-      warn "Error ^ while running: ", cmd.join(" ")
+      echo "Error ^ while running: ", cmd.join(" ")
 
   for example in example_dirs:
     # Desktop
     if desktopMain(example) != "":
-      test(example.extractFilename):
+      test($THISOS & " " & example.extractFilename):
         runMaybe:
           forMatrix(THISOS, example.extractFilename, "run"):
             doAssert testWiishRun(example, @["run"], 5)
@@ -471,12 +472,12 @@ suite "build":
     try:
       sh cmd
     except:
-      warn "Error ^ while running: ", cmd.join(" ")
+      echo "Error ^ while running: ", cmd.join(" ")
 
   for example in example_dirs:
     # Desktop
     if desktopMain(example) != "":
-      test(example.extractFilename):
+      test($THISOS & " " & example.extractFilename):
         withDir example:
           forMatrix(THISOS, example.extractFilename, "build"):
             runWiish "build"
@@ -503,11 +504,11 @@ suite "init":
     try:
       sh cmd
     except:
-      warn "Error ^ while running: ", cmd.join(" ")
+      echo "Error ^ while running: ", cmd.join(" ")
 
   test "init and build":
     withDir tmpDir():
-      info absolutePath"."
+      echo absolutePath"."
       addConfigNims()
       runWiish "init", "desktop"
       withDir "desktop":
@@ -516,7 +517,7 @@ suite "init":
   if Ios in buildTargets or IosSimulator in buildTargets:
     test "init and build --os ios-simulator":
       withDir tmpDir():
-        info absolutePath"."
+        echo absolutePath"."
         addConfigNims()
         runWiish "init", "iostest"
         withDir "iostest":
@@ -526,7 +527,7 @@ suite "init":
     test "init and build --os android":
       androidBuildMaybe:
         withDir tmpDir():
-          info absolutePath"."
+          echo absolutePath"."
           addConfigNims()
           runWiish "init", "androidtest"
           withDir "androidtest":
@@ -535,5 +536,5 @@ suite "init":
 stdout.flushFile()
 stderr.flushFile()
 
-info "\n## Support Matrix for " & $THISOS
+echo "\n## Support Matrix for " & $THISOS
 displaySupport(THISOS)
