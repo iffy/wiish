@@ -31,7 +31,7 @@ jobs:
       with:
         path: |
           ~/.nimble/pkgs
-        key: ${{ runner.os }}-${{ hashFiles('wiish.nimble') }}
+        key: ${{ runner.os }}-nimble-${{ hashFiles('wiish.nimble') }}
     - name: Install
       shell: bash
       run: |
