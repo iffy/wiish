@@ -1,5 +1,6 @@
 import os
 import std/exitprocs
+import strformat
 import strutils
 import terminal
 import times
@@ -53,6 +54,8 @@ method failureOccurred*(formatter: MyFormatter, checkpoints: seq[string], stackT
     msg = msg.substr(0, msg.len - " [SkipTestError]".len)
     formatter.currentSkip = msg
   else:
+    if formatter.progResult != 0:
+      echo &"EXITCODE=1 for {formatter.currentSuite}::{formatter.currentTest}"
     formatter.progResult = 1
     stdout.styledWriteLine fgRed, "\nFAILURE >>>"
     for item in checkpoints:

@@ -160,7 +160,8 @@ type
   SupportStatus = enum
     NotWorking
     NotApplicable
-    Planned
+    Planned # It probably doesn't work -- if it does that's a surprise
+    Untested # It probably works, but it's untested
     Working
 
 var supportedBranches = initTable[string, SupportStatus]()
@@ -185,18 +186,24 @@ template forMatrix(targetOS: TargetOS, example: string, action: string, body: un
     try:
       if expectedStatus == NotApplicable:
         discard
+      elif expectedStatus == Untested:
+        echo "Not testing scenario marked Untested: ", $targetOS, " ", example, " ", action
       else:
         body
         markSupport(targetOS, example, action, Working)
     except:
       case expectedStatus
       of NotWorking:
+        if getProgramResult() != 0:
+          echo "EXITCODE=1 for " & $targetOS & " " & example & " "  & action
         setProgramResult 1
         raise
       of NotApplicable:
         echo "Failed, but expected NotApplicable"
       of Planned:
         echo "Failed, but not expected to pass yet"
+      of Untested:
+        echo "Failed, but not expected to pass as untested"
       of Working:
         markSupport(targetOS, example, action, NotWorking)
       
@@ -213,6 +220,8 @@ proc str(status: SupportStatus): string =
     "Yes"
   of Planned:
     "Planned"
+  of Untested:
+    "Untested"
 
 proc displaySupport(hostOS: TargetOS) =
   var rows:seq[seq[string]]
@@ -231,6 +240,8 @@ proc displaySupport(hostOS: TargetOS) =
       if run_status == NotApplicable and build_status == NotApplicable:
         continue
       if run_status == NotWorking or build_status == NotWorking:
+        if getProgramResult() != 0:
+          echo &"EXITCODE=1 for {targetOS} {example} run/build"
         setProgramResult 1
       rows.add @[$targetOS, example, run_status.str(), build_status.str()]
       col1max = max(col1max, rows[^1][0].len)
@@ -286,6 +297,8 @@ elif defined(windows):
       markSupport(Ios, example, action, NotApplicable)
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Linux, example, action, NotApplicable)
+      markSupport(Android, example, action, Planned)
+    markSupport(Windows, example, "run", Untested) # It probably works, but can't be tested on CI yet
     markSupport(Windows, example, "build", Planned) # Building for Windows doesn't work yet
 
 else:
