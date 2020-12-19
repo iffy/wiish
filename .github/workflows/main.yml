@@ -26,6 +26,12 @@ jobs:
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
+    - name: Cache multiple paths
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.nimble/pkgs
+        key: ${{ runner.os }}-${{ hashFiles('wiish.nimble') }}
     - name: Install
       shell: bash
       run: |
