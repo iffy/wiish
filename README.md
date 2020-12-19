@@ -17,26 +17,19 @@ Wiish (Why Is It So Hard) GUI framework might one day make it easy to develop, p
 
 2. Install Wiish:
 
-    ```
+    ```bash
     nimble install https://github.com/iffy/wiish.git
     ```
 
-3. Install other dependencies:
+3. Find out what other dependencies you need:
 
     ```bash
-    # Tell me what I need to install
     wiish doctor
     ```
-    
-    Depending on the GUI you want to use, it might be the following:
-
-    - **Ubuntu**: `apt-get install libsdl2-dev libsdl2-ttf-dev libgtk-3-dev libwebkit2gtk-4.0-dev`
-    - **macOS**: Xcode
-    - **Windows**: Don't know yet
 
 4. Create a project and run it:
 
-    ```
+    ```bash
     wiish init somedir
     cd somedir
     wiish run
@@ -57,9 +50,9 @@ Wiish provides:
 
 1. A `wiish` command line tool for running, building and packaging apps.
 2. A `wiish` Nim library (i.e. `import wiish/...`) for app-specific helpers (e.g. auto-updating, asset-access, etc...)
-3. Plugins for different GUI frameworks.
+3. Plugins for different GUI frameworks: `import wiish/plugins/...`
 
-## Plugins
+# Plugins
 
 Wiish uses a plugin system to support various GUI frameworks:
 
@@ -70,61 +63,85 @@ The GUI component is designed to work separately from other features (e.g. auto-
 
 It is hoped that more plugins will be introduced for other GUI frameworks.
 
-## Support
+## Support Matrix
 
-### GUI framework support
- 
-| Product   | webview | OpenGL | SDL2  |
-| --------- | :-----: | :----: | :---: |
-| macOS     |    Y    |   Y    |   Y   |
-| Windows   |         |        |       |
-| Linux     |    Y    |        |       |
-| iOS       |    Y    |   Y    |   Y   |
-| Android   |    Y    |   Y    |   Y   |
-| mobiledev |    Y    |        |       |
+| Host OS | `--os`        | Example      | `wiish run` | `wiish build` |
+| ------- | ------------- | ------------ | :---------: | :-----------: |
+| windows | android       | opengl       |     No      |      No       |
+| windows | android       | plainwebview |     No      |      No       |
+| windows | android       | sdl2         |     No      |      No       |
+| windows | android       | webview      |     No      |      No       |
+| windows | mobiledev     | opengl       |     No      |       -       |
+| windows | mobiledev     | plainwebview |     No      |       -       |
+| windows | mobiledev     | sdl2         |     No      |       -       |
+| windows | mobiledev     | webview      |     No      |       -       |
+| windows | windows       | opengl       |     No      |      Yes      |
+| windows | windows       | plainwebview |     No      |      Yes      |
+| windows | windows       | sdl2         |     No      |      Yes      |
+| windows | windows       | webview      |     No      |      Yes      |
+| linux   | android       | opengl       |   Planned   |      Yes      |
+| linux   | android       | sdl2         |   Planned   |      Yes      |
+| linux   | android       | webview      |   Planned   |      Yes      |
+| linux   | mobiledev     | opengl       |     Yes     |       -       |
+| linux   | mobiledev     | sdl2         |     Yes     |       -       |
+| linux   | mobiledev     | webview      |     Yes     |       -       |
+| linux   | linux         | opengl       |     Yes     |    Planned    |
+| linux   | linux         | plainwebview |     Yes     |    Planned    |
+| linux   | linux         | sdl2         |     Yes     |    Planned    |
+| linux   | linux         | webview      |     Yes     |    Planned    |
+| mac     | android       | opengl       |     Yes     |      Yes      |
+| mac     | android       | sdl2         |     Yes     |      Yes      |
+| mac     | android       | webview      |     Yes     |      Yes      |
+| mac     | ios           | opengl       |   Planned   |    Planned    |
+| mac     | ios           | sdl2         |   Planned   |    Planned    |
+| mac     | ios           | webview      |   Planned   |    Planned    |
+| mac     | ios-simulator | opengl       |     Yes     |      Yes      |
+| mac     | ios-simulator | sdl2         |     Yes     |      Yes      |
+| mac     | ios-simulator | webview      |     Yes     |      Yes      |
+| mac     | mobiledev     | opengl       |     Yes     |       -       |
+| mac     | mobiledev     | sdl2         |     Yes     |       -       |
+| mac     | mobiledev     | webview      |     Yes     |       -       |
+| mac     | mac           | opengl       |     Yes     |      Yes      |
+| mac     | mac           | plainwebview |     Yes     |      Yes      |
+| mac     | mac           | sdl2         |     Yes     |      Yes      |
+| mac     | mac           | webview      |     Yes     |      Yes      |
 
 ### GUI-independent features
 
-| Feature                    | macOS | Windows | Linux |  iOS  | Android |
-| -------------------------- | :---: | :-----: | :---: | :---: | :-----: |
-| App icons                  |   Y   |         |       |   Y   |    Y    |
-| `wiish run` logs to stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
-| Log files                  |       |         |       |       |         |
-| Static assets              |   Y   |         |       |   Y   |    Y    |
-| Automatic updating         |       |         |       |   -   |    -    |
-| File associations          |       |         |       |       |         |
-| Menu bar access            |       |         |       |   -   |    -    |
+| Feature                 | macOS | Windows | Linux |  iOS  | Android |
+| ----------------------- | :---: | :-----: | :---: | :---: | :-----: |
+| App icons               |   Y   |         |       |   Y   |    Y    |
+| `wiish run` logs stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
+| Log files               |       |         |       |       |         |
+| Static assets           |   Y   |         |       |   Y   |    Y    |
+| Automatic updating      |       |         |       |   -   |    -    |
+| File associations       |       |         |       |       |         |
+| Menu bar access         |       |         |       |   -   |    -    |
 
 ### Distribution formats
 
 | Package           | Supported | Code signing |
 | ----------------- | :-------: | :----------: |
 | macOS `.dmg`      |           |              |
+| Windows Portable  |           |              |
 | Windows Installer |           |              |
-| Linux AppImage    |           |              |
+| Linux `.AppImage` |           |              |
 | iOS `.ipa`        |           |              |
 | Android `.apk`    |     Y     |              |
-
-### Cross-compiling support
-
-| Host system | macOS | Windows | Linux |  iOS  | Android |
-| ----------- | :---: | :-----: | :---: | :---: | :-----: |
-| macOS       |   Y   |         |       |   Y   |    Y    |
-| Windows     |   -   |    Y    |       |   -   |         |
-| Linux       |   -   |         |   Y   |   -   |    Y    |
 
 
 # Examples
 
 See the [`examples`](./examples) directory for more examples of how to use this library.  You can also initialize a project using these examples with `wiish init`.  See `wiish init --help` for information.
 
-# Developing wiish
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to Wiish development.
+# Plugins
 
+## sdl2
 
+## webview| 
 
-# Webview messaging
+### Messaging
 
 When using the `wiish/plugins/webview` plugin, you send/receive strings between JavaScript and your Nim like this:
 
@@ -162,3 +179,7 @@ app.start()
 # A note on quality
 
 This library works as advertised, but it is a huge mess.  I'm learning as I'm going, and trying to wrangle all these platforms is ridiculous.  I happily welcome suggestions (and pull requests).
+
+# Developing wiish
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for information about contributing to Wiish development.

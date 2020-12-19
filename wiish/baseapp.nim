@@ -1,26 +1,27 @@
 import ./events; export events
-import os
 
 const
   wiish_dev* = defined(wiish_dev) or defined(wiish_mobiledev)
     ## Indicates that this isn't a packaged app, but rather running in dev mode
-  wiish_mobile* = defined(ios) or defined(android) or defined(wiish_mobiledev)
+  wiish_ios* = defined(ios)
+  wiish_android* = defined(android)
+  wiish_mobiledev* = defined(wiish_mobiledev)
+  wiish_mobile* = wiish_ios or wiish_android or wiish_mobiledev
     ## Indicates that this is mobile app
+  wiish_mac* = defined(macosx) and not wiish_mobile
+  wiish_linux* = defined(linux) and not wiish_mobile
+  wiish_windows* = defined(windows) and not wiish_mobile
   wiish_desktop* = not wiish_mobile
     ## Indicates that this is a desktop app
-  wiish_webview* = defined(wiish_webview)
-    ## Indicates that this is a webview app
-  wiish_sdl* = defined(wiish_sdl)
-    ## Indicates that this is an SDL2 app
   testconcepts* = defined(testconcepts)
 
-template isConcept*(con: untyped, instance: untyped): untyped =
-  ## Check if the given concept is fulfilled by the instance.
-  when testconcepts:
-    {.hint: "Checking concept: " & $con .}
-    block:
-      proc checkConcept(ign: con) {.used.} = discard
-      checkConcept(instance) {.explain.}
+# template isConcept*(con: untyped, instance: untyped): untyped =
+#   ## Check if the given concept is fulfilled by the instance.
+#   when testconcepts:
+#     {.hint: "Checking concept: " & $con .}
+#     block:
+#       proc checkConcept[T: con](ign: T) {.used.} = discard
+#       checkConcept(instance) {.explain.}
 
 ## For iOS related documentation see:
 ##
@@ -34,57 +35,24 @@ template isConcept*(con: untyped, instance: untyped): untyped =
 ## - 
 
 type
-  MobileEventKind* = enum
+  LifeEventKind* = enum
     AppStarted
-      ## iOS      UIApplicationDelegate didFinishLaunchingWithOptions 
-      ## Android  TODO
     AppWillExit
-      ## iOS      UIApplicationDelegate applicationWillTerminate
-      ## Android  TODO
     WindowAdded
-      ## iOS 13   UISceneDelegate willConnectToSession
-      ## Android  TODO
-    WindowWillForeground
-      ## iOS 13   UISceneDelegate sceneWillEnterForeground
-      ## Android  TODO
-    WindowDidForeground
-      ## iOS 13   UISceneDelegate sceneDidBecomeActive
-      ## Android  TODO
-    WindowWillBackground
-      ## iOS 13   UISceneDelegate sceneWillResignActive
-      ## Android  TODO
+    WindowWillForeground ## Mobile only
+    WindowDidForeground ## Mobile only
+    WindowWillBackground ## Mobile only
     WindowClosed
-      ## iOS 13   UISceneDelegate sceneDidDisconnect
-      ## Android  TODO
 
-  MobileEvent* = object
+  LifeEvent* = object
     ## Events that can happen to mobile apps
-    case kind*: MobileEventKind
+    case kind*: LifeEventKind
     of AppStarted, AppWillExit:
       discard
     of WindowAdded, WindowWillForeground, WindowDidForeground, WindowWillBackground, WindowClosed:
       windowId*: int
 
-  DesktopEventKind* = enum
-    desktopAppStarted
-    desktopAppWillExit
-  
-  DesktopEvent* = object
-    ## Events that can happen to desktop apps
-    case kind*: DesktopEventKind
-    of desktopAppStarted, desktopAppWillExit:
-      discard
-
 type
   IBaseApp* = concept app
     ## Interface common to both mobile and desktop applications
-
-  IDesktopApp* = concept app
-    ## Interface required for desktop applications
-    app is IBaseApp
-    app.life is EventSource[DesktopEvent]
-
-  IMobileApp* = concept app
-    ## Interface required for mobile applications
-    app is IBaseApp
-    app.life is EventSource[MobileEvent]
+    app.life is EventSource[LifeEvent]

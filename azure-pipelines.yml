@@ -1,0 +1,30 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- bash: |
+    choco install curl
+  displayName: 'Choco'
+- bash: env | sort
+  displayName: 'env'
+- bash: |
+    curl -o install-nim.sh https://raw.githubusercontent.com/iffy/install-nim/master/install-nim.sh
+    bash install-nim.sh stable
+  displayName: 'Install Nim'
+- bash: |
+    nim --version
+    nimble --version
+  displayName: 'Versions'
+- bash: |
+    export WIISH_TEST_RUN=1
+    nimble install -y
+    nimble test
+  displayName: 'Run tests'

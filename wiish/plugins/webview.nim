@@ -1,13 +1,42 @@
 import os
-import osproc
 import strformat
 import strutils
 import tables
-import distros
 
+#-------------------------------------------------------------------
+# Importing for app
+#-------------------------------------------------------------------
+import wiish/baseapp
+import wiish/common; export common
+
+type
+  IWebviewWindow* = concept win
+    ## This is the interface required for a webview window
+    win.onReady is EventSource[bool]
+    win.onMessage is EventSource[string]
+  
+  IWebviewApp* = concept app
+    ## These are the things needed for a webview desktop app
+    # app is IBaseApp
+    newWebviewApp() is ref typeof app
+    app.start(url = string)
+    app.start()
+    app.life is EventSource[LifeEvent]
+    app.newWindow(url = string, title = string) is IWebviewWindow
+    app.getWindow(int) is IWebviewWindow
+
+when wiish_ios:
+  import ./webview/webview_ios; export webview_ios
+elif wiish_android:
+  import ./webview/webview_android; export webview_android
+else:
+  import ./webview/desktop; export desktop
+
+#-------------------------------------------------------------------
+# Building
+#-------------------------------------------------------------------
 import wiish/building/buildutil
 import wiish/building/config
-import wiish/doctor
 
 import wiish/plugins/standard/build_android
 
@@ -19,6 +48,16 @@ type
 
 proc name*(b: WiishWebviewPlugin): string = "WiishWebview"
 
+proc desktopRun*(b: WiishWebviewPlugin, ctx: ref BuildContext) =
+  if ctx.targetFormat in {targetRun}:
+    ctx.logStartStep()
+    var args = @[findExe"nim", "c"]
+    args.add ctx.nim_flags
+    args.add ctx.nim_run_flags
+    args.add "-r"
+    args.add ctx.main_nim
+    echo args.join(" ")
+    sh args
 
 proc macRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview macOS Build
@@ -38,17 +77,7 @@ proc macRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       args.add(ctx.main_nim)
       sh(args)
   of Run:
-    if ctx.targetFormat in {targetRun}:
-      ctx.logStartStep()
-      var args = @[findExe"nim", "c"]
-      args.add ctx.nim_flags
-      args.add "-d:wiishDev"
-      args.add "-d:ssl"
-      args.add "--threads:on"
-      args.add "-r"
-      args.add ctx.main_nim
-      echo args.join(" ")
-      sh args
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -56,20 +85,21 @@ proc linuxRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext
   ## Wiish Webview Linux Build
   case step
   of Compile:
-    ctx.logStartStep
-    ctx.log "Linux builds not yet supported"
+    if ctx.targetFormat != targetRun:
+      raise ValueError.newException("Linux SDL2 building not supported yet")
   of Run:
-    if ctx.targetFormat in {targetRun}:
-      ctx.logStartStep
-      var args = @[findExe"nim", "c"]
-      args.add ctx.nim_flags
-      args.add "-d:wiishDev"
-      # args.add "-d:ssl"
-      # args.add "--threads:on"
-      args.add "-r"
-      args.add ctx.main_nim
-      echo args.join(" ")
-      sh args
+    b.desktopRun(ctx)
+  else:
+    discard
+
+proc windowsRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish Webview Windows Build
+  case step
+  of Compile:
+    if ctx.targetFormat != targetRun:
+      raise ValueError.newException("Windows SDL2 building not supported yet")
+  of Run:
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -77,18 +107,7 @@ proc mobiledevRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildCon
   ## Wiish Webview mobile dev run
   case step
   of Run:
-    ctx.logStartStep
-    var args = @[
-      findExe"nim", "c",
-      "-d:wiish_mobiledev", # TODO: get this from the ctx
-      "-d:wiish_webview",
-    ]
-    args.add ctx.config.nimFlags
-    args.add "-r"
-    args.add ctx.main_nim
-    withDir ctx.projectPath.absolutePath:
-      ctx.log args.join(" ")
-      sh args
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -212,24 +231,8 @@ proc runStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
     b.mobiledevRunStep(step, ctx)
   of Linux:
     b.linuxRunStep(step, ctx)
+  of Windows:
+    b.windowsRunStep(step, ctx)
   else:
-    ctx.log "Not yet supported: ", $ctx.targetOS
+    raise ValueError.newException("Not yet supported: " & $ctx.targetOS)
 
-proc checkDoctor*(): seq[DoctorResult] =
-  when defined(linux):
-    # TODO: make this work for other distors
-    let packages = [
-      ("gtk+-3.0", "libgtk-3-dev"),
-      ("webkit2gtk-4.0", "libwebkit2gtk-4.0-dev"),
-    ]
-    for (name, installname) in packages:
-      result.dr "webview", name:
-        dr.targetOS = {Linux}
-        if execCmdEx("pkg-config --cflags " & name).exitCode != 0:
-          dr.status = NotWorking
-          dr.error = &"Missing library {name}"
-          dr.fix = "Maybe this will work:\l\l  "
-          let cmd = foreignDepInstallCmd(installname)
-          if cmd[1]:
-            dr.fix.add "sudo "
-          dr.fix.add cmd[0]

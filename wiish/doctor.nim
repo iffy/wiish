@@ -29,7 +29,7 @@ proc writeColored(text: string, color: ForegroundColor, fh: File = stdout) =
 
 proc ok*(res: DoctorResult): bool =
   ## Return true if the item is Working
-  res.status == Working
+  res.status in {Working, NotWorkingButOptional}
 
 proc ok*(res: seq[DoctorResult]): bool =
   ## Return true if ALL the items are Working
@@ -78,7 +78,7 @@ proc display*(res: DoctorResult, selected = true) =
     writeStyled(&"{label}\L", {styleBright})
     if res.status in {NotWorking, NotWorkingButOptional}:
       writeColored(&"{res.error}\L", fgYellow)
-      stdout.write(&"{res.fix.strip()}\L\L")
+      stdout.write(&"FIX: {res.fix.strip()}\L\L")
       stdout.write("-".repeat(terminalWidth()-1) & "\L")
 
 template dr*(res: var seq[DoctorResult], plugin_s: string, name_s: string, body: untyped): untyped =

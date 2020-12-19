@@ -20,6 +20,7 @@ import wiish/building/buildutil
 const
   CODE_SIGN_IDENTITY_VARNAME = "WIISH_IOS_SIGNING_IDENTITY"
   PROVISIONING_PROFILE_VARNAME = "WIISH_IOS_PROVISIONING_PROFILE_PATH"
+  SIMULATOR_APP = "/Applications/Xcode.app/Contents/Developer/Applications/Simulator.app"
 
 var
   PROV_PROFILE_DIR = expandTilde("~/Library/MobileDevice/Provisioning Profiles")
@@ -249,7 +250,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.logStartStep
       # open the simulator
       ctx.log "Opening simulator..."
-      p = startProcess(command="open", args = @["-a", "Simulator"], options = {poUsePath, poParentStreams})
+      p = startProcess(command="open", args = @["-a", SIMULATOR_APP], options = {poUsePath, poParentStreams})
       if p.waitForExit() != 0:
         raise newException(CatchableError, "Error starting simulator")
       
@@ -559,6 +560,13 @@ proc checkDoctor*(): seq[DoctorResult] =
         dr.error = "xcode not found"
         dr.fix = "Install Xcode command line tools"
     
+    result.dr "standard", "Simulator":
+      dr.targetOS = {IosSimulator}
+      if not dirExists(SIMULATOR_APP):
+        dr.status = NotWorking
+        dr.error = "Simulator not found"
+        dr.fix = "Install the Xcode Simulator.  It should exist at: " & SIMULATOR_APP
+    
     let identities = listCodesigningIdentities().filterIt(it.fullname.startsWith("iPhone"))
     result.dr "standard", "signing-keys":
       dr.targetOS = {Ios}
@@ -605,7 +613,7 @@ proc checkDoctor*(): seq[DoctorResult] =
   else:
     result.dr "standard", "os":
       dr.targetOS = {Ios,IosSimulator}
-      dr.status = NotWorking
+      dr.status = NotWorkingButOptional
       dr.error = "iOS can only be built on the macOS operating system"
       dr.fix = "Give money to Apple to fix this"
   
