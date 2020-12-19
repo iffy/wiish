@@ -18,8 +18,11 @@ steps:
 - bash: |
     curl -o install-nim.sh https://raw.githubusercontent.com/iffy/install-nim/master/install-nim.sh
     bash install-nim.sh stable
-    nim --version
   displayName: 'Install Nim'
+- bash: |
+    nim --version
+    nimble --version
+  displayName: 'Versions'
 - bash: |
     nimble install -y
     nimble test
