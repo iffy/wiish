@@ -298,7 +298,7 @@ elif defined(windows):
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Linux, example, action, NotApplicable)
       markSupport(Android, example, action, Planned)
-    markSupport(Windows, example, "run", Untested) # It probably works, but can't be tested on CI yet
+    markSupport(Windows, example, "run", Planned) # It probably works, but can't be tested on CI yet
     markSupport(Windows, example, "build", Planned) # Building for Windows doesn't work yet
 
 else:
@@ -435,6 +435,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
         break
       sleep(1000)
     result = p.running() # it should still be running
+    echo "success? ", $result
     terminateAllChildren(p.processID())
     echo "waiting for death"
     p.waitForDeath()
