@@ -224,6 +224,7 @@ proc str(status: SupportStatus): string =
     "Untested"
 
 proc displaySupport(hostOS: TargetOS) =
+  setProgramResult 0
   var rows:seq[seq[string]]
   var col1max = 0
   var col2max = 0
