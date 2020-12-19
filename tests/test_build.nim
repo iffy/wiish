@@ -299,7 +299,8 @@ elif defined(windows):
       markSupport(IosSimulator, example, action, NotApplicable)
       markSupport(Linux, example, action, NotApplicable)
       markSupport(Android, example, action, Planned)
-    markSupport(Windows, example, "run", Untested) # It probably works, but can't be tested on CI yet
+    markSupport(MobileDev, example, "run", Untested) # CI can't test this, though it might work.
+    markSupport(Windows, example, "run", Untested) # CI can't test this, though it might work.
     markSupport(Windows, example, "build", Planned) # Building for Windows doesn't work yet
 
 else:
