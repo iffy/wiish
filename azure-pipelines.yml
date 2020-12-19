@@ -13,7 +13,7 @@ steps:
 - bash: |
     choco install curl
   displayName: 'Choco'
-- bash: env
+- bash: env | sort
   displayName: 'env'
 - bash: |
     curl -o install-nim.sh https://raw.githubusercontent.com/iffy/install-nim/master/install-nim.sh
