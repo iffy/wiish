@@ -12,6 +12,9 @@ pool:
 steps:
 - bash: |
     choco install curl
+  displayName: 'Choco'
+- bash: env
+  displayName: 'env'
 - bash: |
     curl -o install-nim.sh https://raw.githubusercontent.com/iffy/install-nim/master/install-nim.sh
     bash install-nim.sh stable
