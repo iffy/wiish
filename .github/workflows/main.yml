@@ -80,6 +80,9 @@ jobs:
         elif [ "$(uname)" == "Linux" ]; then
           export WIISH_BUILD_ANDROID=yes
           export WIISH_TEST_RUN=yes
+        else
+          # windows
+          export WIISH_TEST_RUN=yes
         fi
         export VERBOSE=1
         wiish doctor || true
