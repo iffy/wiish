@@ -24,6 +24,7 @@ steps:
     nimble --version
   displayName: 'Versions'
 - bash: |
+    export WIISH_TEST_RUN=1
     nimble install -y
     nimble test
   displayName: 'Run tests'
