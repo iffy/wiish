@@ -22,7 +22,7 @@ type
   MessageToMain = object
     case kind: MessageToMainKind
     of StdMobileEvent:
-      mobile_ev: MobileEvent
+      mobile_ev: LifeEvent
     of JsIsReady:
       windowId: int
     of MessageFromJavaScript:
@@ -35,11 +35,11 @@ var ch_main_setup: Channel[bool]; ch_main_setup.open()
 type
   WebviewAndroidApp* = object
     url*: string
-    life*: EventSource[MobileEvent]
-    windows: Table[int, ref WebviewAndroidWindow]
+    life*: EventSource[LifeEvent]
+    windows: Table[int, WebviewAndroidWindow]
     nextWindowId: int
   
-  WebviewAndroidWindow* = object
+  WebviewAndroidWindow* = ref object
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
     wiishActivity*: Option[WiishActivity]
@@ -109,25 +109,25 @@ var globalapplock: Lock
 initLock(globalapplock)
 var globalapp {.guard: globalapplock.}: ptr WebviewAndroidApp
 
-proc newWebviewMobileApp*(): ptr WebviewAndroidApp =
+proc newWebviewApp*(): ptr WebviewAndroidApp =
   {.gcsafe.}:
     globalapplock.withLock:
       if not globalapp.isNil:
         raise newException(ValueError, "Only one WebviewAndroidApp can be created at once")
       globalapp = createShared(WebviewAndroidApp)
-      globalapp[].life = newEventSource[MobileEvent]()
-      globalapp[].windows = initTable[int, ref WebviewAndroidWindow]()
+      globalapp[].life = newEventSource[LifeEvent]()
+      globalapp[].windows = initTable[int, WebviewAndroidWindow]()
       result = globalapp
 
-proc newWebviewAndroidWindow*(): ref WebviewAndroidWindow =
+proc newWebviewAndroidWindow*(): WebviewAndroidWindow =
   new(result)
   result.onReady = newEventSource[bool]()
   result.onMessage = newEventSource[string]()
 
-proc getWindow*(app: ptr WebviewAndroidApp, windowId: int): ref WebviewAndroidWindow {.inline.} =
+proc getWindow*(app: ptr WebviewAndroidApp, windowId: int): WebviewAndroidWindow {.inline.} =
   app.windows[windowId]
 
-proc evalJavaScript(win: ref WebviewAndroidWindow, js: string) =
+proc evalJavaScript(win: WebviewAndroidWindow, js: string) =
   ## Evaluate some JavaScript in the webview
   if win.wiishActivity.isNone:
     warn "Attempting to execute JavaScript in unattached webview window"
@@ -143,7 +143,7 @@ proc evalJavaScript(win: ref WebviewAndroidWindow, js: string) =
       var jstring_js = env.NewStringUTF(env, js)
       env.CallVoidMethod(env, activity, mid, jstring_js)
 
-proc sendMessage*(win: ref WebviewAndroidWindow, message: string) =
+proc sendMessage*(win: WebviewAndroidWindow, message: string) =
   ## Send a string message to the JavaScript in the window's webview
   win.evalJavaScript(&"wiish._handleMessage({%message});")
 
@@ -187,7 +187,7 @@ proc startNimLoop() =
   # wait for main loop to start...
   discard ch_main_setup.recv()
 
-proc start*(app: ptr WebviewAndroidApp, url: string) =
+proc start*(app: ptr WebviewAndroidApp, url = "", title = "") =
   startLogging()
   globalapplock.withLock:
     globalapp.url = url
@@ -205,11 +205,11 @@ proc wiish_c_initVM(env: JNIEnvPtr) {.exportc.} =
 
 proc wiish_c_appStarted() {.exportc.} =
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: AppStarted)))
+    mobile_ev: LifeEvent(kind: AppStarted)))
 
 proc wiish_c_appWillExit() {.exportc.} =
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: AppWillExit)))
+    mobile_ev: LifeEvent(kind: AppWillExit)))
 
 proc wiish_c_windowAdded(windowId: cint, activity: jobject) {.exportc.} =
   var window = newWebviewAndroidWindow()
@@ -217,23 +217,23 @@ proc wiish_c_windowAdded(windowId: cint, activity: jobject) {.exportc.} =
   globalapplock.withLock:
     globalapp.windows[windowId] = window
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: WindowAdded, windowId: windowId.int)))
+    mobile_ev: LifeEvent(kind: WindowAdded, windowId: windowId.int)))
 
 proc wiish_c_windowWillForeground(windowId: cint) {.exportc.} =
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: WindowWillForeground, windowId: windowId)))
+    mobile_ev: LifeEvent(kind: WindowWillForeground, windowId: windowId)))
 
 proc wiish_c_windowDidForeground(windowId: cint) {.exportc.} =
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: WindowDidForeground, windowId: windowId)))
+    mobile_ev: LifeEvent(kind: WindowDidForeground, windowId: windowId)))
 
 proc wiish_c_windowWillBackground(windowId: cint) {.exportc.} =
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: WindowWillBackground, windowId: windowId)))
+    mobile_ev: LifeEvent(kind: WindowWillBackground, windowId: windowId)))
 
 proc wiish_c_windowClosed(windowId: cint) {.exportc.} =
   ch_to_main.send(MessageToMain(kind: StdMobileEvent,
-    mobile_ev: MobileEvent(kind: WindowClosed, windowId: windowId)))
+    mobile_ev: LifeEvent(kind: WindowClosed, windowId: windowId)))
 
 proc wiish_c_nextWindowId*(): cint {.exportc.} =
   ## Return the next Window ID to be used.

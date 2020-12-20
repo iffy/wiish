@@ -9,9 +9,9 @@ discard ttfInit()
 
 var app = newSDL2DesktopApp()
 
-app.life.addListener proc(ev: DesktopEvent) =
+app.life.addListener proc(ev: LifeEvent) =
   case ev.kind
-  of desktopAppStarted:
+  of AppStarted:
     debug "App launched"
     var w = app.newSDLWindow()
     #------------------------------------------------------
@@ -49,7 +49,9 @@ app.life.addListener proc(ev: DesktopEvent) =
 
       # Make it so!
       renderer.present()
-  of desktopAppWillExit:
+  of AppWillExit:
     debug "App about to exit"
+  else:
+    discard
 
 app.start()

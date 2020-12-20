@@ -40,7 +40,7 @@ elif defined(ios):
     {.emit: """
     logtype = os_log_create(the_id, "info");
     """.}
-  if appBundleIdentifier != "":
+  when appBundleIdentifier != "":
     configureLogger(appBundleIdentifier)
   else:
     {.warning: "Pass -d:appBundleIdentifier=your.app.name to enabled logging".}
@@ -105,7 +105,7 @@ else:
   # Built, desktop app
   import os
   const appName {.strdefine.}: string = ""
-  if appName == "":
+  when appName == "":
     {.warning: "Define -d:appName=name_of_your_app to enable logging".}
   proc startLogging*() =
     var

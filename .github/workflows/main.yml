@@ -10,6 +10,7 @@ jobs:
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         nimversion: 
           - stable
@@ -25,53 +26,106 @@ jobs:
     - uses: iffy/install-nim@v3
       with:
         version: ${{ matrix.nimversion }}
+    - name: Cache multiple paths
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.nimble/pkgs
+        key: ${{ runner.os }}-nimble-${{ hashFiles('wiish.nimble') }}
     - name: Install
       shell: bash
       run: |
-        nimble install -y
+        nimble install -y --verbose
         wiish init /tmp/foo
-    - name: Doctor
+    - name: Doctor (Pre)
       shell: bash
       run: |
         wiish doctor || true
-    # - name: Fix Windows path
-    #   # This is needed until https://github.com/actions/virtual-environments/pull/2174/files is included in the GitHub VMs
-    #   if: runner.os == 'Windows'
-    #   shell: powershell
-    #   run: |
-    #     $ndkRoot = "C:\Program Files (x86)\Android\android-sdk\ndk-bundle"
-    #     (Get-Content -Encoding UTF8 "${ndkRoot}\ndk-build.cmd").replace('%~dp0\build\ndk-build.cmd','"%~dp0\build\ndk-build.cmd"')|Set-Content "${ndkRoot}\ndk-build.cmd"
-    #     type "${ndkRoot}\ndk-build.cmd"
+    - name: Install deps
+      shell: bash
+      run: |
+        if [ "$(uname)" == "Darwin" ]; then
+          brew install sdl2 sdl2_ttf sdl2_image sdl2_gfx
+        elif [ "$(uname)" == "Linux" ]; then
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-gfx-dev
+          sudo apt install -y xvfb
+        else
+          echo "Nothing yet for Windows"
+        fi
+    - name: Install Android Device
+      if: runner.os == 'macOS'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        ndk: 21.0.6113669
+        cmake: 3.10.2.4988404
+        script: env | sort
+    - name: Initialize iOS Device
+      if: runner.os == 'macOS'
+      run: |
+        set -x
+        xcrun simctl list devices 'iphone 11' --json
+        nim c .github/ios_devices.nim
+        SIM_UDID=$(.github/ios_devices | head -n 1)
+        echo $SIM_UDID
+        open -a /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app --args -CurrentDeviceUDID $SIM_UDID
     - name: Test
       shell: bash
+      timeout-minutes: 60
       run: |
-        # nim c .github/tounixpath.nim
-        # normpath() {
-        #   varname="$1"
-        #   if [ ! -z "${!varname}" ]; then
-        #     export "${1}"="$(.github/tounixpath "${!varname}")"
-        #   fi
-        # }
-        # env | grep -i android
-        # normpath ANDROID_HOME
-        # normpath ANDROID_NDK_HOME
-        # normpath ANDROID_NDK_PATH
-        # normpath ANDROID_SDK_ROOT
-        # export PATH="${ANDROID_NDK_HOME}:${PATH}"
-        # export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
-        # export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
-        # echo "--------------------- build-local.mk"
-        # cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
-        # echo "---------------------"
-        # env | grep -i android
-        # echo $PATH
-        if [ "$(uname)" == "Darwin" ] || [ "$(uname)" == "Linux" ]; then
+        set -x
+        export ANDROID_NDK_HOME="${ANDROID_SDK_ROOT}/ndk-bundle"
+        export PATH="${ANDROID_NDK_HOME}:${PATH}"
+        export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+        export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+        if [ "$(uname)" == "Darwin" ]; then
+          echo "macOS"
           export WIISH_BUILD_ANDROID=yes
+          export WIISH_RUN_ANDROID=yes
+          export WIISH_TEST_RUN=yes
+        elif [ "$(uname)" == "Linux" ]; then
+          echo "Linux"
+          export WIISH_BUILD_ANDROID=yes
+          export WIISH_TEST_RUN=yes
+        else
+          echo "Windows"
+          # export WIISH_TEST_RUN=yes
         fi
+        export VERBOSE=1
         wiish doctor || true
-        nimble test
+
+        if [ "$(uname)" == "Linux" ]; then
+          # Maybe this?
+          # https://github.community/t/cant-run-sdl2-no-available-video-device/17190/2
+          xvfb-run nimble test
+        else
+          nimble test
+        fi
     - name: Docs
       if: runner.os == 'Linux'
       run: |
         ./builddocs.sh
     
+
+# Saving for later in case we do Android testing on Windows
+# nim c .github/tounixpath.nim
+# normpath() {
+#   varname="$1"
+#   if [ ! -z "${!varname}" ]; then
+#     export "${1}"="$(.github/tounixpath "${!varname}")"
+#   fi
+# }
+# env | grep -i android
+# normpath ANDROID_HOME
+# normpath ANDROID_NDK_HOME
+# normpath ANDROID_NDK_PATH
+# normpath ANDROID_SDK_ROOT
+# export PATH="${ANDROID_NDK_HOME}:${PATH}"
+# export PATH="${ANDROID_SDK_ROOT}/emulator:${PATH}"
+# export PATH="${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+# echo "--------------------- build-local.mk"
+# cat "C:\Program Files (x86)\Android\android-sdk\ndk-bundle\build\\..\build\core\build-local.mk"
+# echo "---------------------"
+# env | grep -i android
+# echo $PATH

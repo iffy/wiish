@@ -1,9 +1,9 @@
 import os
+import osproc
 import strformat
 import strutils
 import tables
 
-import wiish/doctor
 import wiish/building/buildutil
 import wiish/plugins/standard/build_android
 
@@ -14,6 +14,19 @@ type
     ## SDL2 plugin
 
 proc name*(b: WiishSDL2Plugin): string {.inline.} = "WiishSDL2"
+
+
+proc desktopRun*(b: WiishSDL2Plugin, ctx: ref BuildContext) =
+  if ctx.targetFormat in {targetRun}:
+    ctx.logStartStep()
+    var args = @[findExe"nim", "c"]
+    args.add ctx.nim_flags
+    args.add ctx.nim_run_flags
+    args.add "-r"
+    args.add ctx.main_nim
+    echo args.join(" ")
+    sh args
+
 
 #-------------------------------------------------------------
 # macOS
@@ -36,17 +49,35 @@ proc macRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
       args.add(ctx.main_nim)
       sh(args)
   of Run:
-    if ctx.targetFormat in {targetRun}:
-      ctx.logStartStep
-      var args = @[findExe"nim", "c"]
-      args.add ctx.config.nimFlags
-      args.add "-d:wiishDev"
-      args.add "-d:ssl"
-      args.add "--threads:on"
-      args.add "-r"
-      args.add ctx.main_nim
-      echo args.join(" ")
-      sh args
+    b.desktopRun(ctx)
+  else:
+    discard
+
+#-------------------------------------------------------------
+# Linux
+#-------------------------------------------------------------
+proc linuxRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish SDL2 Linux Build
+  case step
+  of Compile:
+    if ctx.targetFormat != targetRun:
+      raise ValueError.newException("Linux SDL2 building not supported yet")
+  of Run:
+    b.desktopRun(ctx)
+  else:
+    discard
+
+#-------------------------------------------------------------
+# Windows
+#-------------------------------------------------------------
+proc windowsRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish SDL2 Windows Build
+  case step
+  of Compile:
+    if ctx.targetFormat != targetRun:
+      raise ValueError.newException("Windows SDL2 building not supported yet")
+  of Run:
+    b.desktopRun(ctx)
   else:
     discard
 
@@ -231,6 +262,16 @@ include $(BUILD_SHARED_LIBRARY)
   else:
     discard
 
+#-------------------------------------------------------------
+# MobileDev
+#-------------------------------------------------------------
+proc mobiledevRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
+  ## Wiish SDL mobiledev run
+  case step
+  of Run:
+    b.desktopRun(ctx)
+  else:
+    discard
 
 #-------------------------------------------------------------
 # General
@@ -245,38 +286,12 @@ proc runStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
     b.iosRunStep(step, ctx)
   of Android:
     b.androidRunStep(step, ctx)
+  of MobileDev:
+    b.mobiledevRunStep(step, ctx)
+  of Linux:
+    b.linuxRunStep(step, ctx)
+  of Windows:
+    b.windowsRunStep(step, ctx)
   else:
-    ctx.log "Not yet supported: ", $ctx.targetOS
+    raise ValueError.newException("Not yet supported: " & $ctx.targetOS)
 
-proc checkDoctor*(): seq[DoctorResult] =
-  var libs = [
-    ("SDL2", true),
-    ("SDL2_ttf", false),
-    ("SDL2_image", false),
-    ("SDL2_gfx", false),
-  ]
-  for x in libs:
-    result.dr "sdl2", "lib" & x[0]:
-      when defined(macosx):
-        dr.targetOS = {Mac}
-        if not fileExists("/usr/local/lib" / "lib" & x[0] & ".dylib"):
-          if x[1]:
-            dr.status = NotWorking
-          else:
-            dr.status = NotWorkingButOptional
-          dr.error = &"Missing the {x[0]} dynamic library"
-          dr.fix = &"Maybe this will work:\l\l  brew install {x[0].toLower()}"
-      elif defined(windows):
-        dr.targetOS = {Windows}
-        if x[1]:
-          dr.status = NotWorking
-        else:
-          dr.status = NotWorkingButOptional
-        dr.error = "Unable to check if library is present"
-      else:
-        dr.targetOS = {Linux}
-        if x[1]:
-          dr.status = NotWorking
-        else:
-          dr.status = NotWorkingButOptional
-        dr.error = "Unable to check if library is present"

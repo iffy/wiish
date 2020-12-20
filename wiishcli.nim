@@ -3,8 +3,13 @@ import argparse
 import logging
 import sequtils
 import strformat
-import wiish/doctor
+
 import wiish/building/buildutil
+import wiish/doctor
+
+import wiish/plugins/standard/standard_doctor
+import wiish/plugins/webview/webview_doctor
+import wiish/plugins/sdl2/sdl2_doctor
 
 const
   EXAMPLE_NAMES = toSeq((currentSourcePath.parentDir.parentDir/"examples").walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
@@ -24,7 +29,8 @@ proc onlyInWiishProject() =
   ## Quit the process with a warning if this is not being run within
   ## a wiish project.
   if not WIISHBUILDFILE.fileExists:
-    stderr.writeLine &"ERROR: {WIISHBUILDFILE} not found. This command can only be run within a wiish project. Create one with: wiish init"
+    let pwd = getCurrentDir().absolutePath()
+    stderr.writeLine &"ERROR: {WIISHBUILDFILE} not found in {pwd}. This command can only be run within a wiish project. Create one with: wiish init"
     quit(1)
 
 proc doInit(directory: string, example: string) =
@@ -45,10 +51,6 @@ wiish run
 wiish build
 """
 
-import wiish/plugins/standard
-import wiish/plugins/webview
-import wiish/plugins/sdl2
-
 proc toSet[T](x: seq[T]): set[T] =
   for item in x:
     result.incl(item)
@@ -57,9 +59,9 @@ proc runDoctor(plugins: seq[string] = @[], targetOS: set[TargetOS] = {}, targetF
   ## Run doctor for all the things that come with Wiish
   ## Return true if everything is set, else false
   var results: seq[DoctorResult]
-  results.add standard.checkDoctor()
-  results.add webview.checkDoctor()
-  results.add sdl2.checkDoctor()
+  results.add standard_doctor.checkDoctor()
+  results.add webview_doctor.checkDoctor()
+  results.add sdl2_doctor.checkDoctor()
   var valid: seq[DoctorResult]
   for r in results:
     let selected = r.isSelected(targetOS, targetFormat, plugins)
@@ -123,7 +125,11 @@ the 'webview' plugin do:
       if not runDoctor(opts.plugin,
           opts.os.mapIt(parseTargetOS(it)).toSet(),
           opts.target.mapIt(parseTargetFormat(it)).toSet()):
+        echo "failed"
         quit(1)
+      else:
+        echo "ting tang walla walla bing bang!"
+        echo "ok"
   
   # command "config":
   #   help("Display a full config file")
