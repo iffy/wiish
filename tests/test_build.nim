@@ -393,8 +393,6 @@ proc waitForDeath(p: Process) =
       break
   echo "  waiting for finish: ", $p.processID()
   discard p.waitForExit()
-  echo "  closing process: ", $p.processID()
-  p.close()
   echo "  done: ", $p.processID()
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
@@ -450,6 +448,9 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       else:
         break
     stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
+    echo "closing process..."
+    p.close()
+    echo "done closing process"
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
