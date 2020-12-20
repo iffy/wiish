@@ -65,20 +65,26 @@ It is hoped that more plugins will be introduced for other GUI frameworks.
 
 ## Support Matrix
 
+The following shows the support matrix of **automated** tests.  Actual support may be better or worse than described here.
+
+- `Yes` - For `wiish run`, this means that the application starts and continues running for a few seconds.  For `wiish build` it means the build succeeded.
+- `No` - Means it failed
+- `-` - Means it's not supported (and isn't planned to be supported)
+- `Planned` - Means it doesn't currently work, but we're planning on getting it to work.
+- `Untested` - Means that it *might* work when run on a real computer, but our automated tests aren't yet capable of testing it.  For instance, we haven't yet figured out how to run GUI applications on Windows so those are mostly marked `Untested`.
+
 | Host OS | `--os`        | Example      | `wiish run` | `wiish build` |
 | ------- | ------------- | ------------ | :---------: | :-----------: |
-| windows | android       | opengl       |     No      |      No       |
-| windows | android       | plainwebview |     No      |      No       |
-| windows | android       | sdl2         |     No      |      No       |
-| windows | android       | webview      |     No      |      No       |
-| windows | mobiledev     | opengl       |     No      |       -       |
-| windows | mobiledev     | plainwebview |     No      |       -       |
-| windows | mobiledev     | sdl2         |     No      |       -       |
-| windows | mobiledev     | webview      |     No      |       -       |
-| windows | windows       | opengl       |     No      |      Yes      |
-| windows | windows       | plainwebview |     No      |      Yes      |
-| windows | windows       | sdl2         |     No      |      Yes      |
-| windows | windows       | webview      |     No      |      Yes      |
+| windows | android       | opengl       |   Planned   |    Planned    |
+| windows | android       | sdl2         |   Planned   |    Planned    |
+| windows | android       | webview      |   Planned   |    Planned    |
+| windows | mobiledev     | opengl       |  Untested   |       -       |
+| windows | mobiledev     | sdl2         |  Untested   |       -       |
+| windows | mobiledev     | webview      |  Untested   |       -       |
+| windows | windows       | opengl       |  Untested   |    Planned    |
+| windows | windows       | plainwebview |  Untested   |    Planned    |
+| windows | windows       | sdl2         |  Untested   |    Planned    |
+| windows | windows       | webview      |  Untested   |    Planned    |
 | linux   | android       | opengl       |   Planned   |      Yes      |
 | linux   | android       | sdl2         |   Planned   |      Yes      |
 | linux   | android       | webview      |   Planned   |      Yes      |
@@ -110,10 +116,10 @@ It is hoped that more plugins will be introduced for other GUI frameworks.
 
 | Feature                 | macOS | Windows | Linux |  iOS  | Android |
 | ----------------------- | :---: | :-----: | :---: | :---: | :-----: |
-| App icons               |   Y   |         |       |   Y   |    Y    |
-| `wiish run` logs stdout |   Y   |    Y    |   Y   |   Y   |    Y    |
+| App icons               |  Yes  |         |       |  Yes  |   Yes   |
+| `wiish run` logs stdout |  Yes  |   Yes   |  Yes  |  Yes  |   Yes   |
 | Log files               |       |         |       |       |         |
-| Static assets           |   Y   |         |       |   Y   |    Y    |
+| Static assets           |  Yes  |         |       |  Yes  |   Yes   |
 | Automatic updating      |       |         |       |   -   |    -    |
 | File associations       |       |         |       |       |         |
 | Menu bar access         |       |         |       |   -   |    -    |
@@ -127,7 +133,7 @@ It is hoped that more plugins will be introduced for other GUI frameworks.
 | Windows Installer |           |              |
 | Linux `.AppImage` |           |              |
 | iOS `.ipa`        |           |              |
-| Android `.apk`    |     Y     |              |
+| Android `.apk`    |    Yes    |              |
 
 
 # Examples
