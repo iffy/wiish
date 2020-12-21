@@ -1,8 +1,10 @@
 ## wiish command line interface
 import argparse
 import logging
+import parsecfg
 import sequtils
 import strformat
+import strutils
 
 import wiish/building/buildutil
 import wiish/doctor
@@ -10,6 +12,14 @@ import wiish/doctor
 import wiish/plugins/standard/standard_doctor
 import wiish/plugins/webview/webview_doctor
 import wiish/plugins/sdl2/sdl2_doctor
+
+proc extractVersion(nimblefile: string): string =
+  for line in nimblefile.splitLines():
+    if line.startsWith("version"):
+      result = line.split("\"")[1]
+
+const
+  VERSION = extractVersion(slurp"./wiish.nimble")
 
 const
   EXAMPLE_NAMES = toSeq((currentSourcePath.parentDir.parentDir/"examples").walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
@@ -70,7 +80,9 @@ proc runDoctor(plugins: seq[string] = @[], targetOS: set[TargetOS] = {}, targetF
       valid.add(r)
   result = valid.ok()
 
-let p = newParser("wiish"):
+let p = newParser("wiish "):
+  help("Wiish v" & VERSION)
+  flag("-v", "--version", help = "Show version and quit", shortcircuit = true)
   command "init":
     help("Create a new wiish application")
     arg("directory", default=some("."))
@@ -138,8 +150,16 @@ the 'webview' plugin do:
 
 proc runWiish*(args: varargs[string]) =
   ## Run a wiish command-line command
-  p.run(toSeq(args))
+  try:
+    p.run(toSeq(args))
+  except ShortCircuit as e:
+    if e.flag == "version":
+      echo "wiish ", VERSION
 
 if isMainModule:
   addHandler(newConsoleLogger())
-  p.run()
+  try:
+    p.run()
+  except ShortCircuit as e:
+    if e.flag == "version":
+      echo "wiish ", VERSION
