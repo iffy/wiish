@@ -438,8 +438,13 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     terminateAllChildren(p.processID())
     echo "waiting for death"
     p.waitForDeath()
+
+    echo "close stdout"
+    outs.close()
+
     echo "waiting for reader thread..."
     readerThread.joinThread()
+
     echo "clearing out reader channel..."
     while true:
       let tried = outChan.tryRecv()
