@@ -439,12 +439,6 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     echo "waiting for death"
     p.waitForDeath()
 
-    echo "close stdout"
-    outs.close()
-
-    echo "waiting for reader thread..."
-    readerThread.joinThread()
-
     echo "clearing out reader channel..."
     while true:
       let tried = outChan.tryRecv()
@@ -455,6 +449,8 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
     echo "closing process..."
     p.close()
+    echo "waiting for reader thread..."
+    readerThread.joinThread()
     echo "done closing process"
 
 var wiish_bin_built = false
