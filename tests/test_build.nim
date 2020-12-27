@@ -14,6 +14,8 @@ import strutils
 import tables
 import terminal
 import unittest
+import posix
+
 
 import ./formatter
 
@@ -412,8 +414,8 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     let pid = $p.processID()
     stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, wiishbin, " ", args.join(" ")
     let outfd = p.outputHandle.int
-    sel.registerHandle(outfd, {Event.Read, Event.Error}, Unknown)
-    defer: sel.unregister(outfd)
+    sel.registerHandle(outfd.SocketHandle, {Event.Read, Event.Error}, Unknown)
+    defer: sel.unregister(outfd.SocketHandle)
 
     var line: string
     var sentinel_start = none[DateTime]()
@@ -421,7 +423,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
       if sentinel_start.isSome():
         let diff = now() - sentinel_start.get()
         if diff.inSeconds() > sleepSeconds:
-          stdout.styledWrite styleBright, &"    Success!"
+          stdout.styledWriteLine styleBright, &"    Success!"
           break
       for ready in sel.select(1000):
         if ready.fd == outfd:
@@ -432,7 +434,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
               stdout.styledWrite styleDim, pid, ": ", resetStyle, line
               stdout.flushFile()
               if run_sentinel in line:
-                stdout.styledWrite styleBright, &"    Waiting for {sleepSeconds}s to see if it keeps running..."
+                stdout.styledWriteLine styleBright, &"    Waiting for {sleepSeconds}s to see if it keeps running..."
                 sentinel_start = some(now())
               line.setLen(0)
           if Event.Error in ready.events:
@@ -448,7 +450,7 @@ proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
     
     result = p.running() # it should still be running
     terminateAllChildren(p.processID())
-    stdout.styledWrite styleBright, &"    Waiting for death..."
+    stdout.styledWriteLine styleBright, &"    Waiting for death..."
     p.waitForDeath()
 
     stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
