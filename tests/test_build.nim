@@ -504,7 +504,7 @@ suite "run":
                     args.add(@["--os", "mobiledev"])
                   else:
                     discard
-                  doAssert testWiishRun(example, args, 15)
+                  doAssert testWiishRun(example, args, 30)
 
 suite "build":
   tearDown:
