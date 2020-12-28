@@ -398,62 +398,65 @@ proc waitForDeath(p: Process) =
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
-  echo "    Running command:"
-  echo "        cd ", dirname
-  let wiishbin = ("bin"/"wiish").absolutePath
-  echo "        " & wiishbin & " ", args.join(" ")
-  withDir dirname:
-    var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
-    defer:
-      echo "Closing process"
-      p.close()
-    var sel = newSelector[SelectorData]()
-    defer:
-      echo "Closing selector"
-      sel.close()
-    let pid = $p.processID()
-    stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, wiishbin, " ", args.join(" ")
-    let outfd = p.outputHandle.int
-    sel.registerHandle(outfd.SocketHandle, {Event.Read, Event.Error}, Unknown)
-    defer: sel.unregister(outfd.SocketHandle)
+  when defined(windows):
+    raise newException(ValueError, "Windows testing not supported, yet")
+  else:
+    echo "    Running command:"
+    echo "        cd ", dirname
+    let wiishbin = ("bin"/"wiish").absolutePath
+    echo "        " & wiishbin & " ", args.join(" ")
+    withDir dirname:
+      var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
+      defer:
+        echo "Closing process"
+        p.close()
+      var sel = newSelector[SelectorData]()
+      defer:
+        echo "Closing selector"
+        sel.close()
+      let pid = $p.processID()
+      stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, wiishbin, " ", args.join(" ")
+      let outfd = p.outputHandle.int
+      sel.registerHandle(outfd.SocketHandle, {Event.Read, Event.Error}, Unknown)
+      defer: sel.unregister(outfd.SocketHandle)
 
-    var line: string
-    var sentinel_start = none[DateTime]()
-    while not sel.isEmpty:
-      if sentinel_start.isSome():
-        let diff = now() - sentinel_start.get()
-        if diff.inSeconds() > sleepSeconds:
-          stdout.styledWriteLine styleBright, &"    Success!"
-          break
-      for ready in sel.select(1000):
-        if ready.fd == outfd:
-          if Event.Read in ready.events:
-            line.add p.outputStream.readChar()
-            if line.endsWith("\n"):
-              # complete line
-              stdout.styledWrite styleDim, pid, ": ", resetStyle, line
-              stdout.flushFile()
-              if run_sentinel in line:
-                stdout.styledWriteLine styleBright, &"    Waiting for {sleepSeconds}s to see if it keeps running..."
-                sentinel_start = some(now())
-              line.setLen(0)
-          if Event.Error in ready.events:
-            stdout.styledWriteLine styleDim, pid, ": ", resetStyle, fgRed, "error reading stdout"
+      var line: string
+      var sentinel_start = none[DateTime]()
+      while not sel.isEmpty:
+        if sentinel_start.isSome():
+          let diff = now() - sentinel_start.get()
+          if diff.inSeconds() > sleepSeconds:
+            stdout.styledWriteLine styleBright, &"    Success!"
             break
-      if not p.running():
-        stdout.styledWriteLine styleDim, pid, ": ", resetStyle, fgRed, "exited prematurely"
+        for ready in sel.select(1000):
+          if ready.fd == outfd:
+            if Event.Read in ready.events:
+              line.add p.outputStream.readChar()
+              if line.endsWith("\n"):
+                # complete line
+                stdout.styledWrite styleDim, pid, ": ", resetStyle, line
+                stdout.flushFile()
+                if run_sentinel in line:
+                  stdout.styledWriteLine styleBright, &"    Waiting for {sleepSeconds}s to see if it keeps running..."
+                  sentinel_start = some(now())
+                line.setLen(0)
+            if Event.Error in ready.events:
+              stdout.styledWriteLine styleDim, pid, ": ", resetStyle, fgRed, "error reading stdout"
+              break
+        if not p.running():
+          stdout.styledWriteLine styleDim, pid, ": ", resetStyle, fgRed, "exited prematurely"
+          stdout.flushFile()
+          break
+      if line != "":
+        stdout.styledWriteLine styleDim, pid, ": ", resetStyle, line
         stdout.flushFile()
-        break
-    if line != "":
-      stdout.styledWriteLine styleDim, pid, ": ", resetStyle, line
-      stdout.flushFile()
-    
-    result = p.running() # it should still be running
-    terminateAllChildren(p.processID())
-    stdout.styledWriteLine styleBright, &"    Waiting for death..."
-    p.waitForDeath()
+      
+      result = p.running() # it should still be running
+      terminateAllChildren(p.processID())
+      stdout.styledWriteLine styleBright, &"    Waiting for death..."
+      p.waitForDeath()
 
-    stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
+      stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
