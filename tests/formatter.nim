@@ -98,7 +98,7 @@ method testEnded*(formatter: MyFormatter, testResult: TestResult) =
     stdout.styledWrite fgYellow, "[SKIPPED] "
     stdout.write preline
     stdout.styledWriteLine styleDim, " ", formatter.currentSkip
-    formatter.skippedTests.add fullname
+    formatter.skippedTests.add fullname & " " & formatter.currentSkip
   if bytesWritten > 0:
     echo "-".repeat(terminalWidth())
   formatter.currentTest = ""

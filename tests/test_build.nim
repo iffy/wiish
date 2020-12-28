@@ -5,12 +5,17 @@ import random
 import sequtils
 import std/compilesettings
 import std/exitprocs
+import std/options
+import std/selectors
+import std/times
 import streams
 import strformat
 import strutils
 import tables
 import terminal
 import unittest
+import posix
+
 
 import ./formatter
 
@@ -356,19 +361,15 @@ suite "checks":
           let cmdstr = cmd.join(" ")
           checkpoint "COMMAND: " & cmdstr
           check execCmd(cmdstr) == 0
-  
-const run_sentinel = "WIISH RUN STARTING"
 
-var outChan: Channel[string]
-outChan.open()
+#----------------------------------------------------------------------
+# Run tests
+#----------------------------------------------------------------------
+const run_sentinel = "WIISH RUN STARTING" # This string is emitted by the example apps
 
-proc readOutput(s: Stream) {.thread.} =
-  var line: string
-  try:
-    while s.readLine(line):
-      outChan.send(line)
-  except:
-    echo "Ignoring error reading line: ", getCurrentExceptionMsg()
+type
+  SelectorData = enum
+    Unknown
 
 proc waitForDeath(p: Process) =
   for i in 0..10:
@@ -397,60 +398,65 @@ proc waitForDeath(p: Process) =
 
 proc testWiishRun(dirname: string, args: seq[string], sleepSeconds = 5): bool =
   ## Test a `wiish run` invocation
-  echo "    Running command:"
-  echo "        cd ", dirname
-  let wiishbin = ("bin"/"wiish").absolutePath
-  echo "        " & wiishbin & " ", args.join(" ")
-  withDir dirname:
-    var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
-    defer: p.close()
-    let pid = $p.processID()
-    stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, wiishbin, " ", args.join(" ")
-    let outs = p.outputStream()
-    var readerThread: Thread[Stream]
-    readerThread.createThread(readOutput, outs)
-    while true:
-      if p.running():
-        # still running
-        try:
-          let tried = outChan.tryRecv()
-          if tried.dataAvailable:
-            let line = tried.msg  
-            stdout.styledWriteLine styleDim, pid, ": ", resetStyle, line
-            stdout.flushFile()
-            if run_sentinel in line:
+  when defined(windows):
+    raise newException(ValueError, "Windows testing not supported, yet")
+  else:
+    echo "    Running command:"
+    echo "        cd ", dirname
+    let wiishbin = ("bin"/"wiish").absolutePath
+    echo "        " & wiishbin & " ", args.join(" ")
+    withDir dirname:
+      var p = startProcess(wiishbin, args = args, options = {poStdErrToStdOut})
+      defer:
+        echo "Closing process"
+        p.close()
+      var sel = newSelector[SelectorData]()
+      defer:
+        echo "Closing selector"
+        sel.close()
+      let pid = $p.processID()
+      stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, wiishbin, " ", args.join(" ")
+      let outfd = p.outputHandle.int
+      sel.registerHandle(outfd.SocketHandle, {Event.Read, Event.Error}, Unknown)
+      defer: sel.unregister(outfd.SocketHandle)
+
+      var line: string
+      var sentinel_start = none[DateTime]()
+      while not sel.isEmpty:
+        if sentinel_start.isSome():
+          let diff = now() - sentinel_start.get()
+          if diff.inSeconds() > sleepSeconds:
+            stdout.styledWriteLine styleBright, &"    Success!"
+            break
+        for ready in sel.select(1000):
+          if ready.fd == outfd:
+            if Event.Read in ready.events:
+              line.add p.outputStream.readChar()
+              if line.endsWith("\n"):
+                # complete line
+                stdout.styledWrite styleDim, pid, ": ", resetStyle, line
+                stdout.flushFile()
+                if run_sentinel in line:
+                  stdout.styledWriteLine styleBright, &"    Waiting for {sleepSeconds}s to see if it keeps running..."
+                  sentinel_start = some(now())
+                line.setLen(0)
+            if Event.Error in ready.events:
+              stdout.styledWriteLine styleDim, pid, ": ", resetStyle, fgRed, "error reading stdout"
               break
-          else:
-            sleep(10)
-        except:
-          echo "Error reading subprocess output"
-          echo getCurrentExceptionMsg()
-          raise
-      else:
-        echo "wiish command exited prematurely"
-        break
-    echo &"    Waiting for {sleepSeconds}s to see if it keeps running..."
-    for i in 0..<sleepSeconds:
-      if not p.running():
-        break
-      sleep(1000)
-    result = p.running() # it should still be running
-    terminateAllChildren(p.processID())
-    echo "waiting for death"
-    p.waitForDeath()
-    echo "waiting for reader thread..."
-    readerThread.joinThread()
-    echo "clearing out reader channel..."
-    while true:
-      let tried = outChan.tryRecv()
-      if tried.dataAvailable:
-        stdout.styledWriteLine styleDim, pid, ": ", resetStyle, tried.msg
-      else:
-        break
-    stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
-    echo "closing process..."
-    p.close()
-    echo "done closing process"
+        if not p.running():
+          stdout.styledWriteLine styleDim, pid, ": ", resetStyle, fgRed, "exited prematurely"
+          stdout.flushFile()
+          break
+      if line != "":
+        stdout.styledWriteLine styleDim, pid, ": ", resetStyle, line
+        stdout.flushFile()
+      
+      result = p.running() # it should still be running
+      terminateAllChildren(p.processID())
+      stdout.styledWriteLine styleBright, &"    Waiting for death..."
+      p.waitForDeath()
+
+      stdout.styledWriteLine styleDim, pid, ": ", resetStyle, styleBright, "exit=", $p.peekExitCode()
 
 var wiish_bin_built = false
 proc ensureWiishBin() =
@@ -498,7 +504,7 @@ suite "run":
                     args.add(@["--os", "mobiledev"])
                   else:
                     discard
-                  doAssert testWiishRun(example, args, 15)
+                  doAssert testWiishRun(example, args, 30)
 
 suite "build":
   tearDown:
