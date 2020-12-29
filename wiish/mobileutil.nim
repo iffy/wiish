@@ -26,7 +26,7 @@ proc documentsPath*():string =
     var path = activity.getInternalStoragePath()
     result = $path
   elif wiish_mobiledev:
-    result = "_mobiledev" / "Documents"
+    result = "_mobiledev" / "documents"
     createDir result
   else:
     raise newException(ValueError, "documentsPath not support on this OS")

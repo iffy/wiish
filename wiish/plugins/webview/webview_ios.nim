@@ -25,10 +25,10 @@ type
   WebviewIosApp* = ref object of RootObj
     url*: string
     life*: EventSource[LifeEvent]
-    windows: Table[int, WebviewIosWindow]
+    windows: Table[int, WebviewWindow]
     nextWindowId: int
   
-  WebviewIosWindow* = ref object of RootObj
+  WebviewWindow* = ref object of RootObj
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
     app: WebviewIosApp
@@ -41,15 +41,15 @@ var globalapp {.global, guard: globalapplock.} : WebviewIosApp
 proc newWebviewApp*(): WebviewIosApp =
   new(result)
   result.life = newEventSource[LifeEvent]()
-  result.windows = initTable[int, WebviewIosWindow]()
+  result.windows = initTable[int, WebviewWindow]()
 
-proc newWindow*(app: WebviewIosApp, url: string, title = ""): WebviewIosWindow =
+proc newWindow*(app: WebviewIosApp, url: string, title = ""): WebviewWindow =
   new(result)
   result.onReady = newEventSource[bool]()
   result.onMessage = newEventSource[string]()
   result.app = app
 
-proc getWindow*(app: WebviewIosApp, windowId: int): WebviewIosWindow {.inline.} =
+proc getWindow*(app: WebviewIosApp, windowId: int): WebviewWindow {.inline.} =
   app.windows[windowId]
 
 proc nim_nextWindowId*(): cint {.exportc.} =
@@ -66,7 +66,7 @@ proc nim_windowCreated*(windowId: cint, controller: pointer) {.exportc.} =
     globalapp.windows[windowId.int] = win
     globalapp.life.emit(LifeEvent(kind: WindowAdded, windowId: windowId.int))
 
-proc evalJavaScript*(win:WebviewIosWindow, js:string) =
+proc evalJavaScript*(win:WebviewWindow, js:string) =
   ## Evaluate some JavaScript in the webview
   # doAssert win.wiishController.isSome()
   var
@@ -76,7 +76,7 @@ proc evalJavaScript*(win:WebviewIosWindow, js:string) =
   [controller evalJavaScript:[NSString stringWithUTF8String:javascript]];
   """.}
 
-proc sendMessage*(win:WebviewIosWindow, message:string) =
+proc sendMessage*(win:WebviewWindow, message:string) =
   ## Send a message from Nim to JS
   evalJavaScript(win, &"wiish._handleMessage({%message});")
 
@@ -173,13 +173,13 @@ proc nim_applicationWillTerminate() {.exportc.} =
 
 
 proc nim_signalJSMessagesReady(windowId: cint) {.exportc.} =
-  var win: WebviewIosWindow
+  var win: WebviewWindow
   globalapplock.withLock:
     win = globalapp.getWindow(windowId.int)
   win.onReady.emit(true)
 
 proc nim_sendMessageToNim(windowId: cint, x:cstring) {.exportc.} =
-  var win: WebviewIosWindow
+  var win: WebviewWindow
   globalapplock.withLock:
     win = globalapp.getWindow(windowId.int)
   win.onMessage.emit($x)

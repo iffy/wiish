@@ -36,10 +36,10 @@ type
   WebviewAndroidApp* = object
     url*: string
     life*: EventSource[LifeEvent]
-    windows: Table[int, WebviewAndroidWindow]
+    windows: Table[int, WebviewWindow]
     nextWindowId: int
   
-  WebviewAndroidWindow* = ref object
+  WebviewWindow* = ref object
     onReady*: EventSource[bool]
     onMessage*: EventSource[string]
     wiishActivity*: Option[WiishActivity]
@@ -116,18 +116,18 @@ proc newWebviewApp*(): ptr WebviewAndroidApp =
         raise newException(ValueError, "Only one WebviewAndroidApp can be created at once")
       globalapp = createShared(WebviewAndroidApp)
       globalapp[].life = newEventSource[LifeEvent]()
-      globalapp[].windows = initTable[int, WebviewAndroidWindow]()
+      globalapp[].windows = initTable[int, WebviewWindow]()
       result = globalapp
 
-proc newWebviewAndroidWindow*(): WebviewAndroidWindow =
+proc newWebviewAndroidWindow*(): WebviewWindow =
   new(result)
   result.onReady = newEventSource[bool]()
   result.onMessage = newEventSource[string]()
 
-proc getWindow*(app: ptr WebviewAndroidApp, windowId: int): WebviewAndroidWindow {.inline.} =
+proc getWindow*(app: ptr WebviewAndroidApp, windowId: int): WebviewWindow {.inline.} =
   app.windows[windowId]
 
-proc evalJavaScript(win: WebviewAndroidWindow, js: string) =
+proc evalJavaScript(win: WebviewWindow, js: string) =
   ## Evaluate some JavaScript in the webview
   if win.wiishActivity.isNone:
     warn "Attempting to execute JavaScript in unattached webview window"
@@ -143,7 +143,7 @@ proc evalJavaScript(win: WebviewAndroidWindow, js: string) =
       var jstring_js = env.NewStringUTF(env, js)
       env.CallVoidMethod(env, activity, mid, jstring_js)
 
-proc sendMessage*(win: WebviewAndroidWindow, message: string) =
+proc sendMessage*(win: WebviewWindow, message: string) =
   ## Send a string message to the JavaScript in the window's webview
   win.evalJavaScript(&"wiish._handleMessage({%message});")
 
@@ -311,9 +311,9 @@ JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIs
 
 # type
 #   WebviewApp* = ref object of BaseApplication
-#     window*: WebviewAndroidWindow
+#     window*: WebviewWindow
   
-#   WebviewAndroidWindow* = ref object of WebviewWindow
+#   WebviewWindow* = ref object of WebviewWindow
 #     onReady*: EventSource[bool]
 #     onMessage*: EventSource[string]
 #     wiishActivity*: WiishActivity
@@ -326,13 +326,13 @@ JNIEXPORT void JNICALL Java_org_wiish_exampleapp_WiishActivity_wiish_1signalJSIs
 #   result.window.onMessage = newEventSource[string]()
 #   result.window.onReady = newEventSource[bool]()
 
-# proc evalJavaScript*(win:WebviewAndroidWindow, js:string) =
+# proc evalJavaScript*(win:WebviewWindow, js:string) =
 #   ## Evaluate some JavaScript in the webview
 #   var
 #     activity = win.wiishActivity
 #     javascript = js
 #   activity.evalJavaScript(javascript)
 
-# proc sendMessage*(win:WebviewAndroidWindow, message:string) =
+# proc sendMessage*(win:WebviewWindow, message:string) =
 #   ## Send a message from Nim to JS
 #   evalJavaScript(win, &"wiish._handleMessage({%message});")
