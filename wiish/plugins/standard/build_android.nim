@@ -180,6 +180,11 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.log "Waiting for device to boot ..."
       sh("adb", "wait-for-local-device")
     
+      while runningDevices().len != 0:
+        ctx.log "Still waiting for device to boot..."
+        sleep(1000)
+      sleep(1000) # There's some amount of race condition between boot and when the apk can be installed
+
     ctx.log &"Installing apk {apkPath} ..."
     sh("adb", "install", "-r", "-t", apkPath)
 
