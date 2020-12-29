@@ -1,0 +1,3 @@
+[[replacement]]
+pattern = '#(\d+)'
+replace = "[#$1](https://github.com/iffy/wiish/issues/$1)"
