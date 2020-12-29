@@ -148,7 +148,7 @@ proc getAndroidConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getAndroidConfig()
 
 proc getMobileDevConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "mobile", "main"])
+  parsed.getConfig(@[OVERRIDE_KEY, "mobiledev", "mobile", "main"])
 proc getMobileDevConfig*(filename: string): WiishConfig {.inline.} =
   filename.parseConfig().getMobileDevConfig()
 
