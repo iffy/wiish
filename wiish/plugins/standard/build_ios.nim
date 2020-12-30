@@ -276,17 +276,22 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ], options = {poUsePath, poParentStreams})
       if p.waitForExit() != 0:
         raise newException(CatchableError, "Error installing application")
+      
+      # Watch the logs
+      var args = @["xcrun", "simctl", "spawn", "booted", "log", "stream"]
+      if not ctx.verbose:
+        args.add(@["--predicate", &"subsystem contains \"{ctx.config.bundle_identifier}\""])
+      var logp = startProcess(command=args[0], args = args[1..^1],
+        options = {poUsePath, poParentStreams})
 
       # start the app
       ctx.log &"Starting app {ctx.config.bundle_identifier}..."
       let startmessage = shoutput("xcrun", "simctl", "launch", "booted", ctx.config.bundle_identifier)
       discard startmessage.strip.split(" ")[1]
 
-      # Watch the logs
-      var args = @["xcrun", "simctl", "spawn", "booted", "log", "stream"]
-      if not ctx.verbose:
-        args.add(@["--predicate", &"subsystem contains \"{ctx.config.bundle_identifier}\""])
-      sh(args)
+      # wait for logs to finish
+      discard logp.waitForExit()
+      # sh(args)
     discard
 
 # proc doiOSBuild*(directory:string, config: WiishConfig):string =
