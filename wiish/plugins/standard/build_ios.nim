@@ -162,6 +162,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       </dict>
       <key>UILaunchStoryboardName</key>
       <string>LaunchScreen</string>
+      {ctx.config.info_plist_append}
     </dict>
     </plist>
     """)

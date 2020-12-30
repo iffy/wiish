@@ -106,6 +106,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     </dict>
     <key>LSRequiresCarbon</key>
     <true/>
+    {ctx.config.info_plist_append}
   </dict>
   </plist>""")
 

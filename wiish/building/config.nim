@@ -22,6 +22,7 @@ type
     # macos/ios
     CodesignID = "codesign_identity",
     BundleID = "bundle_identifier",
+    InfoPlistAppend = "info_plist_append",
     # macos
     CategoryType = "category_type",
     # ios
@@ -44,6 +45,7 @@ type
     # macos/ios
     codesign_identity*: string
     bundle_identifier*: string
+    info_plist_append*: string
     # macos
     category_type*: string
     # ios
@@ -108,6 +110,8 @@ proc getConfig*(toml: TomlValueRef, sections:seq[string]): WiishConfig =
       result.codesign_identity = toml.get(sections, $opt, ?"").stringVal
     of BundleID:
       result.bundle_identifier = toml.get(sections, $opt, ?"com.example.wiishdemo").stringVal
+    of InfoPlistAppend:
+      result.info_plist_append = toml.get(sections, $opt, ?"").stringVal
     # macos
     of CategoryType:
       result.category_type = toml.get(sections, $opt, ?"").stringVal
@@ -191,6 +195,9 @@ proc defaultConfig*():string =
     of BundleID:
       macos.add(&"{opt} = \"com.example.wiishapp\"")
       ios.add(&"{opt} = \"com.example.wiishapp\"")
+    of InfoPlistAppend:
+      macos.add(&"{opt} = \"\"")
+      ios.add(&"{opt} = \"\"")
     # macos
     of CategoryType:
       macos.add(&"{opt} = \"public.app-category.example\"")
