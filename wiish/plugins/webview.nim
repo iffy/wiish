@@ -38,6 +38,7 @@ else:
 import wiish/building/buildutil
 import wiish/building/config
 
+import wiish/plugins/standard/common as stdcommon
 import wiish/plugins/standard/build_ios
 import wiish/plugins/standard/build_android
 
@@ -126,7 +127,17 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
     else:
       ctx.log &"Xcode project already exists: {ctx.xcode_project}"
     
+    # copy in icon
+    ctx.log "Creating icons..."
+    var iconSrcPath: string
+    if ctx.config.icon == "":
+      iconSrcPath = stdDatadir / "default_square.png"
+    else:
+      iconSrcPath = ctx.projectPath / ctx.config.icon
+    iconSrcPath.resizePNG(ctx.xcode_project / "Icon.png", 180, 180)
+
     # copy in resources
+    ctx.log "Adding static files..."
     let
       srcResources = ctx.projectPath / ctx.config.resourceDir
       dstResources = ctx.xcode_project / "static"

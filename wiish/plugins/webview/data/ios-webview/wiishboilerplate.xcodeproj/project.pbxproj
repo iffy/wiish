@@ -12,6 +12,7 @@
 		C9DC08EC259E2E7300CDD339 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C9DC08EB259E2E7300CDD339 /* main.m */; };
 		C9DC08F4259E2FA700CDD339 /* app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C9DC08F3259E2FA700CDD339 /* app.a */; };
 		C9DC0904259E50E600CDD339 /* static in Resources */ = {isa = PBXBuildFile; fileRef = C9DC0903259E50E600CDD339 /* static */; };
+		C9DC0906259E567900CDD339 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = C9DC0905259E567900CDD339 /* Icon.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		C9DC08F2259E2F2A00CDD339 /* app.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = app.h; sourceTree = "<group>"; };
 		C9DC08F3259E2FA700CDD339 /* app.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = app.a; sourceTree = "<group>"; };
 		C9DC0903259E50E600CDD339 /* static */ = {isa = PBXFileReference; lastKnownFileType = folder; path = static; sourceTree = "<group>"; };
+		C9DC0905259E567900CDD339 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,6 +42,7 @@
 		C9DC08CD259E2E7200CDD339 = {
 			isa = PBXGroup;
 			children = (
+				C9DC0905259E567900CDD339 /* Icon.png */,
 				C9DC0903259E50E600CDD339 /* static */,
 				C9DC08D8259E2E7200CDD339 /* wiishboilerplate */,
 				C9DC08D7259E2E7200CDD339 /* Products */,
@@ -124,6 +127,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C9DC0906259E567900CDD339 /* Icon.png in Resources */,
 				C9DC0904259E50E600CDD339 /* static in Resources */,
 				C9DC08E9259E2E7300CDD339 /* LaunchScreen.storyboard in Resources */,
 				C9DC08E6259E2E7300CDD339 /* Assets.xcassets in Resources */,
