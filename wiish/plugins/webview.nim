@@ -38,6 +38,7 @@ else:
 import wiish/building/buildutil
 import wiish/building/config
 
+import wiish/plugins/standard/build_ios
 import wiish/plugins/standard/build_android
 
 const datadir = currentSourcePath.parentDir / "webview" / "data"
@@ -111,9 +112,25 @@ proc mobiledevRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildCon
   else:
     discard
 
+# proc output_lib*(ctx: ref BuildContext): string {.inline.} =
+#   ctx.xcode_project / "wiishboilerplate" / "app.a"
+
+# proc xcode_project_file*(ctx: ref BuildContext): string {.inline.} =
+#   ctx.xcode_project / "webview.xcodeproj"
+
 proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview iOS Build
+  let output_lib = ctx.xcode_project / "wiishboilerplate" / "app.a"
+  let xcode_project_file = ctx.xcode_project / "wiishboilerplate.xcodeproj"
   case step
+  of Setup:
+    ctx.logStartStep
+    if not ctx.xcode_project.dirExists():
+      ctx.log &"Copying iOS template project to {ctx.xcode_project}"
+      createDir(ctx.xcode_project)
+      copyDirWithPermissions(datadir / "ios-webview", ctx.xcode_project)
+    else:
+      ctx.log &"Xcode project already exists: {ctx.xcode_project}"
   of Compile:
     ctx.logStartStep()
     var
@@ -122,7 +139,8 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       linkerFlags.add(flag)
       compilerFlags.add(flag)
     nimFlags.add([
-      "--os:macosx",
+      "--os:ios",
+      "--app:staticlib",
       "-d:ios",
       "-d:iPhone",
       &"-d:appBundleIdentifier={ctx.config.bundle_identifier}",
@@ -151,7 +169,7 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       "--parallelBuild:0",
       "--threads:on",
       "--tlsEmulation:off",
-      "--out:" & ctx.executable_path,
+      "--out:" & output_lib,
       "--nimcache:nimcache",
       ])
     for flag in linkerFlags:
@@ -165,6 +183,22 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
     var args = @["nim", "objc"]
     args.add(nimFlags)
     args.add(ctx.main_nim)
+    ctx.log args.join(" ")
+    sh(args)
+  of Build:
+    ctx.logStartStep()
+    var destination = "generic/platform=iOS"
+    if ctx.simulator:
+      destination = "generic/platform=iOS Simulator"
+    var args = @["xcodebuild",
+      "-scheme", "wiishdev",
+      "-project", xcode_project_file,
+      "-destination", destination,
+      "clean", "build",
+      "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
+      "PRODUCT_NAME=" & ctx.config.name,
+      "PRODUCT_BUNDLE_IDENTIFIER=" & ctx.config.bundle_identifier,
+    ]
     ctx.log args.join(" ")
     sh(args)
   else:

@@ -42,6 +42,7 @@ type
   BuildContext* = object
     ## The context for all builds
     projectPath*: string
+      ## . when in the wiish project
     targetOS*: TargetOS
     targetFormat*: TargetFormat
     verbose*: bool
@@ -50,8 +51,10 @@ type
     currentPlugin*: string
     pluginData: TableRef[string, pointer]
     # data that is set during the build
+    dist_dir*: string
+      ## Directory where built output goes (final products)
     build_dir*: string
-      ## Directory where build output goes
+      ## Path where intermediate build files live
     executable_path*: string
       ## For builds that produce an executable, this is the path
       ## to that executable
@@ -177,6 +180,7 @@ proc log*(ctx: ref BuildContext, msg: varargs[string]) =
   for c in fullmsg:
     stderr.write(c)
   stderr.write("\L")
+  stderr.flushFile()
 
 proc logStartStep*(ctx: ref BuildContext) =
   styledWriteLine(stderr, fgCyan, ctx.logprefix, "start", resetStyle)

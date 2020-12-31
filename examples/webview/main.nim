@@ -30,6 +30,7 @@ proc receiveMessage*(msg: string) =
 var app = newWebviewApp()
 
 app.life.addListener proc(ev: LifeEvent) =
+  debug "event: ", $ev
   case ev.kind
   of AppStarted:
     debug "AppStarted"

@@ -53,10 +53,13 @@ proc listProvisioningProfiles(): seq[string] =
 
 proc app_dir*(ctx: ref BuildContext): string {.inline.} =
   ## Return the "MyApp.app" path
-  ctx.build_dir / ctx.config.name & ".app"
+  ctx.dist_dir / ctx.config.name & ".app"
 
 proc entitlements_file*(ctx: ref BuildContext): string {.inline.} =
-  ctx.build_dir / "Entitlements.plist"
+  ctx.dist_dir / "Entitlements.plist"
+
+proc xcode_project*(ctx: ref BuildContext): string {.inline.} =
+  ctx.build_dir / "xc"
 
 proc formatCmd(args:seq[string]):string =
   ## NOT SECURE, but good enough
@@ -101,79 +104,80 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   case step
   of Setup:
     ctx.logStartStep()
-    ctx.build_dir = ctx.projectPath / ctx.config.dst / "ios"
+    ctx.dist_dir = ctx.projectPath / ctx.config.dst / "ios"
+    ctx.build_dir = ctx.projectPath / "build" / "ios"
     ctx.executable_path = ctx.app_dir / "executable"
     ctx.nim_flags.add ctx.config.nimFlags
     ctx.nim_flags.add "-d:appBundleIdentifier=" & ctx.config.bundle_identifier
     var sdk_version = ctx.config.sdk_version
     if sdk_version == "":
-      debug &"Choosing SDK version ..."
+      ctx.log &"Choosing SDK version ..."
       let sdk_versions = listPossibleSDKVersions(ctx.simulator)
-      debug "Possible SDK versions: " & sdk_versions.join(", ")
+      ctx.log "Possible SDK versions: " & sdk_versions.join(", ")
       sdk_version = sdk_versions[^1]
-      debug &"Chose SDK version: {sdk_version}"
+      ctx.log &"Chose SDK version: {sdk_version}"
     ctx.ios_sdk_version = sdk_version
     
-    ctx.log &"Creating .app structure in {ctx.app_dir} ..."
-    createDir(ctx.app_dir)
+    # ctx.log &"Creating .app structure in {ctx.app_dir} ..."
+    # createDir(ctx.app_dir)
 
-    ctx.log &"Compiling LaunchScreen storyboard ..."
-    # https://gist.github.com/fabiopelosin/4560417
-    sh("ibtool",
-      "--output-format", "human-readable-text",
-      "--compile", ctx.app_dir/"LaunchScreen.storyboardc",
-      stdDatadir/"ios-util"/"LaunchScreen.storyboard",
-      "--sdk", ctx.ios_sdk_path,
-    )
+    # ctx.log &"Compiling LaunchScreen storyboard ..."
+    # # https://gist.github.com/fabiopelosin/4560417
+    # sh("ibtool",
+    #   "--output-format", "human-readable-text",
+    #   "--compile", ctx.app_dir/"LaunchScreen.storyboardc",
+    #   stdDatadir/"ios-util"/"LaunchScreen.storyboard",
+    #   "--sdk", ctx.ios_sdk_path,
+    # )
 
-    ctx.log &"Creating icons ..."
-    var iconSrcPath:string
-    if ctx.config.icon == "":
-      iconSrcPath = stdDatadir/"default_square.png"
-    else:
-      iconSrcPath = ctx.projectPath / ctx.config.icon
-    iconSrcPath.resizePNG(ctx.app_dir/"Icon.png", 180, 180)
+    # ctx.log &"Creating icons ..."
+    # var iconSrcPath:string
+    # if ctx.config.icon == "":
+    #   iconSrcPath = stdDatadir/"default_square.png"
+    # else:
+    #   iconSrcPath = ctx.projectPath / ctx.config.icon
+    # iconSrcPath.resizePNG(ctx.app_dir/"Icon.png", 180, 180)
 
-    ctx.log &"Creating Info.plist ..."
-    writeFile(ctx.app_dir / "Info.plist", &"""
-    <?xml version="1.0" encoding="UTF-8" ?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleName</key>
-      <string>{ctx.config.name}</string>
-      <key>CFBundleIdentifier</key>
-      <string>{ctx.config.bundle_identifier}</string>
-      <key>CFBundleExecutable</key>
-      <string>{ctx.executable_path.extractFilename}</string>
-      <key>CFBundleShortVersionString</key>
-      <string>{ctx.config.version}</string>
-      <key>CFBundleVersion</key>
-      <string>{ctx.config.version}.1</string>
-      <key>CFBundleIcons</key>
-      <dict>
-        <key>CFBundlePrimaryIcon</key>
-        <dict>
-          <key>CFBundleIconFiles</key>
-          <array>
-            <string>Icon.png</string>
-          </array>
-        </dict>
-      </dict>
-      <key>UILaunchStoryboardName</key>
-      <string>LaunchScreen</string>
-      {ctx.config.info_plist_append}
-    </dict>
-    </plist>
-    """)
+    # ctx.log &"Creating Info.plist ..."
+    # writeFile(ctx.app_dir / "Info.plist", &"""
+    # <?xml version="1.0" encoding="UTF-8" ?>
+    # <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    # <plist version="1.0">
+    # <dict>
+    #   <key>CFBundleName</key>
+    #   <string>{ctx.config.name}</string>
+    #   <key>CFBundleIdentifier</key>
+    #   <string>{ctx.config.bundle_identifier}</string>
+    #   <key>CFBundleExecutable</key>
+    #   <string>{ctx.executable_path.extractFilename}</string>
+    #   <key>CFBundleShortVersionString</key>
+    #   <string>{ctx.config.version}</string>
+    #   <key>CFBundleVersion</key>
+    #   <string>{ctx.config.version}.1</string>
+    #   <key>CFBundleIcons</key>
+    #   <dict>
+    #     <key>CFBundlePrimaryIcon</key>
+    #     <dict>
+    #       <key>CFBundleIconFiles</key>
+    #       <array>
+    #         <string>Icon.png</string>
+    #       </array>
+    #     </dict>
+    #   </dict>
+    #   <key>UILaunchStoryboardName</key>
+    #   <string>LaunchScreen</string>
+    #   {ctx.config.info_plist_append}
+    # </dict>
+    # </plist>
+    # """)
 
-    let
-      srcResources = ctx.projectPath / ctx.config.resourceDir
-      dstResources = ctx.app_dir / "static"
-    if srcResources.dirExists:
-      ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
-      createDir(dstResources)
-      copyDir(srcResources, dstResources)
+    # let
+    #   srcResources = ctx.projectPath / ctx.config.resourceDir
+    #   dstResources = ctx.app_dir / "static"
+    # if srcResources.dirExists:
+    #   ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
+    #   createDir(dstResources)
+    #   copyDir(srcResources, dstResources)
   of PreCompile:
     discard
   of Compile:
@@ -187,35 +191,37 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   of PostBuild:
     discard
   of PrePackage:
-    if not ctx.simulator:
-      ctx.logStartStep
-      # provisioning profile
-      var prov_profile = getEnv(PROVISIONING_PROFILE_VARNAME, "")
-      if prov_profile == "":
-        let options = listProvisioningProfiles()
-        if options.len > 0:
-          debug &"Since {PROVISIONING_PROFILE_VARNAME} was not set, choosing a provisioning profile at random ..."
-          prov_profile = options[0]
-        else:
-          raise newException(CatchableError, "No provisioning profile set.  Run 'wiish doctor' for instructions.")
+    discard
+  #   if not ctx.simulator:
+  #     ctx.logStartStep
+  #     # provisioning profile
+  #     var prov_profile = getEnv(PROVISIONING_PROFILE_VARNAME, "")
+  #     if prov_profile == "":
+  #       let options = listProvisioningProfiles()
+  #       if options.len > 0:
+  #         debug &"Since {PROVISIONING_PROFILE_VARNAME} was not set, choosing a provisioning profile at random ..."
+  #         prov_profile = options[0]
+  #       else:
+  #         raise newException(CatchableError, "No provisioning profile set.  Run 'wiish doctor' for instructions.")
       
-      let dst = ctx.app_dir/"embedded.mobileprovision"
-      ctx.log &"Copying '{prov_profile}' to '{dst}'"
-      copyFile(prov_profile, dst)
+  #     let dst = ctx.app_dir/"embedded.mobileprovision"
+  #     ctx.log &"Copying '{prov_profile}' to '{dst}'"
+  #     copyFile(prov_profile, dst)
 
-      # Extract entitlements from provisioning profile and put them in the signature
-      let prov_guts = prov_profile.readFile()
-      let i_prestart = prov_guts.find("<key>Entitlements")
-      let i_start = prov_guts.find("<dict>", i_prestart)
-      let i_end = prov_guts.find("</dict>", i_start) + "</dict>".len
-      let entitlements = prov_guts[i_start .. i_end]
-      writeFile(ctx.entitlements_file, &"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        {entitlements}
-        </plist>
-      """)
+  #     # Extract entitlements from provisioning profile and put them in the signature
+  #     let prov_guts = prov_profile.readFile()
+  #     let i_prestart = prov_guts.find("<key>Entitlements")
+  #     let i_start = prov_guts.find("<dict>", i_prestart)
+  #     let i_end = prov_guts.find("</dict>", i_start) + "</dict>".len
+  #     let entitlements = prov_guts[i_start .. i_end]
+  #     writeFile(ctx.entitlements_file, &"""
+  #       <?xml version="1.0" encoding="UTF-8"?>
+  #       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  #       <plist version="1.0">
+  #       {entitlements}
+  #       </plist>
+  #     """)
+  #     ctx.log &"Wrote {ctx.entitlements_file}"
   of Package:
     discard
   of PostPackage:
@@ -223,20 +229,21 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   of PreSign:
     discard
   of BuildStep.Sign:
-    if not ctx.simulator:
-      ctx.logStartStep
-      var signing_identity = getEnv(CODE_SIGN_IDENTITY_VARNAME, "")
-      if signing_identity == "":
-        let identities = listCodesigningIdentities()
-        if identities.len > 0:
-          debug &"Since {CODE_SIGN_IDENTITY_VARNAME} was not set, choosing a signing identity at random ..."
-          signing_identity = identities[0].fullname
+    discard
+  #   if not ctx.simulator:
+  #     ctx.logStartStep
+  #     var signing_identity = getEnv(CODE_SIGN_IDENTITY_VARNAME, "")
+  #     if signing_identity == "":
+  #       let identities = listCodesigningIdentities()
+  #       if identities.len > 0:
+  #         debug &"Since {CODE_SIGN_IDENTITY_VARNAME} was not set, choosing a signing identity at random ..."
+  #         signing_identity = identities[0].fullname
 
-      if signing_identity == "":
-        raise newException(CatchableError, "No signing identity chosen. Run 'wiish doctor' for instructions.")
-      debug &"Signing app with identity {signing_identity}..."
-      signApp(ctx.app_dir, signing_identity, ctx.entitlements_file)
-      ctx.entitlements_file.removeFile()
+  #     if signing_identity == "":
+  #       raise newException(CatchableError, "No signing identity chosen. Run 'wiish doctor' for instructions.")
+  #     debug &"Signing app with identity {signing_identity}..."
+  #     signApp(ctx.app_dir, signing_identity, ctx.entitlements_file)
+  #     ctx.entitlements_file.removeFile()
   of PostSign:
     discard
   of PreNotarize:
@@ -247,6 +254,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     discard
   of Run:
     if ctx.simulator:
+      if not ctx.app_dir.existsDir:
+        raise ValueError.newException("Unable to find app: " & ctx.app_dir)
       var p: Process
       ctx.logStartStep
       # open the simulator
