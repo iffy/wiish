@@ -112,12 +112,6 @@ proc mobiledevRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildCon
   else:
     discard
 
-# proc output_lib*(ctx: ref BuildContext): string {.inline.} =
-#   ctx.xcode_project / "wiishboilerplate" / "app.a"
-
-# proc xcode_project_file*(ctx: ref BuildContext): string {.inline.} =
-#   ctx.xcode_project / "webview.xcodeproj"
-
 proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview iOS Build
   let output_lib = ctx.xcode_project / "wiishboilerplate" / "app.a"
@@ -131,6 +125,15 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       copyDirWithPermissions(datadir / "ios-webview", ctx.xcode_project)
     else:
       ctx.log &"Xcode project already exists: {ctx.xcode_project}"
+    
+    # copy in resources
+    let
+      srcResources = ctx.projectPath / ctx.config.resourceDir
+      dstResources = ctx.xcode_project / "static"
+    if srcResources.dirExists:
+      ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
+      createDir(dstResources)
+      copyDir(srcResources, dstResources)
   of Compile:
     ctx.logStartStep()
     var

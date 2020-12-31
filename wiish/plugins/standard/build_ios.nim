@@ -104,7 +104,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   case step
   of Setup:
     ctx.logStartStep()
-    ctx.dist_dir = ctx.projectPath / ctx.config.dst / "ios"
+    ctx.dist_dir = ctx.projectPath / ctx.config.dst / (if ctx.simulator: "ios-sim" else: "ios")
     ctx.build_dir = ctx.projectPath / "build" / "ios"
     ctx.executable_path = ctx.app_dir / "executable"
     ctx.nim_flags.add ctx.config.nimFlags

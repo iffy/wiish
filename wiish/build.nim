@@ -40,7 +40,7 @@ proc detectTargetFormat*(targetOS: TargetOS): TargetFormat =
   of Ios:
     return targetIosApp
   of IosSimulator:
-    return targetRun
+    return targetIosApp
   of Android:
     return targetAndroidApk
   of Linux:
