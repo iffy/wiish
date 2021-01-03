@@ -209,6 +209,15 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
       createDir(dstResources)
       copyDir(srcResources, dstResources)
+    
+    # list schemes
+    ctx.log "listing schemes..."
+    var args = @["xcodebuild",
+      "-list",
+      "-project", ctx.xcode_project_file,
+    ]
+    ctx.log args.join(" ")
+    shmaybe(args)
   of Build:
     ctx.logStartStep()
     var destination = "generic/platform=iOS"
@@ -291,7 +300,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     discard
   of Run:
     if ctx.simulator:
-      if not ctx.app_dir.existsDir:
+      if not ctx.app_dir.dirExists():
         raise ValueError.newException("Unable to find app: " & ctx.app_dir)
       var p: Process
       ctx.logStartStep
