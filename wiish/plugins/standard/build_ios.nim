@@ -217,7 +217,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       "-project", ctx.xcode_project_file,
     ]
     ctx.log args.join(" ")
-    shmaybe(args)
+    try: sh(args)
+    except: discard
   of Build:
     ctx.logStartStep()
     var destination = "generic/platform=iOS"
