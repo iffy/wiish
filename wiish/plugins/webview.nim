@@ -113,38 +113,28 @@ proc mobiledevRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildCon
   else:
     discard
 
+proc output_lib(ctx: ref BuildContext): string =
+  ## Path to the static library for the iOS build.
+  ctx.xcode_project_root / "wiishboilerplate" / "app.a"
+
 proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview iOS Build
-  let output_lib = ctx.xcode_project / "wiishboilerplate" / "app.a"
-  let xcode_project_file = ctx.xcode_project / "wiishboilerplate.xcodeproj"
   case step
   of Setup:
     ctx.logStartStep
-    if not ctx.xcode_project.dirExists():
-      ctx.log &"Copying iOS template project to {ctx.xcode_project}"
-      createDir(ctx.xcode_project)
-      copyDirWithPermissions(datadir / "ios-webview", ctx.xcode_project)
+    ctx.xcode_project_root = ctx.build_dir / "xc"
+    ctx.xcode_project_file = ctx.xcode_project_root / "wiishboilerplate.xcodeproj"
+    if not ctx.xcode_project_root.dirExists():
+      ctx.log &"Copying iOS template project to {ctx.xcode_project_root}"
+      createDir(ctx.xcode_project_root)
+      copyDirWithPermissions(datadir / "ios-webview", ctx.xcode_project_root)
     else:
-      ctx.log &"Xcode project already exists: {ctx.xcode_project}"
+      ctx.log &"Xcode project already exists: {ctx.xcode_project_root}"
     
-    # copy in icon
-    ctx.log "Creating icons..."
-    var iconSrcPath: string
-    if ctx.config.icon == "":
-      iconSrcPath = stdDatadir / "default_square.png"
-    else:
-      iconSrcPath = ctx.projectPath / ctx.config.icon
-    iconSrcPath.resizePNG(ctx.xcode_project / "Icon.png", 180, 180)
-
-    # copy in resources
-    ctx.log "Adding static files..."
-    let
-      srcResources = ctx.projectPath / ctx.config.resourceDir
-      dstResources = ctx.xcode_project / "static"
-    if srcResources.dirExists:
-      ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
-      createDir(dstResources)
-      copyDir(srcResources, dstResources)
+    # clean up old .a file
+    if ctx.output_lib.fileExists():
+      ctx.log "Cleaning up old " & ctx.output_lib
+      removeFile(ctx.output_lib)
   of Compile:
     ctx.logStartStep()
     var
@@ -183,8 +173,7 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       "--parallelBuild:0",
       "--threads:on",
       "--tlsEmulation:off",
-      "--out:" & output_lib,
-      "--nimcache:nimcache",
+      "--out:" & ctx.output_lib,
       ])
     for flag in linkerFlags:
       nimFlags.add("--passL:" & flag)
@@ -193,26 +182,10 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
     
     nimFlags.add(ctx.config.nimflags)
 
-    ctx.log "Doing build ..."
+    ctx.log "Doing compile ..."
     var args = @["nim", "objc"]
     args.add(nimFlags)
     args.add(ctx.main_nim)
-    ctx.log args.join(" ")
-    sh(args)
-  of Build:
-    ctx.logStartStep()
-    var destination = "generic/platform=iOS"
-    if ctx.simulator:
-      destination = "generic/platform=iOS Simulator"
-    var args = @["xcodebuild",
-      "-scheme", "wiishdev",
-      "-project", xcode_project_file,
-      "-destination", destination,
-      "clean", "build",
-      "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
-      "PRODUCT_NAME=" & ctx.config.name,
-      "PRODUCT_BUNDLE_IDENTIFIER=" & ctx.config.bundle_identifier,
-    ]
     ctx.log args.join(" ")
     sh(args)
   else:

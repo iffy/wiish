@@ -58,9 +58,10 @@ type
     executable_path*: string
       ## For builds that produce an executable, this is the path
       ## to that executable
+    xcode_project_root*: string ## the dir containing the .xcodeproj file
+    xcode_project_file*: string ## the .xcodeproj file
+
     ios_sdk_version*: string
-    output_path*: string
-      ## Build product path (.app, .dmg, .apk, etc...)
     nim_flags*: seq[string]
       ## Flags that should be set when compiling Nim code.
       ## Includes the flags from the config.

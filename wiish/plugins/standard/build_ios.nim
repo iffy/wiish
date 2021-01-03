@@ -58,8 +58,13 @@ proc app_dir*(ctx: ref BuildContext): string {.inline.} =
 proc entitlements_file*(ctx: ref BuildContext): string {.inline.} =
   ctx.dist_dir / "Entitlements.plist"
 
-proc xcode_project*(ctx: ref BuildContext): string {.inline.} =
-  ctx.build_dir / "xc"
+# proc xcode_project_root*(ctx: ref BuildContext): string {.inline.} =
+#   ## Path where .xcodeproj file lives
+#   ctx.build_dir / "xc"
+
+# proc xcode_project_file*(ctx: ref BuildContext): string {.inline.} =
+#   ## Path to .xcodeproj file
+#   ctx.build_dir 
 
 proc formatCmd(args:seq[string]):string =
   ## NOT SECURE, but good enough
@@ -185,9 +190,41 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   of PostCompile:
     discard
   of PreBuild:
-    discard
+    ctx.logStartStep()
+    # copy in icon
+    ctx.log "Creating icons..."
+    var iconSrcPath: string
+    if ctx.config.icon == "":
+      iconSrcPath = stdDatadir / "default_square.png"
+    else:
+      iconSrcPath = ctx.projectPath / ctx.config.icon
+    iconSrcPath.resizePNG(ctx.xcode_project_root / "Icon.png", 180, 180)
+
+    # copy in resources
+    ctx.log "Adding static files..."
+    let
+      srcResources = ctx.projectPath / ctx.config.resourceDir
+      dstResources = ctx.xcode_project_root / "static"
+    if srcResources.dirExists:
+      ctx.log &"Copying resources from {srcResources} to {dstResources} ..."
+      createDir(dstResources)
+      copyDir(srcResources, dstResources)
   of Build:
-    discard
+    ctx.logStartStep()
+    var destination = "generic/platform=iOS"
+    if ctx.simulator:
+      destination = "generic/platform=iOS Simulator"
+    var args = @["xcodebuild",
+      "-scheme", "wiishdev",
+      "-project", ctx.xcode_project_file,
+      "-destination", destination,
+      "clean", "build",
+      "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
+      "PRODUCT_NAME=" & ctx.config.name,
+      "PRODUCT_BUNDLE_IDENTIFIER=" & ctx.config.bundle_identifier,
+    ]
+    ctx.log args.join(" ")
+    sh(args)
   of PostBuild:
     discard
   of PrePackage:
