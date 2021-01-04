@@ -1,16 +1,17 @@
 ## Code for building iOS applications.
 ##
-import os
-import osproc
-import strformat
-import strutils
 # import parsetoml
 # import posix
-import regex
-import logging
-import sequtils
-# import xmltree
 # import xmlparser
+# import xmltree
+import json
+import logging
+import os
+import osproc
+import regex
+import sequtils
+import strformat
+import strutils
 
 import ./common
 import wiish/doctor
@@ -46,6 +47,22 @@ proc listCodesigningIdentities(): seq[CodeSignIdentity] =
       identity.shortid = matches[2]
       identity.fullname = &"{identity.name} ({identity.shortid})"
       result.add(identity)
+
+type
+  Device* = tuple
+    name: string
+    udid: string
+
+proc listAvailableSimulators(): seq[Device] =
+  let output = execCmdEx("xcrun simctl list devices 'iphone 11' --json").output
+  let data = output.parseJson()
+  let devices = data["devices"]
+  for k,v in devices.pairs():
+    if ".iOS" in k:
+      for item in v:
+        if item["isAvailable"].getBool(false):
+          result.add((item["name"].getStr(), item["udid"].getStr()))
+
 
 proc listProvisioningProfiles(): seq[string] =
   for kind, thing in walkDir(PROV_PROFILE_DIR):
@@ -122,6 +139,19 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       sdk_version = sdk_versions[^1]
       ctx.log &"Chose SDK version: {sdk_version}"
     ctx.ios_sdk_version = sdk_version
+
+    if ctx.xcode_build_destination == "":
+      ctx.log &"Choosing xcodebuild -destination ..."
+      if ctx.simulator:
+        let devices = listAvailableSimulators()
+        if devices.len > 0:
+          ctx.xcode_build_destination = &"platform=iOS Simulator,name={devices[0].name}"
+        else:
+          ctx.log "Unable to find any available devices"
+          ctx.xcode_build_destination = "generic/platform=iOS Simulator"
+      else:
+        ctx.xcode_build_destination = "generic/platform=iOS"
+      ctx.log &"Chose xcodebuild -destination " & ctx.xcode_build_destination
     
     # ctx.log &"Creating .app structure in {ctx.app_dir} ..."
     # createDir(ctx.app_dir)
@@ -221,13 +251,10 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     except: discard
   of Build:
     ctx.logStartStep()
-    var destination = "generic/platform=iOS"
-    if ctx.simulator:
-      destination = "generic/platform=iOS Simulator"
     var args = @["xcodebuild",
       "-scheme", ctx.xcode_build_scheme,
       "-project", ctx.xcode_project_file,
-      "-destination", destination,
+      "-destination", ctx.xcode_build_destination,
       "clean", "build",
       "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
       "PRODUCT_NAME=" & ctx.config.name,
