@@ -40,7 +40,7 @@ proc detectTargetFormat*(targetOS: TargetOS): TargetFormat =
   of Ios:
     return targetIosApp
   of IosSimulator:
-    return targetRun
+    return targetIosApp
   of Android:
     return targetAndroidApk
   of Linux:
@@ -50,7 +50,7 @@ proc detectTargetFormat*(targetOS: TargetOS): TargetFormat =
   of AutoDetectOS:
     discard
 
-template doBuildSteps*[T](ctx: ref BuildContext, builders: T) =
+template doBuildSteps*[T](ctx: ref BuildContext, builders: T, steps: set[BuildStep] = {}) =
   ctx.log "build starting..."
   if ctx.targetOS == AutoDetectOS and ctx.targetFormat in {targetAuto, targetRun}:
     ctx.log "choosing targetOS..."
@@ -85,6 +85,8 @@ template doBuildSteps*[T](ctx: ref BuildContext, builders: T) =
   ctx.log "verbosity:     ", $ctx.verbose
   ctx.log "config: ", $ctx.config[]
   for step in low(BuildStep)..high(BuildStep):
+    if steps.len > 0 and step notin steps:
+      continue
     if step == Run and ctx.targetFormat != targetRun:
       continue
     ctx.currentStep = step
@@ -96,8 +98,25 @@ template doBuildSteps*[T](ctx: ref BuildContext, builders: T) =
 template build*[T](builders: T) =
   ## Perform a plugin-based Wiish build with the given plugins
   ## Provide plugins as a tuple.
+  proc parseSteps(inp: seq[string]): set[BuildStep] =
+    for x in inp:
+      result.incl parseEnum[BuildStep](x, Setup)
+
   var parser = newParser:
-    command "build":
+    command "step", "Low level":
+      option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
+      option("-t", "--target", choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it))
+      flag("--verbose")
+      arg("steps", nargs = -1, help = "Step(s) to run. [" & toSeq(low(BuildStep)..high(BuildStep)).join(", ") & "]")
+      run:
+        var ctx = newBuildContext()
+        ctx.projectPath = "."
+        ctx.targetOS = parseTargetOS(opts.os)
+        ctx.targetFormat = parseTargetFormat(opts.target)
+        ctx.verbose = opts.verbose
+        let steps = parseSteps(opts.steps)
+        doBuildSteps(ctx, builders, steps)
+    command "build", "High level":
       option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
       option("-t", "--target", choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it))
       flag("--verbose")
@@ -108,7 +127,7 @@ template build*[T](builders: T) =
         ctx.targetFormat = parseTargetFormat(opts.target)
         ctx.verbose = opts.verbose
         doBuildSteps(ctx, builders)
-    command "run":
+    command "run", "High level":
       option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
       flag("--verbose")
       run:
@@ -118,7 +137,8 @@ template build*[T](builders: T) =
         ctx.targetFormat = targetRun
         ctx.verbose = opts.verbose
         doBuildSteps(ctx, builders)
-    command "doctor":
+    command "doctor", "High level":
       run:
         raise ValueError.newException("doctor not implemented yet")
+    
   parser.run()

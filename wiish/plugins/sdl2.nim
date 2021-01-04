@@ -127,8 +127,26 @@ proc iosBuildSDLLib(ctx: ref BuildContext, lib = ""): string =
 
 proc iosRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
   case step
+  of Setup:
+    ctx.logStartStep
+    ctx.xcode_project_root = ctx.build_dir / "xc"
+    ctx.xcode_project_file = ctx.xcode_project_root / "wiishboilerplate.xcodeproj"
+    ctx.xcode_build_scheme = "wiishboilerplate"
+    let executable = ctx.xcode_project_root / "executable"
+
+    if not ctx.xcode_project_root.dirExists():
+      ctx.log &"Copying iOS template project to {ctx.xcode_project_root}"
+      createDir(ctx.xcode_project_root)
+      copyDirWithPermissions(datadir / "ios-sdl2", ctx.xcode_project_root)
+    else:
+      ctx.log &"Xcode project already exists: {ctx.xcode_project_root}"
+    
+    if executable.fileExists():
+      ctx.log "Cleaning up old " & executable
+      removeFile(executable)
   of Compile:
     ctx.logStartStep
+    let executable = ctx.xcode_project_root / "executable"
     var
       nimflags: seq[string]
       linkerFlags: seq[string]
@@ -183,7 +201,7 @@ proc iosRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
       "--parallelBuild:0",
       "--threads:on",
       "--tlsEmulation:off",
-      "--out:" & ctx.executable_path,
+      "--out:" & executable,
       "--nimcache:nimcache",
     ])
     for flag in linkerFlags:

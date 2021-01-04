@@ -28,8 +28,10 @@ proc receiveMessage*(msg: string) =
 # Where wiish comes in...
 #---------------------------------------------------
 var app = newWebviewApp()
+let index_html = "file://" & resourcePath("index.html").replace(" ", "%20")
 
 app.life.addListener proc(ev: LifeEvent) =
+  debug "event: ", $ev
   case ev.kind
   of AppStarted:
     debug "AppStarted"
@@ -44,5 +46,4 @@ app.life.addListener proc(ev: LifeEvent) =
   else:
     debug "Unhandled lifecycle message: ", $ev
 
-let index_html = "file://" & resourcePath("index.html").replace(" ", "%20")
 app.start(index_html, title = "Wiish Webview Demo")

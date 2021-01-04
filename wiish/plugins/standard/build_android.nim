@@ -46,6 +46,9 @@ proc possibleDevices(): seq[string] =
   let emulator_bin = findExe("emulator")
   return shoutput(emulator_bin, "-list-avds").strip.splitLines
 
+proc apk_path(ctx: ref BuildContext): string {.inline.} =
+  ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
+
 proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Standard Android build
   case step
@@ -56,7 +59,6 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     if ctx.build_dir.dirExists():
       ctx.log "Removing old build dir: ", ctx.build_dir
       ctx.build_dir.removeDir()
-    ctx.output_path = ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
     ctx.nim_flags.add ctx.config.nimFlags
     ctx.nim_flags.add "-d:appJavaPackageName=" & ctx.config.java_package_name
   of Compile:
@@ -158,9 +160,6 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     let android_home = adb_bin.parentDir.parentDir
     ctx.log &"Android SDK path = {android_home}"
 
-    ctx.log "Building app ..."
-    let apkPath = ctx.output_path
-
     ctx.log "Finding running emulator devices ..."
     let device_list = runningDevices()
     ctx.log &"Running devices: {device_list.repr}"
@@ -185,8 +184,8 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
         sleep(1000)
       sleep(1000) # There's some amount of race condition between boot and when the apk can be installed
 
-    ctx.log &"Installing apk {apkPath} ..."
-    sh("adb", "install", "-r", "-t", apkPath)
+    ctx.log &"Installing apk {ctx.apk_path} ..."
+    sh("adb", "install", "-r", "-t", ctx.apk_path)
 
     ctx.log &"Watching logs ..."
     var logargs = @["logcat"]

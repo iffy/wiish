@@ -198,7 +198,7 @@ proc start*(app: WebviewIosApp, url = "", title = "") =
   discard startIOSLoop()
 
   
-{.compile: "webview_ios_objc.m".}  
+# {.compile: "webview_ios_objc.m".}  
   
 
 

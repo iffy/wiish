@@ -38,6 +38,8 @@ else:
 import wiish/building/buildutil
 import wiish/building/config
 
+import wiish/plugins/standard/common as stdcommon
+import wiish/plugins/standard/build_ios
 import wiish/plugins/standard/build_android
 
 const datadir = currentSourcePath.parentDir / "webview" / "data"
@@ -111,9 +113,29 @@ proc mobiledevRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildCon
   else:
     discard
 
+proc output_lib(ctx: ref BuildContext): string =
+  ## Path to the static library for the iOS build.
+  ctx.xcode_project_root / "wiishboilerplate" / "app.a"
+
 proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Webview iOS Build
   case step
+  of Setup:
+    ctx.logStartStep
+    ctx.xcode_project_root = ctx.build_dir / "xc"
+    ctx.xcode_project_file = ctx.xcode_project_root / "wiishboilerplate.xcodeproj"
+    ctx.xcode_build_scheme = "wiishboilerplate"
+    if not ctx.xcode_project_root.dirExists():
+      ctx.log &"Copying iOS template project to {ctx.xcode_project_root}"
+      createDir(ctx.xcode_project_root)
+      copyDirWithPermissions(datadir / "ios-webview", ctx.xcode_project_root)
+    else:
+      ctx.log &"Xcode project already exists: {ctx.xcode_project_root}"
+    
+    # clean up old .a file
+    if ctx.output_lib.fileExists():
+      ctx.log "Cleaning up old " & ctx.output_lib
+      removeFile(ctx.output_lib)
   of Compile:
     ctx.logStartStep()
     var
@@ -122,7 +144,8 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       linkerFlags.add(flag)
       compilerFlags.add(flag)
     nimFlags.add([
-      "--os:macosx",
+      "--os:ios",
+      "--app:staticlib",
       "-d:ios",
       "-d:iPhone",
       &"-d:appBundleIdentifier={ctx.config.bundle_identifier}",
@@ -151,8 +174,7 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       "--parallelBuild:0",
       "--threads:on",
       "--tlsEmulation:off",
-      "--out:" & ctx.executable_path,
-      "--nimcache:nimcache",
+      "--out:" & ctx.output_lib,
       ])
     for flag in linkerFlags:
       nimFlags.add("--passL:" & flag)
@@ -161,7 +183,7 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
     
     nimFlags.add(ctx.config.nimflags)
 
-    ctx.log "Doing build ..."
+    ctx.log "Doing compile ..."
     var args = @["nim", "objc"]
     args.add(nimFlags)
     args.add(ctx.main_nim)

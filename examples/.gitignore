@@ -5,3 +5,6 @@
 dist
 .DS_Store
 nimcache/
+webview/build/
+sdl2/build/
+opengl/build/

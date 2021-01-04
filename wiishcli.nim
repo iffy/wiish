@@ -83,14 +83,26 @@ proc runDoctor(plugins: seq[string] = @[], targetOS: set[TargetOS] = {}, targetF
 let p = newParser("wiish "):
   help("Wiish v" & VERSION)
   flag("-v", "--version", help = "Show version and quit", shortcircuit = true)
-  command "init":
+
+  command "step", "Low level":
+    nohelpflag()
+    help("Run a single build step")
+    arg("extra", nargs = -1)
+    run:
+      onlyInWiishProject()
+      var args = baseNimArgs()
+      args.add "step"
+      args.add opts.extra
+      sh args
+
+  command "init", "High level":
     help("Create a new wiish application")
     arg("directory", default=some("."))
     option("-b", "--base-template", help="Template to use.", default=some("webview"), choices = EXAMPLE_NAMES)
     run:
       doInit(directory = opts.directory, example = opts.base_template)
   
-  command "build":
+  command "build", "High level":
     nohelpflag()
     help("Build an application")
     arg("extra", nargs = -1)
@@ -101,7 +113,7 @@ let p = newParser("wiish "):
       args.add opts.extra
       sh args
 
-  command "run":
+  command "run", "High level":
     nohelpflag()
     help("Run the application")
     arg("extra", nargs = -1)
@@ -112,9 +124,9 @@ let p = newParser("wiish "):
       args.add opts.extra
       sh args
 
-  command "doctor":
+  command "doctor", "High level":
     help("""
-Show what needs to be installed/configured to support various features.
+Show what needs to be installed/configured.
 You can filter which checks are performed.  For instance, if you only want to
 know what you need to support building for Android, run with
 

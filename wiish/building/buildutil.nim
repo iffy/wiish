@@ -42,6 +42,7 @@ type
   BuildContext* = object
     ## The context for all builds
     projectPath*: string
+      ## . when in the wiish project
     targetOS*: TargetOS
     targetFormat*: TargetFormat
     verbose*: bool
@@ -50,14 +51,19 @@ type
     currentPlugin*: string
     pluginData: TableRef[string, pointer]
     # data that is set during the build
+    dist_dir*: string
+      ## Directory where built output goes (final products)
     build_dir*: string
-      ## Directory where build output goes
+      ## Path where intermediate build files live
     executable_path*: string
       ## For builds that produce an executable, this is the path
       ## to that executable
+    xcode_project_root*: string ## the dir containing the .xcodeproj file
+    xcode_project_file*: string ## the .xcodeproj file
+    xcode_build_scheme*: string ## the -scheme to build
+    xcode_build_destination*: string ## the -destination to build
+
     ios_sdk_version*: string
-    output_path*: string
-      ## Build product path (.app, .dmg, .apk, etc...)
     nim_flags*: seq[string]
       ## Flags that should be set when compiling Nim code.
       ## Includes the flags from the config.
@@ -177,6 +183,7 @@ proc log*(ctx: ref BuildContext, msg: varargs[string]) =
   for c in fullmsg:
     stderr.write(c)
   stderr.write("\L")
+  stderr.flushFile()
 
 proc logStartStep*(ctx: ref BuildContext) =
   styledWriteLine(stderr, fgCyan, ctx.logprefix, "start", resetStyle)
