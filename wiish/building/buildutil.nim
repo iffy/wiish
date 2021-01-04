@@ -60,6 +60,7 @@ type
       ## to that executable
     xcode_project_root*: string ## the dir containing the .xcodeproj file
     xcode_project_file*: string ## the .xcodeproj file
+    xcode_build_scheme*: string ## the -scheme to build
 
     ios_sdk_version*: string
     nim_flags*: seq[string]

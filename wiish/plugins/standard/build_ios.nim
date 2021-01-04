@@ -225,7 +225,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     if ctx.simulator:
       destination = "generic/platform=iOS Simulator"
     var args = @["xcodebuild",
-      "-scheme", "wiishdev",
+      "-scheme", ctx.xcode_build_scheme,
       "-project", ctx.xcode_project_file,
       "-destination", destination,
       "clean", "build",
