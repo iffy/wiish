@@ -69,6 +69,18 @@
     ctrl.windowID = nim_nextWindowId();
     nim_windowCreated(ctrl.windowID, (void*)CFBridgingRetain(ctrl)); // TODO: This isn't absolutely safe... but probably is :)
     nim_didFinishLaunching();
+    
+    // Hook into the runloop so that Nim can run its loop in tandem within the same thread
+    CFRunLoopRef rl = CFRunLoopGetCurrent();
+    // TODO: This polling is terrible... Can someone think of another way?
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.001
+      target:[NSBlockOperation blockOperationWithBlock:^{
+        nim_iterateLoop();
+      }]
+      selector:@selector(main)
+      userInfo:nil
+      repeats:YES
+    ];
     return YES;
 }
 - (void)applicationWillResignActive:(UIApplication *)application {
