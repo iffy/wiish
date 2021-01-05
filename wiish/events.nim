@@ -35,10 +35,11 @@ proc removeListener*[T](es: var EventSource[T], listener: proc(message:T):void) 
   ## Remove a proc from receiving any more events.
   es.listeners.del(es.listeners.find(listener))
 
-proc emit*[T](es: EventSource[T], message: T) =
+proc emit*[T](es: EventSource[T], message: T) {.gcsafe.} =
   ## Emit an event to all event listeners
   for listener in es.listeners:
-    listener(message)
+    {.gcsafe.}:
+      listener(message)
 
 template handle*[T](es: EventSource[T], varname:untyped, fnbody:untyped): untyped =
   ## Convient syntax for addListener

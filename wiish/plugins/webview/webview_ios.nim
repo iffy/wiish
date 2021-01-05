@@ -80,22 +80,6 @@ proc sendMessage*(win:WebviewWindow, message:string) =
   ## Send a message from Nim to JS
   evalJavaScript(win, &"wiish._handleMessage({%message});")
 
-
-proc nimLoop() {.exportc.} =
-  setupForeignThreadGc()
-  var do_run_forever = false
-  try:
-    poll()
-    do_run_forever = true
-  except ValueError:
-    discard
-  if do_run_forever:
-    runForever()
-
-proc startNimLoop(): Thread[void] =
-  setupForeignThreadGc()
-  createThread(result, nimLoop)
-
 proc startIOSLoop(): cint {.importc.}
 
 proc jsbridgecode(): cstring {.exportc.} =
@@ -149,28 +133,24 @@ proc doLog(x:cstring) {.exportc.} =
 #---------------------------------------------------
 # lifecycle events
 #---------------------------------------------------
+template sendLifeEvent(ev: untyped): untyped =
+  globalapplock.withLock:
+    globalapp.life.emit(ev)
 
 proc nim_didFinishLaunching() {.exportc.} =
-  globalapplock.withLock:
-    globalapp.life.emit(LifeEvent(kind: AppStarted))
+  sendLifeEvent LifeEvent(kind: AppStarted)
 
 proc nim_windowWillBackground(windowId: cint) {.exportc.} =
-  globalapplock.withLock:
-    ## TODO: when multi-scene is supported, change the windowId appropriately
-    globalapp.life.emit(LifeEvent(kind: WindowWillBackground, windowId: windowId.int))
+  sendLifeEvent LifeEvent(kind: WindowWillBackground, windowId: windowId.int)
 
 proc nim_windowWillForeground(windowId: cint) {.exportc.} =
-  globalapplock.withLock:
-    globalapp.life.emit(LifeEvent(kind: WindowWillForeground, windowId: windowId.int))
+  sendLifeEvent LifeEvent(kind: WindowWillForeground, windowId: windowId.int)
 
 proc nim_windowDidForeground(windowId: cint) {.exportc.} =
-  globalapplock.withLock:
-    globalapp.life.emit(LifeEvent(kind: WindowDidForeground, windowId: windowId.int))
+  sendLifeEvent LifeEvent(kind: WindowDidForeground, windowId: windowId.int)
 
 proc nim_applicationWillTerminate() {.exportc.} =
-  globalapplock.withLock:
-    globalapp.life.emit(LifeEvent(kind: AppWillExit))
-
+  sendLifeEvent LifeEvent(kind: AppWillExit)
 
 proc nim_signalJSMessagesReady(windowId: cint) {.exportc.} =
   var win: WebviewWindow
@@ -184,6 +164,13 @@ proc nim_sendMessageToNim(windowId: cint, x:cstring) {.exportc.} =
     win = globalapp.getWindow(windowId.int)
   win.onMessage.emit($x)
 
+proc nim_iterateLoop() {.exportc.} =
+  ## Drain the async loop
+  try:
+    drain()
+  except:
+    discard
+
 proc getInitURL(): cstring {.exportc.} =
   globalapplock.withLock:
     result = globalapp.url
@@ -194,11 +181,9 @@ proc start*(app: WebviewIosApp, url = "", title = "") =
   globalapplock.withLock:
     globalapp = app
     app.url = url
-  discard startNimLoop()
   discard startIOSLoop()
 
-  
-# {.compile: "webview_ios_objc.m".}  
+# {.compile: "webview_ios_objc.m".}
   
 
 
