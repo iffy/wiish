@@ -73,7 +73,7 @@
     // Hook into the runloop so that Nim can run its loop in tandem within the same thread
     CFRunLoopRef rl = CFRunLoopGetCurrent();
     // TODO: This polling is terrible... Can someone think of another way?
-    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.001
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.01
       target:[NSBlockOperation blockOperationWithBlock:^{
         nim_iterateLoop();
       }]

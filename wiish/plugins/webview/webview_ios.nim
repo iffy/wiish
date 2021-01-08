@@ -167,7 +167,7 @@ proc nim_sendMessageToNim(windowId: cint, x:cstring) {.exportc.} =
 proc nim_iterateLoop() {.exportc.} =
   ## Drain the async loop
   try:
-    drain()
+    drain(1)
   except:
     discard
 
