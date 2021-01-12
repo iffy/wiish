@@ -10,7 +10,6 @@ import asyncdispatch
 # App logic
 #---------------------------------------------------
 var counter = initCountTable[string]()
-var timerCounter = 0
 var senderFn: proc(x:string) = nil
 
 proc attachSender*(fn: proc(x:string)) =
@@ -26,10 +25,13 @@ proc receiveMessage*(msg: string) =
     if not senderFn.isNil:
       senderFn($ %* {"color": color, "count": count})
 
-addTimer(1000, false, proc(fd: AsyncFD):bool {.gcsafe.} =
-  timerCounter.inc()
-  senderFn($ %* {"color": "timer", "count": timerCounter})
-)
+when not defined(android):
+  var timerCounter = 0
+  addTimer(1000, false, proc(fd: AsyncFD):bool =
+    {.gcsafe.}:
+      timerCounter.inc()
+      senderFn($ %* {"color": "timer", "count": timerCounter})
+  )
 
 #---------------------------------------------------
 # Where wiish comes in...
