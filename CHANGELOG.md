@@ -1,3 +1,13 @@
+# v0.3.0 - 2021-01-12
+
+- **NEW:** Added `info_plist_append` section to wiish.toml to allow apps to append data to the standard `Info.plist` file for macOS and iOS.
+- **NEW:** iOS apps are now single-threaded by default
+- **NEW:** For iOS, Wiish now uses Xcode to build the app instead of crafting it itself. This also means that you can modify the Xcode build to suit your needs.
+- **FIX:** Renamed OS-specific webview window types to WebviewWindow
+- **FIX:** `mobileutil.documentsPath` now works for mobiledev
+- **FIX:** Webview desktop app no longer hangs when using async Nim features. ([#97](https://github.com/iffy/wiish/issues/97))
+- **FIX:** Look for a `[mobiledev]` section in `wiish.toml`
+
 # v0.2.0 - 2020-12-29
 
 - **BREAKING CHANGE:** Combined DesktopEvent and MobileEvent into LifeEvent
