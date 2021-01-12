@@ -4,11 +4,12 @@ import strutils
 import logging
 import tables
 import json
+import asyncdispatch
 
 #---------------------------------------------------
 # App logic
 #---------------------------------------------------
-var counter* = initCountTable[string]()
+var counter = initCountTable[string]()
 var senderFn: proc(x:string) = nil
 
 proc attachSender*(fn: proc(x:string)) =
@@ -23,6 +24,14 @@ proc receiveMessage*(msg: string) =
     let count = counter[color]
     if not senderFn.isNil:
       senderFn($ %* {"color": color, "count": count})
+
+when not defined(android):
+  var timerCounter = 0
+  addTimer(1000, false, proc(fd: AsyncFD):bool =
+    {.gcsafe.}:
+      timerCounter.inc()
+      senderFn($ %* {"color": "timer", "count": timerCounter})
+  )
 
 #---------------------------------------------------
 # Where wiish comes in...

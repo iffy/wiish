@@ -126,11 +126,11 @@ proc start*(app: WebviewApp, url = "", title = "") =
   while keepgoing:
     # Run window loops
     for windowId, window in app.windows.mpairs:
-      if loop(window.webview, 1) != 0:
+      if loop(window.webview, 0) != 0:
         keepgoing = false
     # Run asyncdispatch loop
     try:
-      drain()
+      drain(1)
     except ValueError:
       discard
   addExitProc proc() =
