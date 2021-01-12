@@ -16,7 +16,7 @@ jobs:
           - stable
           # - devel
         os:
-          - ubuntu-latest
+          - ubuntu-18.04
           - macOS-latest
           - windows-latest
     steps:
