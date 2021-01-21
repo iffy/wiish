@@ -45,7 +45,8 @@ app.life.addListener proc(ev: LifeEvent) =
   case ev.kind
   of AppStarted:
     debug "AppStarted"
-    debug "documents path: ", documentsPath()
+    when wiish_mobile:
+      debug "documents path: ", documentsPath()
   of WindowAdded:
     var win = app.getWindow(ev.windowId)
     win.onReady.handle:
