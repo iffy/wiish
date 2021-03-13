@@ -75,13 +75,21 @@ proc app_dir*(ctx: ref BuildContext): string {.inline.} =
 proc entitlements_file*(ctx: ref BuildContext): string {.inline.} =
   ctx.dist_dir / "Entitlements.plist"
 
-# proc xcode_project_root*(ctx: ref BuildContext): string {.inline.} =
-#   ## Path where .xcodeproj file lives
-#   ctx.build_dir / "xc"
+type
+  Replacement = tuple
+    pattern: Regex
+    replacement: string
 
-# proc xcode_project_file*(ctx: ref BuildContext): string {.inline.} =
-#   ## Path to .xcodeproj file
-#   ctx.build_dir 
+proc replaceInFile(filename: string, replacements: seq[Replacement]) =
+  ## Open a file, search for some patterns and perform the corresponding replacement
+  # TODO: make this more efficient by not reading the whole file into memory
+  var guts = readFile(filename)
+  for (pattern,replacement) in replacements:
+    guts = guts.replace(pattern, replacement)
+  writeFile(filename, guts)
+
+proc replaceInFile(filename: string, pattern: Regex, replacement: string) =
+  filename.replaceInFile(@[(pattern, replacement)])
 
 proc formatCmd(args:seq[string]):string =
   ## NOT SECURE, but good enough
@@ -240,6 +248,14 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       createDir(dstResources)
       copyDir(srcResources, dstResources)
     
+    # set build settings
+    ctx.log "Adjusting build settings..."
+    let pbxproj_path = ctx.xcode_project_file / "project.pbxproj"
+    pbxproj_path.replaceInFile(@[
+      (re"PRODUCT_BUNDLE_IDENTIFIER = .*?;", &"PRODUCT_BUNDLE_IDENTIFIER = {ctx.config.bundle_identifier};"),
+      (re"productName = .*?;", &"productName = {ctx.config.name};"),
+    ])
+
     # list schemes
     ctx.log "listing schemes..."
     var args = @["xcodebuild",
@@ -255,10 +271,9 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       "-scheme", ctx.xcode_build_scheme,
       "-project", ctx.xcode_project_file,
       "-destination", ctx.xcode_build_destination,
+      "-allowProvisioningUpdates",
       "clean", "build",
       "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
-      "PRODUCT_NAME=" & ctx.config.name,
-      "PRODUCT_BUNDLE_IDENTIFIER=" & ctx.config.bundle_identifier,
     ]
     ctx.log args.join(" ")
     sh(args)

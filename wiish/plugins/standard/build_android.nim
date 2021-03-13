@@ -49,6 +49,9 @@ proc possibleDevices(): seq[string] =
 proc apk_path(ctx: ref BuildContext): string {.inline.} =
   ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
 
+proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.} =
+  ctx.build_dir/"app"/"jni"/"src"/android_abi
+
 proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Standard Android build
   case step
@@ -64,7 +67,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
   of Compile:
     ctx.logStartStep
     proc buildFor(android_abi:string, cpu:string) =
-      let nimcachedir = ctx.build_dir/"app"/"jni"/"src"/android_abi
+      let nimcachedir = ctx.csource_dir(android_abi)
       if nimcachedir.dirExists:
         nimcachedir.removeDir()
       var nimFlags:seq[string]
@@ -179,7 +182,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.log "Waiting for device to boot ..."
       sh("adb", "wait-for-local-device")
     
-      while runningDevices().len != 0:
+      while runningDevices().len == 0:
         ctx.log "Still waiting for device to boot..."
         sleep(1000)
       sleep(1000) # There's some amount of race condition between boot and when the apk can be installed
