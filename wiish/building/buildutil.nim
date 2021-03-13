@@ -36,6 +36,7 @@ type
     targetWinExe = "exe"
     targetWinInstaller = "win-installer"
     targetIosApp = "ios-app"
+    targetIosIpa = "ios-ipa"
     targetAndroidApk = "apk"
     targetLinuxBin = "bin"
   
@@ -108,9 +109,9 @@ proc viableTargets*(os: TargetOS): set[TargetFormat] =
   of Android:
     result = {targetRun, targetAndroidApk}
   of Ios:
-    result = {targetIosApp}
+    result = {targetIosApp, targetIosIpa}
   of IosSimulator:
-    result = {targetRun, targetIosApp}
+    result = {targetRun, targetIosApp, targetIosIpa}
   of MobileDev:
     result = {targetRun}
   of Mac:

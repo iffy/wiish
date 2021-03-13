@@ -68,6 +68,14 @@ proc listProvisioningProfiles(): seq[string] =
   for kind, thing in walkDir(PROV_PROFILE_DIR):
     result.add(thing)
 
+proc getProvisioningProfileName(filename: string): string =
+  var this_is_it = false
+  for line in open(filename, fmRead).lines():
+    if this_is_it:
+      return line.replace(re".*?<string>(.*?)</string>.*?", "$1")
+    elif "<key>name</key>" in line.toLower():
+      this_is_it = true
+
 proc app_dir*(ctx: ref BuildContext): string {.inline.} =
   ## Return the "MyApp.app" path
   ctx.dist_dir / ctx.config.name & ".app"
@@ -272,13 +280,57 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       "-project", ctx.xcode_project_file,
       "-destination", ctx.xcode_build_destination,
       "-allowProvisioningUpdates",
-      "clean", "build",
-      "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
+      "clean",
     ]
+    if ctx.targetFormat == targetIosIpa:
+      args.add @[
+        "-archivePath", ctx.dist_dir.absolutePath / ctx.config.name & ".xcarchive",
+        "archive"
+      ]
+    else:
+      args.add @[
+        "build",
+        "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
+      ]
     ctx.log args.join(" ")
     sh(args)
   of PostBuild:
-    discard
+    if ctx.targetFormat == targetIosIpa:
+      ctx.logStartStep()
+      let export_plist_path = ctx.build_dir.absolutePath / "ExportOptions.plist"
+      if not existsFile(export_plist_path):
+        var prov_profile = getEnv(PROVISIONING_PROFILE_VARNAME, "")
+        var prov_profile_name = ""
+        if prov_profile != "":
+          prov_profile_name = prov_profile.getProvisioningProfileName()
+        export_plist_path.writeFile(fmt"""
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>provisioningProfiles</key>
+  <dict>
+      <key>{ctx.config.bundle_identifier}</key>
+      <string>{prov_profile_name}</string>
+  </dict>
+  <key>signingCertificate</key>
+  <string>iOS Distribution</string>
+</dict>
+</plist>
+        """)
+      var args = @[
+        "xcodebuild",
+        "-exportArchive",
+        "-archivePath", ctx.dist_dir.absolutePath / ctx.config.name & ".xcarchive",
+        "-exportPath", ctx.dist_dir.absolutePath,
+        "-exportOptionsPlist", export_plist_path,
+      ]
+      ctx.log args.join(" ")
+      sh(args)
   of PrePackage:
     discard
   #   if not ctx.simulator:
@@ -695,11 +747,7 @@ proc checkDoctor*(): seq[DoctorResult] =
       if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
         dr.status = NotWorking
         dr.error = "No provisioning profile chosen for iOS code signing"
-        dr.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found with
-
-    ls "{PROV_PROFILE_DIR}"
-
-  though they can also be downloaded from Apple."""
+        dr.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found in '{PROV_PROFILE_DIR}'"""
         let possible_profiles = listProvisioningProfiles()
         if possible_profiles.len == 0:
           dr.fix.add("""
@@ -711,9 +759,9 @@ proc checkDoctor*(): seq[DoctorResult] =
 
   TODO: come up with less goofy instructions.""")
         else:
-          dr.fix.add(&""" For instance, this might work:
-  
-    {PROVISIONING_PROFILE_VARNAME}='{possible_profiles[0]}'""")
+          dr.fix.add(" Here are the profiles wiish can identify:\l\l")
+          for prof in possible_profiles:
+            dr.fix.add(&"   {prof.extractFilename()} '{prof.getProvisioningProfileNAme()}'\l")
   else:
     result.dr "standard", "os":
       dr.targetOS = {Ios,IosSimulator}

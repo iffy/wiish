@@ -22,7 +22,7 @@ proc detectTargetOS*(targetFormat: TargetFormat): TargetOS =
       return Linux
   of targetMacDMG, targetMacApp:
     return Mac
-  of targetIosApp:
+  of targetIosApp, targetIosIpa:
     return Ios
   of targetAndroidApk:
     return Android
