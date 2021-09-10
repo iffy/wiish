@@ -244,7 +244,42 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       iconSrcPath = stdDatadir / "default_square.png"
     else:
       iconSrcPath = ctx.projectPath / ctx.config.icon
-    iconSrcPath.resizePNG(ctx.xcode_project_root / "Icon.png", 180, 180)
+    
+    let xcassets = ctx.xcode_project_root / "wiishboilerplate" / "Assets.xcassets"
+    let appicons = xcassets / "AppIcon.appiconset"
+
+    proc addIcon(srcfile: string, size: int, scale: int, idioms = @["iphone", "ipad"]) =
+      let filename = appicons / &"Icon-{size}@{scale}x.png"
+      let pixels = size div scale
+      let size_str = &"{pixels}x{pixels}"
+      let scale_str = &"{scale}x"
+      var contents_json = readFile(appicons / "Contents.json").parseJson()
+      iconSrcPath.resizePNG(filename, size, size)
+      var added: seq[string]
+      for image in contents_json["images"]:
+        let idiom = image["idiom"].getStr()
+        let size = image["size"].getStr()
+        let scale = image["scale"].getStr()
+        if idiom in idioms and size == size_str and scale == scale_str:
+          ctx.log "Added icon ", filename
+          image["filename"] = newJString(filename.extractFilename())
+          added.add(idiom)
+      for idiom in idioms:
+        if idiom notin added:
+          ctx.log "Added icon ", filename
+          contents_json["images"].add(%* {
+            "size": size_str,
+            "scale": scale_str,
+            "idiom": idiom,
+            "filename": newJString(filename.extractFilename()),
+          })
+      writeFile(appicons / "Contents.json", contents_json.pretty())
+
+    # iOS icon guidelines: https://developer.apple.com/library/archive/qa/qa1686/_index.html
+    iconSrcPath.addIcon(120, 2)
+    iconSrcPath.addIcon(180, 3)
+    iconSrcPath.addIcon(76, 1)
+    iconSrcPath.addIcon(152, 2)
 
     # copy in resources
     ctx.log "Adding static files..."
@@ -257,12 +292,32 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       copyDir(srcResources, dstResources)
     
     # set build settings
-    ctx.log "Adjusting build settings..."
     let pbxproj_path = ctx.xcode_project_file / "project.pbxproj"
-    pbxproj_path.replaceInFile(@[
-      (re"PRODUCT_BUNDLE_IDENTIFIER = .*?;", &"PRODUCT_BUNDLE_IDENTIFIER = {ctx.config.bundle_identifier};"),
-      (re"productName = .*?;", &"productName = {ctx.config.name};"),
-    ])
+    ctx.log &"Adjusting {pbxproj_path} ..."
+    sh "plutil", "-convert", "json", pbxproj_path
+    var pbx = readFile(pbxproj_path).parseJson()
+    for (key,obj) in pbx["objects"].pairs():
+      var buildSettings = obj.getOrDefault("buildSettings")
+      if not buildSettings.isNil:
+        if buildSettings.hasKey("PRODUCT_BUNDLE_IDENTIFIER"):
+          buildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = % ctx.config.bundle_identifier
+          ctx.log &"set PRODUCT_BUNDLE_IDENTIFIER to {ctx.config.bundle_identifier}"
+      if obj.hasKey("productName"):
+        obj["productName"] = % ctx.config.name
+        ctx.log &"set productName to {ctx.config.name}"
+        obj["name"] = % ctx.config.name
+        ctx.log &"set name to {ctx.config.name}"
+      if obj.hasKey("path"):
+        if obj["path"].getStr().endsWith(".app"):
+          obj["path"] = % &"{ctx.config.name}.app"
+          ctx.log &"set app path to {ctx.config.name}.app"
+    writeFile(pbxproj_path, $pbx)
+    # pbxproj_path.replaceInFile(@[
+    #   (re"PRODUCT_BUNDLE_IDENTIFIER = .*?;", &"PRODUCT_BUNDLE_IDENTIFIER = {ctx.config.bundle_identifier};"),
+    #   (re"productName = .*?;", &"productName = {ctx.config.name};"),
+    #   (re"; path = .*?\.app;", &"; path = \"{ctx.config.name}\";"),
+    #   (re"""; path = ".*?\.app";""", &"; path = \"{ctx.config.name}\";"),
+    # ])
 
     # list schemes
     ctx.log "listing schemes..."

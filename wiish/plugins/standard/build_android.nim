@@ -31,10 +31,11 @@ proc activityJavaPath*(ctx: ref BuildContext): string =
   ctx.build_dir / "app" / "src" / "main" / "java" / ctx.config.java_package_name.replace(".", "/") / ctx.activityName() & ".java"
 
 proc getCFiles*(ctx: ref BuildContext): seq[string] =
-  ## Get the list of C files to be compiled
+  ## Get the list of C files and static libs to be compiled
   ctx.log "Listing c files ..."
   for item in walkDir(ctx.build_dir/"app"/"jni"/"src"/"x86"):
-    if item.kind == pcFile and item.path.endsWith(".c"):
+    if item.kind == pcFile and (item.path.endsWith(".c") or item.path.endsWith(".a")):
+      ctx.log "  " & item.path.extractFilename()
       result.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
 
 proc runningDevices(): seq[string] {.inline.} = 

@@ -124,7 +124,7 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
     ctx.logStartStep
     ctx.xcode_project_root = ctx.build_dir / "xc"
     ctx.xcode_project_file = ctx.xcode_project_root / "wiishboilerplate.xcodeproj"
-    ctx.xcode_build_scheme = "wiishboilerplate"
+    ctx.xcode_build_scheme = ctx.config.name
     if not ctx.xcode_project_root.dirExists():
       ctx.log &"Copying iOS template project to {ctx.xcode_project_root}"
       createDir(ctx.xcode_project_root)
@@ -234,6 +234,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := main
 LOCAL_SRC_FILES := {ctx.getCFiles().join(" ")}
 LOCAL_LDLIBS := -llog
+# TODO: Make it more straightforward to modify these values in other plugins
+#LOCAL_SHARED_LIBRARIES
+#LOCAL_STATIC_LIBRARIES
+#LOCAL_CFLAGS
 
 include $(BUILD_SHARED_LIBRARY)
     """)

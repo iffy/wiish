@@ -3,7 +3,7 @@ import osproc
 import strutils
 import tables
 import terminal
-import flippy
+import pixie
 
 import ./config
 when defined(macosx):
@@ -211,4 +211,4 @@ proc getWiishPackageRoot*():string =
   return wiishPackagePath
 
 proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
-  loadImage(srcfile).resize(width, height).save(outfile)
+  readImage(srcfile).resize(width, height).writeFile(outfile)
