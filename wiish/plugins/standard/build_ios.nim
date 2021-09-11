@@ -276,10 +276,13 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       writeFile(appicons / "Contents.json", contents_json.pretty())
 
     # iOS icon guidelines: https://developer.apple.com/library/archive/qa/qa1686/_index.html
-    iconSrcPath.addIcon(120, 2)
-    iconSrcPath.addIcon(180, 3)
-    iconSrcPath.addIcon(76, 1)
-    iconSrcPath.addIcon(152, 2)
+    iconSrcPath.addIcon(120, 2, @["iphone"])
+    iconSrcPath.addIcon(180, 3, @["iphone"])
+    iconSrcPath.addIcon(76, 1, @["ipad"])
+    iconSrcPath.addIcon(152, 2, @["ipad"])
+    # And the default icon
+    iconSrcPath.resizePNG(ctx.xcode_project_root / "Icon.png", 180, 180)
+
 
     # copy in resources
     ctx.log "Adding static files..."
