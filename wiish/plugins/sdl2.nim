@@ -130,7 +130,6 @@ proc iosRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
   of Setup:
     ctx.logStartStep
     ctx.xcode_project_root = ctx.build_dir / "xc"
-    ctx.xcode_project_file = ctx.xcode_project_root / "wiishboilerplate.xcodeproj"
     ctx.xcode_build_scheme = "wiishboilerplate"
     let executable = ctx.xcode_project_root / "executable"
 

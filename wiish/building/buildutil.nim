@@ -60,7 +60,7 @@ type
       ## For builds that produce an executable, this is the path
       ## to that executable
     xcode_project_root*: string ## the dir containing the .xcodeproj file
-    xcode_project_file*: string ## the .xcodeproj file
+    # xcode_project_file*: string ## the .xcodeproj file
     xcode_build_scheme*: string ## the -scheme to build
     xcode_build_destination*: string ## the -destination to build
 
@@ -134,6 +134,13 @@ proc ios_sdk_path*(ctx: ref BuildContext): string =
     return simulator_sdk_root / "iPhoneSimulator" & ctx.ios_sdk_version & ".sdk"
   else:
     return ios_sdk_root / "iPhoneOS" & ctx.ios_sdk_version & ".sdk"
+
+proc xcode_project_file*(ctx: ref BuildContext): string =
+  ## Find the name of the xcode project
+  let xcode_project_root = ctx.build_dir / "xc"
+  for file in walkDir(xcode_project_root, relative = true):
+    if file.path.endsWith(".xcodeproj"):
+      result = xcode_project_root / file.path
 
 #-------------------------------------------------------------
 # general
