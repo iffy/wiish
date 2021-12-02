@@ -4,6 +4,7 @@ import strutils
 import tables
 import terminal
 import pixie
+import pixie/fileformats/png
 
 import ./config
 when defined(macosx):
@@ -217,5 +218,12 @@ proc getWiishPackageRoot*():string =
       wiishPackagePath = path
   return wiishPackagePath
 
-proc resizePNG*(srcfile:string, outfile:string, width:int, height:int) =
-  readImage(srcfile).resize(width, height).writeFile(outfile)
+proc resizePNG*(srcfile:string, outfile:string, width:int, height:int, removeAlpha = false) =
+  var image = readImage(srcfile).resize(width, height)
+  if removeAlpha:
+    var rgb: seq[ColorRGB]
+    for x in image.data:
+      rgb.add ColorRGB(r: x.r, g: x.g, b: x.b)
+    writeFile(outfile, encodePng(image.width, image.height, 3, rgb[0].addr, rgb.len * 3))
+  else:
+    image.writeFile(outfile)

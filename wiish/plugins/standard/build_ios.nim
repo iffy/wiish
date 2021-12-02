@@ -12,6 +12,7 @@ import regex
 import sequtils
 import strformat
 import strutils
+import times
 
 import ./common
 import wiish/doctor
@@ -248,13 +249,21 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     let xcassets = ctx.xcode_project_root / "wiishboilerplate" / "Assets.xcassets"
     let appicons = xcassets / "AppIcon.appiconset"
 
-    proc addIcon(srcfile: string, size: int, scale: int, idioms = @["iphone", "ipad"]) =
+    proc fmtInt(x: float): string =
+      if x.toInt.toFloat == x:
+        $x.toInt
+      else:
+        $x
+    
+    proc fmtInt(x: int): string = $x
+
+    proc addIcon(srcfile: string, size: int, scale: int, idioms = @["iphone", "ipad"], alpha = true) =
       let filename = appicons / &"Icon-{size}@{scale}x.png"
-      let pixels = size div scale
+      let pixels = fmtInt(size.toFloat / scale.toFloat)
       let size_str = &"{pixels}x{pixels}"
       let scale_str = &"{scale}x"
       var contents_json = readFile(appicons / "Contents.json").parseJson()
-      iconSrcPath.resizePNG(filename, size, size)
+      iconSrcPath.resizePNG(filename, size, size, removeAlpha = not alpha)
       var added: seq[string]
       for image in contents_json["images"]:
         let idiom = image["idiom"].getStr()
@@ -280,6 +289,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     iconSrcPath.addIcon(180, 3, @["iphone"])
     iconSrcPath.addIcon(76, 1, @["ipad"])
     iconSrcPath.addIcon(152, 2, @["ipad"])
+    iconSrcPath.addIcon(167, 2, @["ipad"])
+    iconSrcPath.addIcon(1024, 1, @["ios-marketing"], alpha = false)
     # And the default icon
     iconSrcPath.resizePNG(ctx.xcode_project_root / "Icon.png", 180, 180)
 
@@ -299,12 +310,16 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.log &"Adjusting {pbxproj_path} ..."
     sh "plutil", "-convert", "json", pbxproj_path
     var pbx = readFile(pbxproj_path).parseJson()
+    let build_version = now().format("yyyyMMddHHmmss")
     for (key,obj) in pbx["objects"].pairs():
       var buildSettings = obj.getOrDefault("buildSettings")
       if not buildSettings.isNil:
         if buildSettings.hasKey("PRODUCT_BUNDLE_IDENTIFIER"):
           buildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = % ctx.config.bundle_identifier
           ctx.log &"set PRODUCT_BUNDLE_IDENTIFIER to {ctx.config.bundle_identifier}"
+        if buildSettings.hasKey("CURRENT_PROJECT_VERSION"):
+          buildSettings["CURRENT_PROJECT_VERSION"] = % build_version
+          ctx.log &"set CURRENT_PROJECT_VERSION to {build_version}" 
       if obj.hasKey("productName"):
         obj["productName"] = % ctx.config.name
         ctx.log &"set productName to {ctx.config.name}"
@@ -315,6 +330,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
           obj["path"] = % &"{ctx.config.name}.app"
           ctx.log &"set app path to {ctx.config.name}.app"
     writeFile(pbxproj_path, $pbx)
+    sh "plutil", "-convert", "xml1", pbxproj_path
     # pbxproj_path.replaceInFile(@[
     #   (re"PRODUCT_BUNDLE_IDENTIFIER = .*?;", &"PRODUCT_BUNDLE_IDENTIFIER = {ctx.config.bundle_identifier};"),
     #   (re"productName = .*?;", &"productName = {ctx.config.name};"),
@@ -368,6 +384,10 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 <dict>
   <key>method</key>
   <string>app-store</string>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>uploadBitcode</key>
+  <false/>
   <key>signingStyle</key>
   <string>manual</string>
   <key>provisioningProfiles</key>
