@@ -1,11 +1,13 @@
-import os
-import osproc
-import regex
-import logging
-import strformat
-import strutils
-import tables
+import std/logging
+import std/os
+import std/osproc
+import std/sequtils
+import std/strformat
+import std/strutils
+import std/tables
+
 import parsetoml
+import regex
 
 import ./common
 import wiish/doctor
@@ -102,19 +104,20 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
         of "1.0": NIMBASE_1_0_X
         of "1.2": NIMBASE_1_2_X
         of "1.4": NIMBASE_1_4_x
+        of "1.6": NIMBASE_1_6_x
         else:
           raise ValueError.newException("Unsupported Nim version: " & nimversion)
       nimbase_dst.writeFile(nimbase_h)
 
     # Android ABIs: https://developer.android.com/ndk/guides/android_mk#taa
     # nim --cpus: https://github.com/nim-lang/Nim/blob/devel/lib/system/platforms.nim#L14
-    buildFor("armeabi-v7a", "arm")
-    buildFor("arm64-v8a", "arm64")
-    buildFor("x86", "i386")
-    buildFor("x86_64", "amd64")
-    
+    var abis: seq[string]
+    for arch in ctx.config.android_archs:
+      buildFor(arch.abi, arch.cpu)
+      abis.add(arch.abi)
+    let abilist = abis.mapIt("'" & it & "'").join(", ")
     replaceInFile(ctx.build_dir/"app"/"build.gradle", {
-      "abiFilters.*?\n": "abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'\n",
+      "abiFilters.*?\n": &"abiFilters {abilist}\n",
     }.toTable)
   of PreBuild:
     ctx.logStartStep

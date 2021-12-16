@@ -31,6 +31,7 @@ type
     ProvisioningProfile = "provisioning_profile",
     # android
     JavaPackageName = "java_package_name",
+    AndroidArchs = "archs",
 
   ## Config is a project's configuration
   WiishConfig* = ref object
@@ -54,6 +55,7 @@ type
     ios_provisioning_profile*: string
     # android
     java_package_name*: string
+    android_archs*: seq[tuple[abi:string, cpu:string]]
 
 
 proc get*[T](maintoml: TomlValueRef, sections:seq[string], key: string, default: T): TomlValueRef =
@@ -125,6 +127,13 @@ proc getConfig*(toml: TomlValueRef, sections:seq[string]): WiishConfig =
     # android
     of JavaPackageName:
       result.java_package_name = toml.get(sections, $opt, ?"com.example.wiishapp").stringVal
+    of AndroidArchs:
+      result.android_archs = @[]
+      for item in toml.get(sections, $opt, ?(@[])).arrayVal:
+        if item.hasKey("abi") and item.hasKey("cpu"):
+          result.android_archs.add((abi: item["abi"].stringVal, cpu: item["cpu"].stringVal))
+        else:
+          warn &"Discarding unknown archs value: {item}"
 
 proc getMacosConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "macos", "desktop", "main"])
@@ -211,6 +220,13 @@ proc defaultConfig*():string =
     # android
     of JavaPackageName:
       android.add(&"{opt} = \"com.example.wiishexample\"")
+    of AndroidArchs:
+      android.add(&"{opt} = [")
+      android.add("  { abi = \"armeabi-v7a\", cpu = \"arm\" },")
+      android.add("  { abi = \"arm64-v8a\", cpu = \"arm64\" },")
+      android.add("  { abi = \"x86\", cpu = \"i386\" },")
+      android.add("  { abi = \"x86_64\", cpu = \"amd64\" },")
+      android.add("]")
   
   result = &"""[main]
 {main.join("\L")}

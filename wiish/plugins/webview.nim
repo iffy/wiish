@@ -220,6 +220,9 @@ import org.wiish.exampleapp.WiishActivity;
 
 public class {ctx.activityName()} extends WiishActivity
 {{
+    static {{
+      LOGID = "{ctx.config.java_package_name}";
+    }}
 }}
     """)
     replaceInFile(ctx.build_dir/"app"/"src"/"main"/"AndroidManifest.xml", {

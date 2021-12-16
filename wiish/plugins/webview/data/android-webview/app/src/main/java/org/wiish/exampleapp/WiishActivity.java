@@ -24,11 +24,22 @@ import android.util.Log;
  * Functions to expose to the JavaScript within a Webview
  */
 class WiishJsBridge {
-
 	private WiishActivity activity;
+	private String LOGID;
 
-	public WiishJsBridge(WiishActivity initActivity) {
+	public WiishJsBridge(WiishActivity initActivity, String LOGID) {
 		activity = initActivity;
+		LOGID = LOGID;
+	}
+
+	@JavascriptInterface
+	public void log(final String message) {
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				Log.i(LOGID, message);
+			}
+		});
 	}
 
 	@JavascriptInterface
@@ -53,6 +64,8 @@ class WiishJsBridge {
 }
 
 public class WiishActivity extends Activity {
+	public static String LOGID = "org.wiish.webviewexample";
+
 	static {
 		System.loadLibrary("main");
 	}
@@ -93,22 +106,22 @@ public class WiishActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// Log.i("org.wiish.webviewexample", "about to wiish_init()");
+		Log.i(LOGID, "about to wiish_init()");
 		wiish_init();
-		// Log.i("org.wiish.webviewexample", "end      wiish_init()");
+		// Log.i(LOGID, "end      wiish_init()");
 
 		LinearLayout view = new LinearLayout(this);
 		view.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 		view.setOrientation(LinearLayout.VERTICAL);
 		setContentView(view);
     
-		// Log.i("org.wiish.webviewexample", "A");
+		// Log.i(LOGID, "A");
 
 		webView = new WebView(this);
 
-		// Log.i("org.wiish.webviewexample", "A2");
+		// Log.i(LOGID, "A2");
 		webView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		// Log.i("org.wiish.webviewexample", "A3");
+		// Log.i(LOGID, "A3");
 		webView.setWebChromeClient(new WebChromeClient() {
 			// @Override
 			// public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -116,66 +129,87 @@ public class WiishActivity extends Activity {
 			// }
 		});
 
-		// Log.i("org.wiish.webviewexample", "B");
+		// Log.i(LOGID, "B");
 
 		// This multi-line string syntax is ridiculous
 		final String javascript = ""
-			+ "const readyrunner = {"
-			+ "	set: function(obj, prop, value) {"
-			+ "   if (prop === 'onReady') { value(); wiishutil.signalJSIsReady(); }"
-			+ "   obj[prop] = value;"
-			+ "   return true;"
-			+ " }"
-			+ "};"
-			// Check to see if onReady is already installed
-			+ "let onReadyFunc;"
-			+ "if (window.wiish && window.wiish.onReady) {"
-			+ "	 onReadyFunc = window.wiish.onReady;"
-			+ "}"
-			+ "window.wiish = new Proxy({}, readyrunner);"
-			+ "window.wiish.handlers = [];"
-			// Called by Nim code to transmit a message to JS
-			+ "window.wiish._handleMessage = function(message) {"
-			+ "	 for (var i = 0; i < window.wiish.handlers.length; i++) {"
-			+ "    window.wiish.handlers[i](message);"
+			+ "function initWiish() {"
+			+ "  if (window.wiish && window.wiish._initialized) { return; }"
+			+ "  console.log('wiish init');"
+			//   Check to see if onReady is already installed
+			+ "  let onReadyFunc;"
+			+ "  if (window.wiish && window.wiish.onReady) {"
+			+ "  	 onReadyFunc = window.wiish.onReady;"
 			+ "  }"
-			+ "};"
-			// Called by JS application code to watch for messages from Nim
-			+ "window.wiish.onMessage = function(handler) {"
-			+ "  wiish.handlers.push(handler);"
-			+ "};"
-			// Called by JS application code to send messages to Nim
-			+ "window.wiish.sendMessage = function(message) {"
-			+ "  wiishutil.sendMessageToNim(message);"
-			+ "};"
-			// Run any existing onReady function
-			+ "if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }"
+			+ "  const readyrunner = {"
+			+ "  	set: function(obj, prop, value) {"
+			+ "     if (prop === 'onReady') { value(); wiishutil.signalJSIsReady(); }"
+			+ "     obj[prop] = value;"
+			+ "     return true;"
+			+ "   }"
+			+ "  };"
+			+ "  window.wiish = new Proxy({}, readyrunner);"
+			+ "  window.wiish.handlers = [];"
+			//   Called by Nim code to transmit a message to JS
+			+ "  window.wiish._handleMessage = function(message) {"
+			+ "  	 for (var i = 0; i < window.wiish.handlers.length; i++) {"
+			+ "      window.wiish.handlers[i](message);"
+			+ "    }"
+			+ "  };"
+			//   Called by JS application code to watch for messages from Nim
+			+ "  window.wiish.onMessage = function(handler) {"
+			+ "    wiish.handlers.push(handler);"
+			+ "  };"
+			//   Called by JS application code to send messages to Nim
+			+ "  window.wiish.sendMessage = function(message) {"
+			+ "    wiishutil.sendMessageToNim(message);"
+			+ "  };"
+			//   Run any existing onReady function
+			+ "  if (onReadyFunc) { window.wiish.onReady = onReadyFunc; }"
+			+ "  window.wiish._initialized = true;"
+			+ "}  "
+			+ "initWiish();"
+			+ "delete window.initWiish;"
 			+ "";
+		Log.i(LOGID, javascript);
 
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView webView, String url) {
 				return false;
 			}
+			// @Override
+			// public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+			// 		super.doUpdateVisitedHistory(view, url, isReload);
+			// 		Log.i(LOGID, "doUpdateVisitedHistory: " + url);
+			// }
 			@Override
 			public void onPageFinished(WebView view, String url) {
 				super.onPageFinished(view, url);
-				WiishActivity.this.evalJavaScript(javascript);
+				// Log.i(LOGID, "Adding standard header JS to: " + url);
+				// Log.i(LOGID, "Original URL: " + view.getOriginalUrl());
+				// Log.i(LOGID, "getURL:       " + view.getUrl());
+				try {
+					WiishActivity.this.evalJavaScript(javascript);
+				} catch(Exception e) {
+					Log.i(LOGID, "Error adding header JS: " + e.toString());
+					throw e;
+				}
+				// Log.i(LOGID, "Added standard header JS");
 			}
 		});
-		// Log.i("org.wiish.webviewexample", "C");
 		webView.getSettings().setJavaScriptEnabled(true);
-		webView.addJavascriptInterface(new WiishJsBridge(this), "wiishutil");
+		webView.addJavascriptInterface(new WiishJsBridge(this, LOGID), "wiishutil");
 		webView.loadUrl(wiish_getInitURL());
 		view.addView(webView);
 
-		// Log.i("org.wiish.webviewexample", "D");
+		// Log.i(LOGID, "D");
 
-		// Log.i("org.wiish.webviewexample", "about to wiish_nextWindowId()");
+		// Log.i(LOGID, "about to wiish_nextWindowId()");
 		windowId = wiish_nextWindowId();
-		// Log.i("org.wiish.webviewexample", "E");
-		// Log.i("org.wiish.webviewexample", "windowId = " + windowId);
+		// Log.i(LOGID, "E");
+		// Log.i(LOGID, "windowId = " + windowId);
 		wiish_windowAdded(windowId);
-		// Log.i("org.wiish.webviewexample", "F");
+		// Log.i(LOGID, "F");
 	}
 }
