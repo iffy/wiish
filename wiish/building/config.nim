@@ -134,6 +134,13 @@ proc getConfig*(toml: TomlValueRef, sections:seq[string]): WiishConfig =
           result.android_archs.add((abi: item["abi"].stringVal, cpu: item["cpu"].stringVal))
         else:
           warn &"Discarding unknown archs value: {item}"
+      if result.android_archs.len == 0:
+        result.android_archs = @[
+          ("armeabi-v7a", "arm"),
+          ("arm64-v8a", "arm64"),
+          ("x86", "i386"),
+          ("x86_64", "amd64"),
+        ]
 
 proc getMacosConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "macos", "desktop", "main"])

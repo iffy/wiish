@@ -14,6 +14,8 @@ import wiish/doctor
 import wiish/building/config
 import wiish/building/buildutil
 
+proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.}
+
 proc replaceInFile*(filename: string, replacements: Table[string, string]) =
   ## Replace lines in a file with the given replacements
   var guts = filename.readFile()
@@ -35,10 +37,16 @@ proc activityJavaPath*(ctx: ref BuildContext): string =
 proc getCFiles*(ctx: ref BuildContext): seq[string] =
   ## Get the list of C files and static libs to be compiled
   ctx.log "Listing c files ..."
-  for item in walkDir(ctx.build_dir/"app"/"jni"/"src"/"x86"):
-    if item.kind == pcFile and (item.path.endsWith(".c") or item.path.endsWith(".a")):
-      ctx.log "  " & item.path.extractFilename()
-      result.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
+  for arch in ctx.config.android_archs:
+    let srcdir = ctx.csource_dir(arch.abi)
+    ctx.log &"Using {srcdir} for c files ..."
+    if srcdir.existsDir():
+      for item in walkDir(srcdir):
+        if item.kind == pcFile and (item.path.endsWith(".c") or item.path.endsWith(".a")):
+          ctx.log "  " & item.path.extractFilename()
+          result.add("$(TARGET_ARCH_ABI)"/(&"{item.path.extractFilename}"))
+      if result.len > 0:
+        break
 
 proc runningDevices(): seq[string] {.inline.} = 
   ## List all currently running Android devices
@@ -50,7 +58,7 @@ proc possibleDevices(): seq[string] =
   return shoutput(emulator_bin, "-list-avds").strip.splitLines
 
 proc apk_path(ctx: ref BuildContext): string {.inline.} =
-  ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
+  ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
 
 proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.} =
   ctx.build_dir/"app"/"jni"/"src"/android_abi
@@ -67,6 +75,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.build_dir.removeDir()
     ctx.nim_flags.add ctx.config.nimFlags
     ctx.nim_flags.add "-d:appJavaPackageName=" & ctx.config.java_package_name
+    ctx.log &"archs = {ctx.config.android_archs}"
   of Compile:
     ctx.logStartStep
     proc buildFor(android_abi:string, cpu:string) =
@@ -433,7 +442,7 @@ proc doAndroidBuild*(directory:string, config: WiishConfig): string =
 #     debug args.join(" ")
 #     sh(args)
   
-#   result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-debug.apk"
+#   result = projectDir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
 
 # proc doAndroidRun*(directory: string, verbose: bool = false) =
 #   ## Run the application in the Android emulator

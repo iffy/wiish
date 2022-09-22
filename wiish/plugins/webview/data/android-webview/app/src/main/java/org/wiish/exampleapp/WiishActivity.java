@@ -67,7 +67,9 @@ public class WiishActivity extends Activity {
 	public static String LOGID = "org.wiish.webviewexample";
 
 	static {
+		Log.i(LOGID, "loading main library");
 		System.loadLibrary("main");
+		Log.i(LOGID, "loaded main library");
 	}
 
 	public int windowId;
@@ -108,7 +110,7 @@ public class WiishActivity extends Activity {
 
 		Log.i(LOGID, "about to wiish_init()");
 		wiish_init();
-		// Log.i(LOGID, "end      wiish_init()");
+		Log.i(LOGID, "end      wiish_init()");
 
 		LinearLayout view = new LinearLayout(this);
 		view.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
@@ -200,6 +202,7 @@ public class WiishActivity extends Activity {
 		});
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(new WiishJsBridge(this, LOGID), "wiishutil");
+		Log.i(LOGID, "Getting initial URL");
 		webView.loadUrl(wiish_getInitURL());
 		view.addView(webView);
 

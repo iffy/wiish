@@ -1,5 +1,10 @@
-import logging
+import std/dynlib
+import std/logging
+import std/os
+import std/strutils
+
 import jnim/private/jni_wrapper
+import jnim/private/jvm_finder
 export jni_wrapper
 
 var global_JavaVM: JavaVMPtr
@@ -30,14 +35,38 @@ proc ok*(rc: jint) =
 proc initializeJavaVM*(env: JNIEnvPtr) =
   ## Set up the global_JavaVM
   ## Call this before doing anything else in here.
-  linkWithJVMLib()
-  if isJVMLoaded():
-    var
-      nVMs: jsize
-    JNI_GetCreatedJavaVMs(global_JavaVM.addr, 1.jsize, nVMs.addr).ok()
-    if nVMs.int == 0:
-      error "Error finding JavaVM"
-    global_JavaVersion = env.GetVersion(env)
+  debug "initializeJavaVM"
+  let rc = env.GetJavaVM(env, global_JavaVM.addr)
+  if rc != 0:
+    error "Error getting JavaVM from JNIEnvPtr"
+  global_JavaVersion = env.GetVersion(env)
+  debug "JavaVersion: " & $global_JavaVersion
+  # debug "global_JavaVM.isNil = " & $(global_JavaVM.isNil)
+  # var handle = loadLib()
+  # debug "handle.isNil = " & $(handle.isNil)
+  # debug "JNI_CreateJavaVM addr isNil == " & $symAddr(handle, "JNI_CreateJavaVM").isNil
+  # debug "foundJVM = " & $findJVM()
+  # for f in walkDirRec("/system/lib/"):
+  #   if f.endsWith(".so"):
+  #     debug " + " & f
+  #   else:
+  #     debug " - " & f
+  # debug "done walking"
+  # # try:
+  # #   linkWithJVMLib()
+  # # except:
+  # #   error "Error calling linkWithJVMLib(): " & getCurrentExceptionMsg()
+  # #   raise
+  # # debug "done linkWithJVMLib()"
+  # if isJVMLoaded():
+  #   var
+  #     nVMs: jsize
+  #   JNI_GetCreatedJavaVMs(global_JavaVM.addr, 1.jsize, nVMs.addr).ok()
+  #   if nVMs.int == 0:
+  #     error "Error finding JavaVM"
+  #   global_JavaVersion = env.GetVersion(env)
+  # else:
+  #   error "isJVMLoaded() == false"
 
 proc getJNIEnv(): JNIEnvPtr =
   doAssert not(global_JavaVM.isNil)

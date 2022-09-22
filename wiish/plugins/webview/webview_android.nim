@@ -186,7 +186,7 @@ proc wiish_c_nextWindowId*(): cint {.exportc.} =
 proc wiish_c_getInitURL(): cstring {.exportc.} =
   ## Return the URL that a new window should open to.
   globalapplock.withLock:
-    result = globalapp.url
+    result = globalapp.url.cstring
 
 proc wiish_c_sendMessageToNim(windowId: cint, message:cstring) {.exportc.} =
   ## message sent from js to nim

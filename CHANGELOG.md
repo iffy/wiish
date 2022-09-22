@@ -1,3 +1,15 @@
+# v0.4.0 - 2022-09-22
+
+- **NEW:** iOS projects now have their bundle identifer and product name set
+- **NEW:** For iOS, the CURRENT_PROJECT_VERSION is automatically set to a timestamp during each build
+- **NEW:** Support for iOS .ipa target
+- **NEW:** Add `ctx.csource_dir` for accessing the directory where C sources reside for Android builds
+- **FIX:** `documentsPath()` in `wiish/mobileutil` now works correctly on Android, and doesn't require using the `app` ([#96](https://github.com/iffy/wiish/issues/96))
+- **FIX:** Switched from deprecated `flippy` package to `pixie` for image manipulation.
+- **FIX:** Correct iOS icons format is used now
+- **FIX:** Older versions of Android handled better
+- **FIX:** Fixed bug the prevented Android device from being detected
+
 # v0.3.0 - 2021-01-12
 
 - **NEW:** Added `info_plist_append` section to wiish.toml to allow apps to append data to the standard `Info.plist` file for macOS and iOS.

@@ -228,6 +228,7 @@ public class {ctx.activityName()} extends WiishActivity
     replaceInFile(ctx.build_dir/"app"/"src"/"main"/"AndroidManifest.xml", {
       "WiishActivity": ctx.activityName(),
     }.toTable)
+    ctx.log &"Adding {ctx.getCFiles().len} C files to be compiled"
     writeFile(ctx.build_dir/"app"/"jni"/"src"/"Android.mk",
   &"""
 LOCAL_PATH := $(call my-dir)
