@@ -161,6 +161,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.log &"Choosing xcodebuild -destination ..."
       if ctx.simulator:
         let devices = listAvailableSimulators()
+        for device in devices:
+          ctx.log "Available device: " & device.name
         if devices.len > 0:
           ctx.xcode_build_destination = &"platform=iOS Simulator,name={devices[0].name}"
         else:
