@@ -32,6 +32,8 @@ type
     # android
     JavaPackageName = "java_package_name",
     AndroidArchs = "archs",
+    AndroidMinSDK = "android_min_sdk_version",
+    AndroidTargetSDK = "android_target_sdk_version",
 
   ## Config is a project's configuration
   WiishConfig* = ref object
@@ -56,6 +58,8 @@ type
     # android
     java_package_name*: string
     android_archs*: seq[tuple[abi:string, cpu:string]]
+    android_min_sdk_version*: string
+    android_target_sdk_version*: string
 
 
 proc get*[T](maintoml: TomlValueRef, sections:seq[string], key: string, default: T): TomlValueRef =
@@ -141,6 +145,11 @@ proc getConfig*(toml: TomlValueRef, sections:seq[string]): WiishConfig =
           ("x86", "i386"),
           ("x86_64", "amd64"),
         ]
+    of AndroidMinSDK:
+      result.android_min_sdk_version = toml.get(sections, $opt, ?"21").stringVal
+    of AndroidTargetSDK:
+      result.android_target_sdk_version = toml.get(sections, $opt, ?"26").stringVal
+
 
 proc getMacosConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
   parsed.getConfig(@[OVERRIDE_KEY, "macos", "desktop", "main"])
@@ -234,6 +243,10 @@ proc defaultConfig*():string =
       android.add("  { abi = \"x86\", cpu = \"i386\" },")
       android.add("  { abi = \"x86_64\", cpu = \"amd64\" },")
       android.add("]")
+    of AndroidMinSDK:
+      android.add(&"{opt} = \"21\"")
+    of AndroidTargetSDK:
+      android.add(&"{opt} = \"26\"")
   
   result = &"""[main]
 {main.join("\L")}

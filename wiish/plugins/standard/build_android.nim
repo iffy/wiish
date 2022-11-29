@@ -126,6 +126,10 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       abis.add(arch.abi)
     let abilist = abis.mapIt("'" & it & "'").join(", ")
     replaceInFile(ctx.build_dir/"app"/"build.gradle", {
+      "compileSdkVersion.*?\n": &"compileSdkVersion {ctx.config.android_target_sdk_version}\n",
+      "minSdkVersion.*?\n": &"minSdkVersion {ctx.config.android_min_sdk_version}\n",
+      "targetSdkVersion.*?\n": &"targetSdkVersion {ctx.config.android_target_sdk_version}\n",
+      "\"APP_PLATFORM=.*?\"": &"\"APP_PLATFORM=android-{ctx.config.android_min_sdk_version}\"",
       "abiFilters.*?\n": &"abiFilters {abilist}\n",
     }.toTable)
   of PreBuild:

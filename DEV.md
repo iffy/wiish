@@ -26,3 +26,16 @@ Following are the various steps or artifacts for a given platform:
 1. All kinds of Java junk
 2. An activity
 3. Compile Nim to shared lib
+
+
+# Version 2
+
+Goals:
+
+- I want to make everything more modular such that you can run individual steps from the command-line
+- I want to combine wiish.toml and wiish_build.nim (and possibly involve config.nims in the simplification)
+- `wiish doctor` should work for everything
+- Each step should be tested
+- Information passed between steps and configuration should be typed
+- Handle different xcode and android studio versions
+- Handle different iOS and Android versions
