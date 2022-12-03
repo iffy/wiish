@@ -228,7 +228,10 @@ public class {ctx.activityName()} extends WiishActivity
     replaceInFile(ctx.build_dir/"app"/"src"/"main"/"AndroidManifest.xml", {
       "WiishActivity": ctx.activityName(),
     }.toTable)
+    
     ctx.log &"Adding {ctx.getCFiles().len} C files to be compiled"
+    let include_paths = ctx.getIncludePaths()
+    ctx.log &"Adding {include_paths.len} -I paths to compilation"
     writeFile(ctx.build_dir/"app"/"jni"/"src"/"Android.mk",
   &"""
 LOCAL_PATH := $(call my-dir)
@@ -236,6 +239,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := main
 LOCAL_SRC_FILES := {ctx.getCFiles().join(" ")}
+LOCAL_C_INCLUDES := {include_paths.join(" ")}
 LOCAL_LDLIBS := -llog
 # TODO: Make it more straightforward to modify these values in other plugins
 #LOCAL_SHARED_LIBRARIES
