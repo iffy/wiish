@@ -42,7 +42,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     if ctx.targetFormat notin {targetMacApp, targetMacDMG}:
       return
     ctx.logStartStep()
-    ctx.build_dir = ctx.projectPath / ctx.config.dst / "macos"
+    ctx.build_dir = ctx.projectPath / ctx.config.outDir / "macos"
     let contentsDir = ctx.contentsDir
     ctx.executable_path = contentsDir / "MacOS" / ctx.config.src.splitFile.name
     ctx.nim_flags.add ctx.config.nimFlags
@@ -65,10 +65,10 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     let
       iconDstPath = ctx.contentsDir/"Resources"/ctx.config.src.splitFile.name & ".icns"
     var iconSrcPath:string
-    if ctx.config.icon == "":
+    if ctx.config.iconPath == "":
       iconSrcPath = stdDataDir/default_icon
     else:
-      iconSrcPath = ctx.projectPath/ctx.config.icon
+      iconSrcPath = ctx.projectPath/ctx.config.iconPath
     createICNS(iconSrcPath, iconDstPath)
 
     # Contents/Info.plist
@@ -125,7 +125,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
 # proc doMacBuild*(directory:string, config: WiishConfig) {.deprecated.} =
 #   ## Build a macOS .app
 #   let
-#     buildDir = directory/config.dst/"macos"
+#     buildDir = directory/config.outDir/"macos"
 #     appSrc = directory/config.src
 #     appDir = buildDir/config.name & ".app"
 #     contentsDir = appDir/"Contents"
@@ -156,10 +156,10 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
 #   # Generate icons
 #   debug "Generating .icns file ..."
 #   var iconSrcPath:string
-#   if config.icon == "":
+#   if config.iconPath == "":
 #     iconSrcPath = stdDataDir/default_icon
 #   else:
-#     iconSrcPath = directory/config.icon
+#     iconSrcPath = directory/config.iconPath
 #   let iconDstPath = contentsDir/"Resources"/appSrc.splitFile.name & ".icns"
 #   createICNS(iconSrcPath, iconDstPath)
 

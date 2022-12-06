@@ -1,268 +1,107 @@
-## Wiish config file parsing
-import parsetoml
-import strutils
-import strformat
-import logging
-import tables
+## Wiish configuration
+import std/hashes
+import std/tables; export tables
+
+template extend*(T: typed) =
+  ## Extend WiishConfig with purpose-specific configuration data
+  var configs = initTable[WiishConfig, T]()
+
+  proc has*(wc: WiishConfig, ext: typedesc[T]): bool =
+    configs.hasKey(wc)
+
+  proc get*(wc: WiishConfig, ext: typedesc[T]): T =
+    ## Get a previously-attached config extension of type T
+    if not configs.hasKey(wc):
+      raise ValueError.newException("Attempting to access config of type " & $typedesc[ext] & " before it was added")
+    return configs[wc]
+  
+  proc getOrDefault*(wc: WiishConfig, dft: T): T =
+    configs.getOrDefault(wc, dft)
+  
+  proc add*(c: WiishConfig, sub: T) =
+    ## Attach an additional configuration object of type T to
+    ## the given WiishConfig
+    configs[c] = sub
 
 type
   WindowFormat* = enum
-    Webview,
-    SDL,
-  
-  ConfigOption* = enum
-    Name = "name",
-    Version = "version",
-    SourceDir = "src",
-    OutputDir = "dst",
-    Icon = "icon",
-    ResourceDir = "resourceDir",
-    NimFlags = "nimFlags",
-    AppWindowFormat = "windowFormat",
-    # macos/ios
-    CodesignID = "codesign_identity",
-    BundleID = "bundle_identifier",
-    InfoPlistAppend = "info_plist_append",
-    # macos
-    CategoryType = "category_type",
-    # ios
-    SdkVersion = "sdk_version",
-    IsSimulator = "simulator",
-    ProvisioningProfile = "provisioning_profile",
-    # android
-    JavaPackageName = "java_package_name",
-    AndroidArchs = "archs",
-    AndroidMinSDK = "android_min_sdk_version",
-    AndroidTargetSDK = "android_target_sdk_version",
+    Webview
+    SDL
 
-  ## Config is a project's configuration
   WiishConfig* = ref object
-    name*: string
-    version*: string
-    src*: string
-    dst*: string
-    icon*: string
+    name*: string ## project name
+    version*: string ## project version
+    src*: string ## main nim file
+    outDir*: string ## directory where build products should go
+    iconPath*: string
     resourceDir*: string
-    nimflags*: seq[string]
-    windowFormat*: WindowFormat
-    # macos/ios
-    codesign_identity*: string
-    bundle_identifier*: string
-    info_plist_append*: string
-    # macos
-    category_type*: string
-    # ios
-    sdk_version*: string
-    ios_simulator*: bool
-    ios_provisioning_profile*: string
-    # android
-    java_package_name*: string
-    android_archs*: seq[tuple[abi:string, cpu:string]]
-    android_min_sdk_version*: string
-    android_target_sdk_version*: string
-
-
-proc get*[T](maintoml: TomlValueRef, sections:seq[string], key: string, default: T): TomlValueRef =
-  ## Get a value from the first section that has the given key
-  for section in sections:
-    if maintoml.hasKey(section):
-      let toml = maintoml[section]
-      if toml.hasKey(key):
-        return toml[key]
-  return default
-
-const OVERRIDE_KEY = "_override_"
-
-proc override*[T](x:var TomlValueRef, key:string, val:T) =
-  ## Set a command-line override
-  x[OVERRIDE_KEY][key] = ?val
-
-proc parseConfig*(filename:string): TomlValueRef =
-  result = parsetoml.parseFile(filename)
-  result[OVERRIDE_KEY] = newTTable()
-
-proc getConfig*(toml: TomlValueRef, sections:seq[string]): WiishConfig =
-  result = WiishConfig()
-  for opt in low(ConfigOption)..high(ConfigOption):
-    case opt
-    of Name:
-      result.name = toml.get(sections, $opt, ?"WiishApp").stringVal
-    of Version:
-      result.version = toml.get(sections, $opt, ?"0.1.0").stringVal
-    of SourceDir:
-      result.src = toml.get(sections, $opt, ?"main.nim").stringVal
-    of OutputDir:
-      result.dst = toml.get(sections, $opt, ?"dist").stringVal
-    of Icon:
-      result.icon = toml.get(sections, $opt, ?"").stringVal
-    of ResourceDir:
-      result.resourceDir = toml.get(sections, $opt, ?"resources").stringVal
-    of NimFlags:
-      result.nimflags = @[]
-      for flag in toml.get(sections, $opt, ?(@[])).arrayVal:
-        result.nimflags.add(flag.stringVal)
-    of AppWindowFormat:
-      let windowFormatString = toml.get(sections, $opt, ?"webview").stringVal
-      case windowFormatString
-      of "", "webview":
-        result.windowFormat = Webview
-      of "sdl":
-        result.windowFormat = SDL
-      else:
-        warn &"Unknown windowFormat: {windowFormatString.repr}"
-        result.windowFormat = Webview
-    # macos/ios
-    of CodesignID:
-      result.codesign_identity = toml.get(sections, $opt, ?"").stringVal
-    of BundleID:
-      result.bundle_identifier = toml.get(sections, $opt, ?"com.example.wiishdemo").stringVal
-    of InfoPlistAppend:
-      result.info_plist_append = toml.get(sections, $opt, ?"").stringVal
-    # macos
-    of CategoryType:
-      result.category_type = toml.get(sections, $opt, ?"").stringVal
-    # ios
-    of SdkVersion:
-      result.sdk_version = toml.get(sections, $opt, ?"").stringVal
-    of IsSimulator:
-      result.ios_simulator = toml.get(sections, $opt, ?false).boolVal
-    of ProvisioningProfile:
-      result.ios_provisioning_profile = toml.get(sections, $opt, ?"").stringVal
-    # android
-    of JavaPackageName:
-      result.java_package_name = toml.get(sections, $opt, ?"com.example.wiishapp").stringVal
-    of AndroidArchs:
-      result.android_archs = @[]
-      for item in toml.get(sections, $opt, ?(@[])).arrayVal:
-        if item.hasKey("abi") and item.hasKey("cpu"):
-          result.android_archs.add((abi: item["abi"].stringVal, cpu: item["cpu"].stringVal))
-        else:
-          warn &"Discarding unknown archs value: {item}"
-      if result.android_archs.len == 0:
-        result.android_archs = @[
-          ("armeabi-v7a", "arm"),
-          ("arm64-v8a", "arm64"),
-          ("x86", "i386"),
-          ("x86_64", "amd64"),
-        ]
-    of AndroidMinSDK:
-      result.android_min_sdk_version = toml.get(sections, $opt, ?"21").stringVal
-    of AndroidTargetSDK:
-      result.android_target_sdk_version = toml.get(sections, $opt, ?"26").stringVal
-
-
-proc getMacosConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "macos", "desktop", "main"])
-proc getMacosConfig*(filename: string): WiishConfig {.inline.} =
-  filename.parseConfig().getMacosConfig()
-
-proc getWindowsConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "windows", "desktop", "main"])
-proc getWindowsConfig*(filename: string): WiishConfig {.inline.} =
-  filename.parseConfig().getWindowsConfig()
-
-proc getLinuxConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "linux", "desktop", "main"])
-proc getLinuxConfig*(filename: string): WiishConfig {.inline.} =
-  filename.parseConfig().getLinuxConfig()
-
-proc getiOSConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "ios", "mobile", "main"])
-proc getiOSConfig*(filename: string): WiishConfig {.inline.} =
-  filename.parseConfig().getiOSConfig()
-
-proc getAndroidConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "android", "mobile", "main"])
-proc getAndroidConfig*(filename: string): WiishConfig {.inline.} =
-  filename.parseConfig().getAndroidConfig()
-
-proc getMobileDevConfig*(parsed: TomlValueRef): WiishConfig {.inline.} =
-  parsed.getConfig(@[OVERRIDE_KEY, "mobiledev", "mobile", "main"])
-proc getMobileDevConfig*(filename: string): WiishConfig {.inline.} =
-  filename.parseConfig().getMobileDevConfig()
-
-proc getMyOSConfig*(filename:string): WiishConfig {.inline.} =
-  when defined(macosx):
-    getMacosConfig(filename)
-  elif defined(windows):
-    getWindowsConfig(filename)
-  else:
-    getLinuxConfig(filename)
-
-proc defaultConfig*():string =
-  ## Return a default config file
-  var
-    main, desktop, mobile, macos, ios, android: seq[string]
-  for opt in low(ConfigOption)..high(ConfigOption):
-    case opt
-    of Name:
-      main.add(&"{opt} = \"Wiish Application\"")
-    of Version:
-      main.add(&"{opt} = \"0.1.0\"")
-    of SourceDir:
-      desktop.add(&"{opt} = \"main_desktop.nim\"")
-      mobile.add(&"{opt} = \"main_mobile.nim\"")
-    of OutputDir:
-      main.add(&"{opt} = \"dist\"")
-    of Icon:
-      desktop.add(&"{opt} = \"\" # Path to an image file to use for the app icon")
-      mobile.add(&"{opt} = \"\" # Path to an image file to use for the app icon")
-    of ResourceDir:
-      main.add(&"{opt} = \"resources\"")
-    of NimFlags:
-      main.add(&"{opt} = []")
-    of AppWindowFormat:
-      main.add(&"{opt} = \"webview\" # options: webview, sdl")
-    # macos/ios
-    of CodesignID:
-      macos.add(&"{opt} = \"\"")
-      ios.add(&"{opt} = \"\"")
-    of BundleID:
-      macos.add(&"{opt} = \"com.example.wiishapp\"")
-      ios.add(&"{opt} = \"com.example.wiishapp\"")
-    of InfoPlistAppend:
-      macos.add(&"{opt} = \"\"")
-      ios.add(&"{opt} = \"\"")
-    # macos
-    of CategoryType:
-      macos.add(&"{opt} = \"public.app-category.example\"")
-    # ios
-    of SdkVersion:
-      ios.add(&"{opt} = \"\"")
-    of IsSimulator:
-      ios.add(&"{opt} = false")
-    of ProvisioningProfile:
-      ios.add(&"{opt} = \"\"")
-    # android
-    of JavaPackageName:
-      android.add(&"{opt} = \"com.example.wiishexample\"")
-    of AndroidArchs:
-      android.add(&"{opt} = [")
-      android.add("  { abi = \"armeabi-v7a\", cpu = \"arm\" },")
-      android.add("  { abi = \"arm64-v8a\", cpu = \"arm64\" },")
-      android.add("  { abi = \"x86\", cpu = \"i386\" },")
-      android.add("  { abi = \"x86_64\", cpu = \"amd64\" },")
-      android.add("]")
-    of AndroidMinSDK:
-      android.add(&"{opt} = \"21\"")
-    of AndroidTargetSDK:
-      android.add(&"{opt} = \"26\"")
+    nimFlags*: seq[string]
+    appWindowFormat*: WindowFormat
   
-  result = &"""[main]
-{main.join("\L")}
+  MacConfig* = ref object
+    codesign_identity*: string
+    bundle_id*: string
+    info_plist_append*: string
+  
+  MacDesktopConfig* = ref object
+    category_type*: string
+  
+  MaciOSConfig* = ref object
+    sdk_version*: string
+    simulator*: bool
+    provisioning_profile*: string
 
-[desktop]
-{desktop.join("\L")}
+  AndroidArchPair = tuple
+    abi: string
+    cpu: string
 
-[mobile]
-{mobile.join("\L")}
+  AndroidConfig* = ref object
+    java_package_name*: string
+    archs*: seq[AndroidArchPair]
+    min_sdk_version*: Natural
+    target_sdk_version*: Natural
 
-[macos]
-{macos.join("\L")}
+proc hash*(c: WiishConfig): Hash = c[].hash
 
-[ios]
-{ios.join("\L")}
+extend(MacConfig)
+extend(MacDesktopConfig)
+extend(MaciOSConfig)
+extend(AndroidConfig)
 
-[android]
-{android.join("\L")}
-"""
+proc default(t: typedesc[WiishConfig]): WiishConfig = WiishConfig(
+  name: "WiishApp",
+  version: "0.1.0",
+  src: "main.nim",
+  outDir: "dist",
+  iconPath: "",
+  resourceDir: "resources",
+  nimFlags: @[],
+  appWindowFormat: Webview,
+)
+
+var wiishConfig* = default(WiishConfig)
+
+proc default*(t: typedesc[MacConfig]): MacConfig = MacConfig(
+  codesign_identity: "",
+  bundle_identifier: "com.example.wiishdemo",
+  info_plist_append: ""
+)
+proc default*(t: typedesc[MacDesktopConfig]): MacDesktopConfig = MacDesktopConfig(
+  category_type: "",
+)
+proc default*(t: typedesc[MaciOSConfig]): MaciOSConfig = MaciOSConfig(
+  sdk_version: "",
+  simulator: false,
+  provisioning_profile: "",
+)
+proc default*(t: typedesc[AndroidConfig]): AndroidConfig = AndroidConfig(
+  java_package_name: "com.example.wiishapp",
+  archs: @[
+    ("armeabi-v7a", "arm"),
+    ("arm64-v8a", "arm64"),
+    ("x86", "i386"),
+    ("x86_64", "amd64"),
+  ],
+  min_sdk_version: 21,
+  target_sdk_version: 26,
+)

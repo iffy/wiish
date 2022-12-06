@@ -7,6 +7,7 @@ import pixie
 import pixie/fileformats/png
 
 import ./config
+
 when defined(macosx):
   import posix
 else:

@@ -143,12 +143,12 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   case step
   of Setup:
     ctx.logStartStep()
-    ctx.dist_dir = ctx.projectPath / ctx.config.dst / (if ctx.simulator: "ios-sim" else: "ios")
+    ctx.dist_dir = ctx.projectPath / ctx.config.outDir / (if ctx.simulator: "ios-sim" else: "ios")
     ctx.build_dir = ctx.projectPath / "build" / "ios"
     ctx.executable_path = ctx.app_dir / "executable"
     ctx.nim_flags.add ctx.config.nimFlags
-    ctx.nim_flags.add "-d:appBundleIdentifier=" & ctx.config.bundle_identifier
-    var sdk_version = ctx.config.sdk_version
+    ctx.nim_flags.add "-d:appBundleIdentifier=" & ctx.config.get(MacConfig).bundle_id
+    var sdk_version = ctx.config.get(MaciOSConfig).sdk_version
     if sdk_version == "":
       ctx.log &"Choosing SDK version ..."
       let sdk_versions = listPossibleSDKVersions(ctx.simulator)
@@ -201,7 +201,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     #   <key>CFBundleName</key>
     #   <string>{ctx.config.name}</string>
     #   <key>CFBundleIdentifier</key>
-    #   <string>{ctx.config.bundle_identifier}</string>
+    #   <string>{ctx.config.get(MacConfig).bundle_id}</string>
     #   <key>CFBundleExecutable</key>
     #   <string>{ctx.executable_path.extractFilename}</string>
     #   <key>CFBundleShortVersionString</key>
@@ -243,10 +243,10 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     # copy in icon
     ctx.log "Creating icons..."
     var iconSrcPath: string
-    if ctx.config.icon == "":
+    if ctx.config.iconPath == "":
       iconSrcPath = stdDatadir / "default_square.png"
     else:
-      iconSrcPath = ctx.projectPath / ctx.config.icon
+      iconSrcPath = ctx.projectPath / ctx.config.iconPath
     
     let xcassets = ctx.xcode_project_root / "wiishboilerplate" / "Assets.xcassets"
     let appicons = xcassets / "AppIcon.appiconset"
@@ -317,8 +317,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       var buildSettings = obj.getOrDefault("buildSettings")
       if not buildSettings.isNil:
         if buildSettings.hasKey("PRODUCT_BUNDLE_IDENTIFIER"):
-          buildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = % ctx.config.bundle_identifier
-          ctx.log &"set PRODUCT_BUNDLE_IDENTIFIER to {ctx.config.bundle_identifier}"
+          buildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = % ctx.config.get(MacConfig).bundle_id
+          ctx.log &"set PRODUCT_BUNDLE_IDENTIFIER to {ctx.config.get(MacConfig).bundle_id}"
         if buildSettings.hasKey("CURRENT_PROJECT_VERSION"):
           buildSettings["CURRENT_PROJECT_VERSION"] = % build_version
           ctx.log &"set CURRENT_PROJECT_VERSION to {build_version}" 
@@ -334,7 +334,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     writeFile(pbxproj_path, $pbx)
     sh "plutil", "-convert", "xml1", pbxproj_path
     # pbxproj_path.replaceInFile(@[
-    #   (re"PRODUCT_BUNDLE_IDENTIFIER = .*?;", &"PRODUCT_BUNDLE_IDENTIFIER = {ctx.config.bundle_identifier};"),
+    #   (re"PRODUCT_BUNDLE_IDENTIFIER = .*?;", &"PRODUCT_BUNDLE_IDENTIFIER = {ctx.config.get(MacConfig).bundle_id};"),
     #   (re"productName = .*?;", &"productName = {ctx.config.name};"),
     #   (re"; path = .*?\.app;", &"; path = \"{ctx.config.name}\";"),
     #   (re"""; path = ".*?\.app";""", &"; path = \"{ctx.config.name}\";"),
@@ -394,7 +394,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
   <string>manual</string>
   <key>provisioningProfiles</key>
   <dict>
-      <key>{ctx.config.bundle_identifier}</key>
+      <key>{ctx.config.get(MacConfig).bundle_id}</key>
       <string>{prov_profile_name}</string>
   </dict>
   <key>signingCertificate</key>
@@ -510,13 +510,13 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       # Watch the logs
       var args = @["xcrun", "simctl", "spawn", "booted", "log", "stream"]
       if not ctx.verbose:
-        args.add(@["--predicate", &"subsystem contains \"{ctx.config.bundle_identifier}\""])
+        args.add(@["--predicate", &"subsystem contains \"{ctx.config.get(MacConfig).bundle_id}\""])
       var logp = startProcess(command=args[0], args = args[1..^1],
         options = {poUsePath, poParentStreams})
 
       # start the app
-      ctx.log &"Starting app {ctx.config.bundle_identifier}..."
-      let startmessage = shoutput("xcrun", "simctl", "launch", "booted", ctx.config.bundle_identifier)
+      ctx.log &"Starting app {ctx.config.get(MacConfig).bundle_id}..."
+      let startmessage = shoutput("xcrun", "simctl", "launch", "booted", ctx.config.get(MacConfig).bundle_id)
       discard startmessage.strip.split(" ")[1]
 
       # wait for logs to finish
@@ -587,7 +587,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 #     <key>CFBundleName</key>
 #     <string>{config.name}</string>
 #     <key>CFBundleIdentifier</key>
-#     <string>{config.bundle_identifier}</string>
+#     <string>{config.get(MacConfig).bundle_id}</string>
 #     <key>CFBundleExecutable</key>
 #     <string>{executablePath.extractFilename}</string>
 #     <key>CFBundleShortVersionString</key>
@@ -631,7 +631,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 #     "--os:macosx",
 #     "-d:ios",
 #     "-d:iPhone",
-#     &"-d:appBundleIdentifier={config.bundle_identifier}",
+#     &"-d:appBundleIdentifier={config.get(MacConfig).bundle_id}",
 #   ])
 #   if config.windowFormat == SDL:
 #     nimFlags.add([
@@ -776,14 +776,14 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
 #     raise newException(CatchableError, "Error installing application")
 
 #   # start the app
-#   debug &"Starting app {config.bundle_identifier}..."
-#   let startmessage = shoutput("xcrun", "simctl", "launch", "booted", config.bundle_identifier)
+#   debug &"Starting app {config.get(MacConfig).bundle_id}..."
+#   let startmessage = shoutput("xcrun", "simctl", "launch", "booted", config.get(MacConfig).bundle_id)
 #   let childPid = startmessage.strip.split(" ")[1]
 
 #   # Watch the logs
 #   var args = @["xcrun", "simctl", "spawn", "booted", "log", "stream"]
 #   if not verbose:
-#     args.add(@["--predicate", &"subsystem contains \"{config.bundle_identifier}\""])
+#     args.add(@["--predicate", &"subsystem contains \"{config.get(MacConfig).bundle_id}\""])
 #   sh(args)
 
 

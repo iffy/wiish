@@ -19,11 +19,8 @@ proc resourceDir*(): string =
   ## Return the absolute path to the directory where resources are
   ## for this app.
   when wiish_dev:
-    let
-      appdir = getAppDir()
-      configPath = appdir/"wiish.toml"
-      config = getMyOSConfig(configPath)
-    result = joinPath(appdir, config.resourceDir)
+    let appdir = getAppDir()
+    result = joinPath(appdir, wiishConfig.resourceDir)
   elif defined(ios):
     result = getAppDir()/"static"
   elif defined(android):

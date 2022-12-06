@@ -147,7 +147,7 @@ proc iosRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext) 
       "--app:staticlib",
       "-d:ios",
       "-d:iPhone",
-      &"-d:appBundleIdentifier={ctx.config.bundle_identifier}",
+      "-d:appBundleIdentifier=" & ctx.config.get(MacConfig).bundle_id,
     ])
     if ctx.simulator:
       nimFlags.add([
@@ -203,25 +203,25 @@ proc androidRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildConte
 
       # build.gradle
       replaceInFile(ctx.build_dir/"app"/"build.gradle", {
-        "org.wiish.exampleapp": ctx.config.java_package_name,
+        "org.wiish.exampleapp": ctx.config.get(AndroidConfig).java_package_name,
       }.toTable)
 
       # AndroidManifest.xml
       replaceInFile(ctx.build_dir/"app"/"src"/"main"/"AndroidManifest.xml", {
-        "org.wiish.exampleapp": ctx.config.java_package_name,
+        "org.wiish.exampleapp": ctx.config.get(AndroidConfig).java_package_name,
       }.toTable)
   of PreBuild:
     ctx.logStartStep
     ctx.log &"Writing {ctx.activityJavaPath()}"
     writeFile(ctx.activityJavaPath, &"""
-package {ctx.config.java_package_name};
+package {ctx.config.get(AndroidConfig).java_package_name};
 
 import org.wiish.exampleapp.WiishActivity;
 
 public class {ctx.activityName()} extends WiishActivity
 {{
     static {{
-      LOGID = "{ctx.config.java_package_name}";
+      LOGID = "{ctx.config.get(AndroidConfig).java_package_name}";
     }}
 }}
     """)
