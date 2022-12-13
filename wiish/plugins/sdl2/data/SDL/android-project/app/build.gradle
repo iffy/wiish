@@ -56,6 +56,12 @@ android {
             }
         }
     }
+    splits {
+        abi {
+            enable true
+            universalApk true
+        }
+    }
 }
 
 dependencies {

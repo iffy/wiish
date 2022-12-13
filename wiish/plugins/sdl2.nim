@@ -4,6 +4,7 @@ import strformat
 import strutils
 import tables
 
+import wiish/building/config
 import wiish/building/buildutil
 import wiish/plugins/standard/build_android
 
@@ -130,7 +131,7 @@ proc iosRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
   of Setup:
     ctx.logStartStep
     ctx.xcode_project_root = ctx.build_dir / "xc"
-    ctx.xcode_build_scheme = "wiishboilerplate"
+    ctx.xcode_build_scheme = ctx.config.name
     let executable = ctx.xcode_project_root / "executable"
 
     if not ctx.xcode_project_root.dirExists():
@@ -165,7 +166,7 @@ proc iosRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext) =
       "--os:macosx",
       "-d:ios",
       "-d:iPhone",
-      &"-d:appBundleIdentifier={ctx.config.bundle_identifier}",
+      &"-d:appBundleIdentifier={ctx.config.get(MacConfig).bundle_id}",
       "--dynlibOverride:SDL2",
       "--dynlibOverride:SDL2_ttf",
     ])
@@ -241,18 +242,18 @@ proc androidRunStep*(b: WiishSDL2Plugin, step: BuildStep, ctx: ref BuildContext)
 
       # build.gradle
       replaceInFile(ctx.build_dir/"app"/"build.gradle", {
-        "org.libsdl.app": ctx.config.java_package_name,
+        "org.libsdl.app": ctx.config.get(AndroidConfig).java_package_name,
       }.toTable)
 
       # AndroidManifest.xml
       replaceInFile(ctx.build_dir/"app"/"src"/"main"/"AndroidManifest.xml", {
-        "org.libsdl.app": ctx.config.java_package_name,
+        "org.libsdl.app": ctx.config.get(AndroidConfig).java_package_name,
       }.toTable)
   of PreBuild:
     ctx.logStartStep
     ctx.log &"Writing {ctx.activityJavaPath}"
     writeFile(ctx.activityJavaPath(), &"""
-package {ctx.config.java_package_name};
+package {ctx.config.get(AndroidConfig).java_package_name};
 
 import org.libsdl.app.SDLActivity;
 
@@ -263,6 +264,9 @@ public class {ctx.activityName()} extends SDLActivity
     replaceInFile(ctx.build_dir/"app"/"src"/"main"/"AndroidManifest.xml", {
       "SDLActivity": ctx.activityName(),
     }.toTable)
+    ctx.log &"Adding {ctx.getCFiles().len} C files to be compiled"
+    let include_paths = ctx.getIncludePaths()
+    ctx.log &"Adding {include_paths.len} -I paths to compilation"
     writeFile(ctx.build_dir/"app"/"jni"/"src"/"Android.mk",
 &"""
 LOCAL_PATH := $(call my-dir)
@@ -270,6 +274,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := main
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../SDL/include
+LOCAL_C_INCLUDES += {include_paths.join(" ")}
 LOCAL_SRC_FILES := {ctx.getCFiles().join(" ")}
 LOCAL_SHARED_LIBRARIES := SDL2
 LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
