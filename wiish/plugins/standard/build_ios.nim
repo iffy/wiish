@@ -340,14 +340,22 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     # ])
 
     # list schemes
-    ctx.log "listing schemes..."
-    var args = @["xcodebuild",
-      "-list",
-      "-project", ctx.xcode_project_file,
-    ]
-    ctx.log args.join(" ")
-    try: sh(args)
-    except: discard
+    block:
+      ctx.log "listing schemes..."
+      var args = @["xcodebuild",
+        "-list",
+        "-project", ctx.xcode_project_file,
+        "-json",
+      ]
+      ctx.log args.join(" ")
+      let outp = shoutput(args)
+      ctx.log outp
+      let data = parseJson(outp)
+      let schemes = data{"project"}{"schemes"}.mapIt(it.getStr())
+      if ctx.xcode_build_scheme notin schemes:
+        ctx.log &"Chosen scheme {ctx.xcode_build_scheme} not valid"
+        ctx.xcode_build_scheme = schemes[0]
+        ctx.log &"Changed scheme to {ctx.xcode_build_scheme}"
   of Build:
     ctx.logStartStep()
     var args = @["xcodebuild",
