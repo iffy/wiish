@@ -123,6 +123,14 @@ proc viableTargets*(os: TargetOS): set[TargetFormat] =
   of Linux:
     result = {targetRun, targetLinuxBin}
 
+proc desktop*(ctx: ref BuildContext): bool =
+  ## Return true if this build is for a desktop OS
+  ctx.targetOS in {Mac, Windows, Linux}
+
+template mobile*(ctx: ref BuildContext): bool =
+  ## Return true if this build is for a mobile OS
+  not ctx.desktop
+
 #-------------------------------------------------------------
 # ios
 #-------------------------------------------------------------

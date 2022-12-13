@@ -86,7 +86,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     <key>CFBundleExecutable</key>
     <string>{ctx.executable_path.extractFilename}</string>
     <key>CFBundleIdentifier</key>
-    <string>{ctx.config.bundle_identifier}</string>
+    <string>{ctx.config.get(MacConfig).bundle_id}</string>
     <key>CFBundleIconFile</key>
     <string>{iconDstPath.extractFilename}</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -106,7 +106,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     </dict>
     <key>LSRequiresCarbon</key>
     <true/>
-    {ctx.config.info_plist_append}
+    {ctx.config.get(MacConfig).info_plist_append}
   </dict>
   </plist>""")
 
@@ -178,7 +178,7 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
 #   <key>CFBundleExecutable</key>
 #   <string>{executablePath.extractFilename}</string>
 #   <key>CFBundleIdentifier</key>
-#   <string>{config.bundle_identifier}</string>
+#   <string>{config.get(MacConfig).bundle_id}</string>
 #   <key>CFBundleIconFile</key>
 #   <string>{iconDstPath.extractFilename}</string>
 #   <key>CFBundleInfoDictionaryVersion</key>

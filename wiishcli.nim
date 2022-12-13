@@ -1,7 +1,6 @@
 ## wiish command line interface
 import argparse
 import logging
-import parsecfg
 import sequtils
 import strformat
 import strutils
@@ -20,6 +19,7 @@ proc extractVersion(nimblefile: string): string =
 
 const
   VERSION = extractVersion(slurp"./wiish.nimble")
+  VERBOSE = defined(verbose)
 
 const
   EXAMPLE_NAMES = toSeq((currentSourcePath.parentDir.parentDir/"examples").walkDir()).filterIt(it.kind == pcDir).mapIt(it.path.extractFilename)
@@ -28,12 +28,13 @@ const
 proc baseNimArgs(): seq[string] {.inline.} =
   ## Return the basic compile args for compiling WIISHBUILDFILE
   ## in the current directory
-  @[
-    findExe"nim", "c",
-    "--hints:off",
-    "--verbosity:0",
-    "-r", WIISHBUILDFILE,
-  ]
+  result.add findExe"nim"
+  result.add "c"
+  if not VERBOSE:
+    result.add "--hints:off"
+    result.add "--verbosity:0"
+  result.add "-r"
+  result.add WIISHBUILDFILE
 
 proc onlyInWiishProject() =
   ## Quit the process with a warning if this is not being run within

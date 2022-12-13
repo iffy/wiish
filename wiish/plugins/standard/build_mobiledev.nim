@@ -6,10 +6,6 @@ import ./buildutil
 
 proc doMobileDevRun*(directory: string = ".", verbose = false) =
   ## Run the application in a simulated environment
-  let configPath = directory/"wiish.toml"
-  var config = getMobileDevConfig(configPath)
-
-  echo $config
 
   debug "Compiling app..."
   let

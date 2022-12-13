@@ -7,7 +7,6 @@ import std/strformat
 import std/strutils
 import std/tables
 
-import parsetoml
 import regex
 
 import ./common

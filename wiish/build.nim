@@ -8,7 +8,7 @@ import argparse; export argparse
 
 import wiish/plugins/standard; export standard
 
-import ./building/config
+import ./building/config; export config
 import ./building/buildutil; export buildutil
 
 proc detectTargetOS*(targetFormat: TargetFormat): TargetOS =
@@ -64,17 +64,6 @@ template doBuildSteps*[T](ctx: ref BuildContext, builders: T, steps: set[BuildSt
     ctx.log "choosing targetOS..."
     ctx.targetOS = detectTargetOS(ctx.targetFormat)
 
-  let configPath = ctx.projectPath / "wiish.toml"
-  ctx.config =
-    case ctx.targetOS
-    of Mac: getMacosConfig(configPath)
-    of Android: getAndroidConfig(configPath)
-    of Windows: getWindowsConfig(configPath)
-    of Ios,IosSimulator: getiOSConfig(configPath)
-    of Linux: getLinuxConfig(configPath)
-    of AutoDetectOS: getMyOSConfig(configPath)
-    of MobileDev: getMobileDevConfig(configPath)
-
   ctx.log "projectPath:   ", ctx.projectPath
   ctx.log "targetOS:      ", $ctx.targetOS
   ctx.log "targetFormat:  ", $ctx.targetFormat
@@ -83,7 +72,7 @@ template doBuildSteps*[T](ctx: ref BuildContext, builders: T, steps: set[BuildSt
     stderr.writeLine &"ERROR: Unsupported targetOS/targetFormat combination. Expected targetFormat to be one of " & $viable
     quit 1
   ctx.log "verbosity:     ", $ctx.verbose
-  ctx.log "config: ", $ctx.config[]
+  # ctx.log "config: ", $ctx.config[]
   for step in low(BuildStep)..high(BuildStep):
     if steps.len > 0 and step notin steps:
       continue

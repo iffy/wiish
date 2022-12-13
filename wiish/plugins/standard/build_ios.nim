@@ -1,6 +1,5 @@
 ## Code for building iOS applications.
 ##
-# import parsetoml
 # import posix
 # import xmlparser
 # import xmltree

@@ -11,7 +11,6 @@ installDirs   = @["wiish", "examples"]
 
 # Dependencies
 requires "nim >= 1.0.6"
-requires "parsetoml >= 0.3.2"
 requires "argparse >= 2.0.0 & < 3.0.0"
 requires "jnim >= 0.5"
 requires "regex >= 0.18.0 & < 1.0.0"

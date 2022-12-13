@@ -1,10 +1,16 @@
 ## Wiish configuration
 import std/hashes
+import std/macros
 import std/tables; export tables
 
-template extend*(T: typed) =
+template extend*(T: typed, dft: untyped) =
   ## Extend WiishConfig with purpose-specific configuration data
   var configs = initTable[WiishConfig, T]()
+
+  proc add*(c: WiishConfig, sub: T) =
+    ## Attach an additional configuration object of type T to
+    ## the given WiishConfig
+    configs[c] = sub
 
   proc has*(wc: WiishConfig, ext: typedesc[T]): bool =
     configs.hasKey(wc)
@@ -12,16 +18,33 @@ template extend*(T: typed) =
   proc get*(wc: WiishConfig, ext: typedesc[T]): T =
     ## Get a previously-attached config extension of type T
     if not configs.hasKey(wc):
-      raise ValueError.newException("Attempting to access config of type " & $typedesc[ext] & " before it was added")
+      wc.add(dft)
     return configs[wc]
+
+  #     raise ValueError.newException("Attempting to access config of type " & $typedesc[ext] & " before it was added")
+  #   return configs[wc]
   
-  proc getOrDefault*(wc: WiishConfig, dft: T): T =
-    configs.getOrDefault(wc, dft)
+  # proc getOrDefault*(wc: WiishConfig): T =
+  #   if not wc.has(ext):
+  #     echo "doesn't have"
+  #     wc.add(default(ext))
+  #     echo "added: ", wc.get(ext)[]
+  #   wc.get(ext)
+  #   configs.getOrDefault(wc, dft())
   
-  proc add*(c: WiishConfig, sub: T) =
-    ## Attach an additional configuration object of type T to
-    ## the given WiishConfig
-    configs[c] = sub
+  # proc getOrDefault*(wc: WiishConfig, ext: typedesc[T]): T =
+  #   echo "getOrDefault: ", wc[], " ", $ext
+  #   if not wc.has(ext):
+  #     echo "doesn't have"
+  #     wc.add(default(ext))
+  #     echo "added: ", wc.get(ext)[]
+  #   wc.get(ext)
+  
+  template with*(wc: WiishConfig, ext: typedesc[T], varname: untyped, body: untyped): untyped =
+    block:
+      var varname {.inject.} = wc.get(ext)
+      body
+
 
 type
   WindowFormat* = enum
@@ -38,6 +61,8 @@ type
     nimFlags*: seq[string]
     appWindowFormat*: WindowFormat
   
+  BaseConfig* = ref object
+
   MacConfig* = ref object
     codesign_identity*: string
     bundle_id*: string
@@ -61,12 +86,11 @@ type
     min_sdk_version*: Natural
     target_sdk_version*: Natural
 
-proc hash*(c: WiishConfig): Hash = c[].hash
+proc hash*(c: WiishConfig): Hash =
+  result = c[].hash
 
-extend(MacConfig)
-extend(MacDesktopConfig)
-extend(MaciOSConfig)
-extend(AndroidConfig)
+proc `$`*[C: ref object](cfg: C): string =
+  $cfg[]
 
 proc default(t: typedesc[WiishConfig]): WiishConfig = WiishConfig(
   name: "WiishApp",
@@ -79,29 +103,33 @@ proc default(t: typedesc[WiishConfig]): WiishConfig = WiishConfig(
   appWindowFormat: Webview,
 )
 
-var wiishConfig* = default(WiishConfig)
+extend(MacConfig, MacConfig(
+    codesign_identity: "",
+    bundle_id: "com.example.wiishdemo",
+    info_plist_append: ""
+  )
+)
+extend(MacDesktopConfig, MacDesktopConfig(
+    category_type: "",
+  )
+)
+extend(MaciOSConfig, MaciOSConfig(
+    sdk_version: "",
+    simulator: false,
+    provisioning_profile: "",
+  )
+)
+extend(AndroidConfig, AndroidConfig(
+    java_package_name: "com.example.wiishapp",
+    archs: @[
+      ("armeabi-v7a", "arm"),
+      ("arm64-v8a", "arm64"),
+      ("x86", "i386"),
+      ("x86_64", "amd64"),
+    ],
+    min_sdk_version: 21,
+    target_sdk_version: 26,
+  )
+)
 
-proc default*(t: typedesc[MacConfig]): MacConfig = MacConfig(
-  codesign_identity: "",
-  bundle_identifier: "com.example.wiishdemo",
-  info_plist_append: ""
-)
-proc default*(t: typedesc[MacDesktopConfig]): MacDesktopConfig = MacDesktopConfig(
-  category_type: "",
-)
-proc default*(t: typedesc[MaciOSConfig]): MaciOSConfig = MaciOSConfig(
-  sdk_version: "",
-  simulator: false,
-  provisioning_profile: "",
-)
-proc default*(t: typedesc[AndroidConfig]): AndroidConfig = AndroidConfig(
-  java_package_name: "com.example.wiishapp",
-  archs: @[
-    ("armeabi-v7a", "arm"),
-    ("arm64-v8a", "arm64"),
-    ("x86", "i386"),
-    ("x86_64", "amd64"),
-  ],
-  min_sdk_version: 21,
-  target_sdk_version: 26,
-)
+var wiishConfig* = default(WiishConfig)
