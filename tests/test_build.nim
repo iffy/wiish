@@ -26,7 +26,7 @@ useCustomUnittestFormatter()
 
 randomize()
 
-const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir).mapIt(it.path).sorted()
+const example_dirs = toSeq(walkDir(currentSourcePath.parentDir.parentDir/"examples")).filterIt(it.kind == pcDir and not(it.path.startsWith("_"))).mapIt(it.path).sorted()
 const examples = example_dirs.mapIt(it.extractFilename())
 
 
