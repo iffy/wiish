@@ -105,8 +105,20 @@ proc apk_path(ctx: ref BuildContext): string {.inline.} =
   else:
     ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
 
+proc all_signables(ctx: ref BuildContext): seq[string] =
+  ## Return all things that can be signed
+  for path in walkDirRec(ctx.build_dir/"app"/"build"/"outputs"):
+    if path.endsWith(".apk") or path.endsWith(".aab"):
+      result.add path
+
 proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.} =
   ctx.build_dir/"app"/"jni"/"src"/android_abi
+
+proc ensureEnv*(varname: string): string =
+  ## Retrieve an environment variable or fail trying
+  result = getEnv(varname)
+  if result == "":
+    raise ValueError.newException(&"Expected a value for environment variable {varname}")
 
 proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
   ## Wiish Standard Android build
@@ -249,6 +261,29 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       args.add "--console=plain"
       debug args.join(" ")
       sh(args)
+  of Sign:
+    ctx.logStartStep
+    if not ctx.doSigning:
+      ctx.log "Skipping signing."
+      return
+    let
+      keystore_file = ensureEnv("ANDROID_SIGNING_KEYSTORE")
+      keyalias = ensureEnv("ANDROID_SIGNING_KEYALIAS")
+      keypassword = ensureEnv("ANDROID_SIGNING_PASSWORD")
+      signables = ctx.all_signables()
+    ctx.log &"Attempting to sign {signables} ..."
+    for filename in signables:
+      ctx.log &"Signing {filename.relativePath} ..."
+      var cmd = @[
+        "jarsigner",
+        "-verbose",
+        "-sigalg", "SHA256withRSA",
+        "-digestalg", "SHA-256",
+        "-storepass", keypassword, # XXX: not sure how I feel about this
+        "-keystore", keystore_file,
+        filename, keystore_alias
+      ]
+      sh cmd
   of Run:
     ctx.logStartStep
     let adb_bin = findExe("adb")

@@ -49,6 +49,7 @@ type
     targetOS*: TargetOS
     targetFormat*: TargetFormat
     releaseBuild*: bool
+    doSigning*: bool
     verbose*: bool
     config*: WiishConfig
     currentStep*: BuildStep
