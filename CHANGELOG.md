@@ -1,3 +1,13 @@
+# v0.5.0 - 2022-12-14
+
+- **BREAKING CHANGE:** Remove SDL2/OpenGL examples from tests. I don't use them and don't have the bandwidth to maintain them in parallel with the webview code. I expect someday that SDL2/OpenGL will return.
+- **BREAKING CHANGE:** Removed `wiish.toml` in favor of all config happening in `wiish_build.nim`
+- **BREAKING CHANGE:** Remove unused pluginData
+- **NEW:** External `.c` and `.h` files referenced from within Nim are now automatically included in Android builds
+- **NEW:** Auto choose xcode scheme from available schemes
+- **NEW:** Upgrade gradle for new Android Studio version
+- **NEW:** Add `--release` flag to build Android release versions and to pass `-d:release` to Nim compilation.
+
 # v0.4.0 - 2022-09-22
 
 - **NEW:** iOS projects now have their bundle identifer and product name set
