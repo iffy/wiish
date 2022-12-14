@@ -47,6 +47,8 @@ proc macBuild*(step: BuildStep, ctx: ref BuildContext) =
     ctx.executable_path = contentsDir / "MacOS" / ctx.config.src.splitFile.name
     ctx.nim_flags.add ctx.config.nimFlags
     ctx.nim_flags.add "-d:appName=" & ctx.config.name
+    if ctx.releaseBuild:
+      ctx.nim_flags.add "-d:release"
     
     ctx.log "mkdir ", contentsDir
     createDir(contentsDir)

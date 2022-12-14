@@ -100,7 +100,10 @@ proc possibleDevices(): seq[string] =
   return shoutput(emulator_bin, "-list-avds").strip.splitLines
 
 proc apk_path(ctx: ref BuildContext): string {.inline.} =
-  ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
+  if ctx.releaseBuild:
+    ctx.build_dir/"app"/"build"/"outputs"/"apk"/"release"/"app-universal-release-unsigned.apk"
+  else:
+    ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
 
 proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.} =
   ctx.build_dir/"app"/"jni"/"src"/android_abi
@@ -117,6 +120,8 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.build_dir.removeDir()
     ctx.nim_flags.add ctx.config.nimFlags
     ctx.nim_flags.add "-d:appJavaPackageName=" & ctx.config.get(AndroidConfig).java_package_name
+    if ctx.releaseBuild:
+      ctx.nim_flags.add "-d:release"
     ctx.log &"archs = {ctx.config.get(AndroidConfig).archs}"
   of Compile:
     ctx.logStartStep
@@ -234,8 +239,12 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
 
     ctx.log &"Building with gradle in {ctx.build_dir} ..."
     withDir(ctx.build_dir):
-      # TODO: assembleRelease?
-      let args = [findExe"bash", "gradlew", "assembleDebug", "--console=plain"]
+      var args = @[findExe"bash", "gradlew"]
+      if ctx.releaseBuild:
+        args.add "assembleRelease"
+      else:
+        args.add "assembleDebug"
+      args.add "--console=plain"
       debug args.join(" ")
       sh(args)
   of Run:

@@ -147,6 +147,8 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     ctx.executable_path = ctx.app_dir / "executable"
     ctx.nim_flags.add ctx.config.nimFlags
     ctx.nim_flags.add "-d:appBundleIdentifier=" & ctx.config.get(MacConfig).bundle_id
+    if ctx.releaseBuild:
+      ctx.nim_flags.add "-d:release"
     var sdk_version = ctx.config.get(MaciOSConfig).sdk_version
     if sdk_version == "":
       ctx.log &"Choosing SDK version ..."

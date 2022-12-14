@@ -96,12 +96,14 @@ template build*[T](builders: T) =
       option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
       option("-t", "--target", choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it))
       flag("--verbose")
+      flag("--release", help = "Build a release version (rather than debug)")
       arg("steps", nargs = -1, help = "Step(s) to run. [" & toSeq(low(BuildStep)..high(BuildStep)).join(", ") & "]")
       run:
         var ctx = newBuildContext()
         ctx.projectPath = "."
         ctx.targetOS = parseTargetOS(opts.os)
         ctx.targetFormat = parseTargetFormat(opts.target)
+        ctx.releaseBuild = opts.release
         ctx.verbose = opts.verbose
         let steps = parseSteps(opts.steps)
         doBuildSteps(ctx, builders, steps)
@@ -109,21 +111,25 @@ template build*[T](builders: T) =
       option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
       option("-t", "--target", choices = (low(TargetFormat)..high(TargetFormat)).mapIt($it))
       flag("--verbose")
+      flag("--release", help = "Build a release version (rather than debug)")
       run:
         var ctx = newBuildContext()
         ctx.projectPath = "."
         ctx.targetOS = parseTargetOS(opts.os)
         ctx.targetFormat = parseTargetFormat(opts.target)
+        ctx.releaseBuild = opts.release
         ctx.verbose = opts.verbose
         doBuildSteps(ctx, builders)
     command "run", "High level":
       option("--os", choices = (low(TargetOS)..high(TargetOS)).mapIt($it))
       flag("--verbose")
+      flag("--release", help = "Build a release version (rather than debug)")
       run:
         var ctx = newBuildContext()
         ctx.projectPath = "."
         ctx.targetOS = parseTargetOS(opts.os)
         ctx.targetFormat = targetRun
+        ctx.releaseBuild = opts.release
         ctx.verbose = opts.verbose
         doBuildSteps(ctx, builders)
     command "doctor", "High level":

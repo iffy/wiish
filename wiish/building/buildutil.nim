@@ -48,6 +48,7 @@ type
       ## . when in the wiish project
     targetOS*: TargetOS
     targetFormat*: TargetFormat
+    releaseBuild*: bool
     verbose*: bool
     config*: WiishConfig
     currentStep*: BuildStep
