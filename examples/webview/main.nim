@@ -30,8 +30,9 @@ when not defined(android):
   var timerCounter = 0
   addTimer(1000, false, proc(fd: AsyncFD):bool =
     {.gcsafe.}:
-      timerCounter.inc()
-      senderFn($ %* {"color": "timer", "count": timerCounter})
+      if not senderFn.isNil:
+        timerCounter.inc()
+        senderFn($ %* {"color": "timer", "count": timerCounter})
   )
 
 #---------------------------------------------------
