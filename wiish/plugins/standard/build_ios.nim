@@ -827,9 +827,11 @@ proc checkDoctor*(): seq[DoctorResult] =
         dr.error = "No identity chosen for iOS code signing"
         dr.fix = &"""Set {CODE_SIGN_IDENTITY_VARNAME} to one of the options listed by
 
-    security find-identity -v -p codesigning"""
+    security find-identity -v -p codesigning
+  
+  """
         if identities.len > 0:
-          dr.fix.add(&".  For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
+          dr.fix.add(&"For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
 
     result.dr "standard", "provisioning-profile":
       dr.targetOS = {Ios}

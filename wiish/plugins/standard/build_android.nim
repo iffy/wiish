@@ -659,5 +659,43 @@ proc checkDoctor*():seq[DoctorResult] =
       dr.status = NotWorking
       dr.error = "Could not find any emulation devices"
       dr.fix = "Fix emulator first"
-  
+
+  # code signing
+  result.dr "standard", "android-signing-keystore":
+    dr.targetOS = {Android}
+    if getEnv("ANDROID_SIGNING_KEYSTORE") == "":
+      dr.status = NotWorking
+      dr.error = "No Android signing keystore found"
+      dr.fix = """
+      Generate with something like (replace 'mycompany' with something related to you):
+        
+        keytool -genkey -v -keystore "mycompany-android-key.keystore" -alias "mycompany" -keyalg RSA -sigalg SHA1withRSA -keysize 2048 -validity 10000
+      
+      Then set
+
+        ANDROID_SIGNING_KEYSTORE="mycompany-android-key.keystore"
+      """
+  result.dr "standard", "android-signing-keyalias":
+    dr.targetOS = {Android}
+    if getEnv("ANDROID_SIGNING_KEYALIAS") == "":
+      dr.status = NotWorking
+      dr.error = "No Android signing key alias found"
+      dr.fix = """
+      Set `ANDROID_SIGNING_KEYALIAS=` to the alias string you provided
+      to `-alias` when you ran `keytool`
+
+        ANDROID_SIGNING_KEYALIAS=mycompany
+      """
+  result.dr "standard", "android-signing-password":
+    dr.targetOS = {Android}
+    if getEnv("ANDROID_SIGNING_PASSWORD") == "":
+      dr.status = NotWorking
+      dr.error = "No Android signing key password found"
+      dr.fix = """
+      Set `ANDROID_SIGNING_PASSWORD=` to the password you chose when you
+      ran `keytool`
+
+        ANDROID_SIGNING_PASSWORD=myterriblepassword
+      """
+
 
