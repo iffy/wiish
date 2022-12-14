@@ -57,7 +57,7 @@ Wiish provides:
 Wiish uses a plugin system to support various GUI frameworks:
 
 - `wiish/plugins/webview` - For webview apps based on [oskca/webview](https://github.com/oskca/webview).
-- `wiish/plugins/sdl2` - For SDL and OpenGL apps based on [nim-lang/sdl2](https://github.com/nim-lang/sdl2).
+- `wiish/plugins/sdl2` - **TEMPORARILY UNMAINTAINED** For SDL and OpenGL apps based on [nim-lang/sdl2](https://github.com/nim-lang/sdl2).
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
