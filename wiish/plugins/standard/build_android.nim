@@ -273,7 +273,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       signables = ctx.all_signables()
     ctx.log &"Attempting to sign {signables} ..."
     for filename in signables:
-      ctx.log &"Signing {filename.relativePath} ..."
+      ctx.log &"Signing {filename} ..."
       var cmd = @[
         "jarsigner",
         "-verbose",
@@ -281,7 +281,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
         "-digestalg", "SHA-256",
         "-storepass", keypassword, # XXX: not sure how I feel about this
         "-keystore", keystore_file,
-        filename, keystore_alias
+        filename, keyalias,
       ]
       sh cmd
   of Run:
