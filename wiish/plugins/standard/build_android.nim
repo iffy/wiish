@@ -242,8 +242,10 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
       var args = @[findExe"bash", "gradlew"]
       if ctx.releaseBuild:
         args.add "assembleRelease"
+        args.add "bundleRelease"
       else:
         args.add "assembleDebug"
+        args.add "bundleDebug"
       args.add "--console=plain"
       debug args.join(" ")
       sh(args)
