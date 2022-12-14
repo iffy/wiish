@@ -52,8 +52,6 @@ type
     config*: WiishConfig
     currentStep*: BuildStep
     currentPlugin*: string
-    pluginData: TableRef[string, pointer]
-    # data that is set during the build
     dist_dir*: string
       ## Directory where built output goes (final products)
     build_dir*: string
@@ -208,7 +206,6 @@ proc logStartStep*(ctx: ref BuildContext) =
 
 proc newBuildContext*(): ref BuildContext =
   new(result)
-  result.pluginData = newTable[string,pointer]()
 
 proc main_nim*(ctx: ref BuildContext): string {.inline.} =
   ## Absolute path to the main nim file to build
