@@ -17,6 +17,7 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+        archivesBaseName = "$applicationId-v$versionCode($versionName)"
         externalNativeBuild {
             ndkBuild {
                 arguments "APP_PLATFORM=android-21"

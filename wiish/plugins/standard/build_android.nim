@@ -100,10 +100,14 @@ proc possibleDevices(): seq[string] =
   return shoutput(emulator_bin, "-list-avds").strip.splitLines
 
 proc apk_path(ctx: ref BuildContext): string {.inline.} =
-  if ctx.releaseBuild:
-    ctx.build_dir/"app"/"build"/"outputs"/"apk"/"release"/"app-universal-release-unsigned.apk"
-  else:
-    ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
+  let searchdir = block:
+    if ctx.releaseBuild:
+      ctx.build_dir/"app"/"build"/"outputs"/"apk"/"release"
+    else:
+      ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"
+  for path in walkDirRec(searchdir):
+    if path.endsWith(".apk") and "universal" in path:
+      return path
 
 proc all_signables(ctx: ref BuildContext): seq[string] =
   ## Return all things that can be signed
