@@ -3,14 +3,14 @@ when not defined(android):
   {.fatal: "Only available for -d:android".}
 
 import ../../androidutil
-import asyncdispatch
-import json
-import locks
-import logging
-import options
-import strformat
-import tables
+import std/json
+import std/locks
+import std/logging
+import std/options
+import std/strformat
+import std/tables
 
+import wiish/async
 import wiish/logsetup
 import wiish/baseapp ; export baseapp
 
@@ -112,7 +112,7 @@ proc nimLoop() {.thread, gcsafe.} =
   try:
     while true:
       try:
-        drain()
+        drainEventLoop(20)
       except ValueError:
         discard
       # look for messages from other threads
