@@ -6,6 +6,7 @@ import std/sequtils
 import std/strformat
 import std/strutils
 import std/tables
+import std/times
 
 import regex
 
@@ -139,6 +140,9 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     if ctx.releaseBuild:
       ctx.nim_flags.add "-d:release"
     ctx.log &"archs = {ctx.config.get(AndroidConfig).archs}"
+    if ctx.config.get(AndroidConfig).version_code == 0:
+      ctx.config.get(AndroidConfig).version_code = getTime().toUnix()
+    ctx.log &"version_code = {ctx.config.get(AndroidConfig).version_code}"
   of Compile:
     ctx.logStartStep
     proc buildFor(android_abi:string, cpu:string) =
@@ -216,6 +220,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     replaceInFile(ctx.build_dir/"app"/"build.gradle", {
       "compileSdkVersion.*?\n": &"compileSdkVersion {ctx.config.get(AndroidConfig).target_sdk_version}\n",
       "minSdkVersion.*?\n": &"minSdkVersion {ctx.config.get(AndroidConfig).min_sdk_version}\n",
+      "versionCode .*?\n": &"versionCode {ctx.config.get(AndroidConfig).version_code}\n",
       "targetSdkVersion.*?\n": &"targetSdkVersion {ctx.config.get(AndroidConfig).target_sdk_version}\n",
       "\"APP_PLATFORM=.*?\"": &"\"APP_PLATFORM=android-{ctx.config.get(AndroidConfig).min_sdk_version}\"",
       "abiFilters.*?\n": &"abiFilters {abilist}\n",

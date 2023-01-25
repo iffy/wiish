@@ -1,11 +1,12 @@
 ## Hello, World Wiish App
-import wiish/plugins/webview
+import std/json
+import std/logging
+import std/strutils
+import std/tables
+
+import wiish/async
 import wiish/mobileutil
-import strutils
-import logging
-import tables
-import json
-import asyncdispatch
+import wiish/plugins/webview
 
 #---------------------------------------------------
 # App logic
@@ -26,14 +27,30 @@ proc receiveMessage*(msg: string) =
     if not senderFn.isNil:
       senderFn($ %* {"color": color, "count": count})
 
-when not defined(android):
-  var timerCounter = 0
-  addTimer(1000, false, proc(fd: AsyncFD):bool =
-    {.gcsafe.}:
-      if not senderFn.isNil:
-        timerCounter.inc()
-        senderFn($ %* {"color": "timer", "count": timerCounter})
-  )
+var timerCounter = 0
+proc timerGuts =
+  {.gcsafe.}:
+    if not senderFn.isNil:
+      timerCounter.inc()
+      senderFn($ %* {"color": "timer", "count": timerCounter})
+
+proc startTimer() =
+  when useChronos:
+    discard setTimer(Moment.fromNow(1.seconds),
+      proc (arg: pointer) {.gcsafe, raises: [Defect].} =
+        try:
+          timerGuts()
+        except:
+          discard
+        startTimer()
+    )
+  else:
+    when not defined(android):
+      addTimer(1000, false, proc(fd: AsyncFD):bool =
+        timerGuts()
+      )
+
+startTimer()
 
 #---------------------------------------------------
 # Where wiish comes in...
