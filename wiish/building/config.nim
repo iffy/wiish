@@ -84,6 +84,7 @@ type
     archs*: seq[AndroidArchPair]
     min_sdk_version*: Natural
     target_sdk_version*: Natural
+    version_code*: int64
 
 proc hash*(c: WiishConfig): Hash =
   result = c[].hash
@@ -127,6 +128,7 @@ extend(AndroidConfig, AndroidConfig(
     ],
     min_sdk_version: 21,
     target_sdk_version: 26,
+    version_code: 0, # This is automatically updated to a timestamp
   )
 )
 

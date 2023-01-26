@@ -6,6 +6,7 @@ import std/sequtils
 import std/strformat
 import std/strutils
 import std/tables
+import std/times
 
 import regex
 
@@ -100,10 +101,14 @@ proc possibleDevices(): seq[string] =
   return shoutput(emulator_bin, "-list-avds").strip.splitLines
 
 proc apk_path(ctx: ref BuildContext): string {.inline.} =
-  if ctx.releaseBuild:
-    ctx.build_dir/"app"/"build"/"outputs"/"apk"/"release"/"app-universal-release-unsigned.apk"
-  else:
-    ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"/"app-universal-debug.apk"
+  let searchdir = block:
+    if ctx.releaseBuild:
+      ctx.build_dir/"app"/"build"/"outputs"/"apk"/"release"
+    else:
+      ctx.build_dir/"app"/"build"/"outputs"/"apk"/"debug"
+  for path in walkDirRec(searchdir):
+    if path.endsWith(".apk") and "universal" in path:
+      return path
 
 proc all_signables(ctx: ref BuildContext): seq[string] =
   ## Return all things that can be signed
@@ -135,6 +140,9 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     if ctx.releaseBuild:
       ctx.nim_flags.add "-d:release"
     ctx.log &"archs = {ctx.config.get(AndroidConfig).archs}"
+    if ctx.config.get(AndroidConfig).version_code == 0:
+      ctx.config.get(AndroidConfig).version_code = getTime().toUnix()
+    ctx.log &"version_code = {ctx.config.get(AndroidConfig).version_code}"
   of Compile:
     ctx.logStartStep
     proc buildFor(android_abi:string, cpu:string) =
@@ -212,6 +220,7 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
     replaceInFile(ctx.build_dir/"app"/"build.gradle", {
       "compileSdkVersion.*?\n": &"compileSdkVersion {ctx.config.get(AndroidConfig).target_sdk_version}\n",
       "minSdkVersion.*?\n": &"minSdkVersion {ctx.config.get(AndroidConfig).min_sdk_version}\n",
+      "versionCode .*?\n": &"versionCode {ctx.config.get(AndroidConfig).version_code}\n",
       "targetSdkVersion.*?\n": &"targetSdkVersion {ctx.config.get(AndroidConfig).target_sdk_version}\n",
       "\"APP_PLATFORM=.*?\"": &"\"APP_PLATFORM=android-{ctx.config.get(AndroidConfig).min_sdk_version}\"",
       "abiFilters.*?\n": &"abiFilters {abilist}\n",

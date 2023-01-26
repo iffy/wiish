@@ -3,14 +3,14 @@ when not defined(android):
   {.fatal: "Only available for -d:android".}
 
 import ../../androidutil
-import asyncdispatch
-import json
-import locks
-import logging
-import options
-import strformat
-import tables
+import std/json
+import std/locks
+import std/logging
+import std/options
+import std/strformat
+import std/tables
 
+import wiish/async
 import wiish/logsetup
 import wiish/baseapp ; export baseapp
 
@@ -69,7 +69,7 @@ proc newWebviewAndroidWindow*(): WebviewWindow =
 proc getWindow*(app: ptr WebviewAndroidApp, windowId: int): WebviewWindow {.inline.} =
   app.windows[windowId]
 
-proc evalJavaScript(win: WebviewWindow, js: string) =
+proc evalJavaScript(win: WebviewWindow, js: string) {.gcsafe.} =
   ## Evaluate some JavaScript in the webview
   if win.wiishActivity.isNone:
     warn "Attempting to execute JavaScript in unattached webview window"
@@ -77,15 +77,16 @@ proc evalJavaScript(win: WebviewWindow, js: string) =
     var
       activity = win.wiishActivity.get()
       javascript = js.cstring
-    withJEnv(env):
-      var cls: JClass = env.GetObjectClass(env, activity)
-      var mid: jmethodID = env.GetMethodID(env, cls, "evalJavaScript", "(Ljava/lang/String;)V");
-      if mid.isNil:
-        raise newException(ValueError, "Failed to get evalJavaScript methodId")
-      var jstring_js = env.NewStringUTF(env, js)
-      env.CallVoidMethod(env, activity, mid, jstring_js)
+    {.gcsafe.}:
+      withJEnv(env):
+        var cls: JClass = env.GetObjectClass(env, activity)
+        var mid: jmethodID = env.GetMethodID(env, cls, "evalJavaScript", "(Ljava/lang/String;)V");
+        if mid.isNil:
+          raise newException(ValueError, "Failed to get evalJavaScript methodId")  
+        var jstring_js = env.NewStringUTF(env, js)
+        env.CallVoidMethod(env, activity, mid, jstring_js)
 
-proc sendMessage*(win: WebviewWindow, message: string) =
+proc sendMessage*(win: WebviewWindow, message: string) {.gcsafe.} =
   ## Send a string message to the JavaScript in the window's webview
   win.evalJavaScript(&"wiish._handleMessage({%message});")
 
@@ -112,7 +113,7 @@ proc nimLoop() {.thread, gcsafe.} =
   try:
     while true:
       try:
-        drain()
+        drainEventLoop(20)
       except ValueError:
         discard
       # look for messages from other threads

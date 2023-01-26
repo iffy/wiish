@@ -1,13 +1,14 @@
 ## Module for making desktop Webview applications.
 ## Import from here regardless of the operating system
-import webview
-import strutils
-import logging
-import asyncdispatch
-import tables
-import json
+import std/strutils
+import std/logging
+import std/tables
+import std/json
 import std/exitprocs
 
+import webview
+
+import wiish/async
 import wiish/events ; export events
 import wiish/logsetup
 import wiish/baseapp ; export baseapp
@@ -130,7 +131,7 @@ proc start*(app: WebviewApp, url = "", title = "") =
         keepgoing = false
     # Run asyncdispatch loop
     try:
-      drain(1)
+      drainEventLoop(20)
     except ValueError:
       discard
   addExitProc proc() =

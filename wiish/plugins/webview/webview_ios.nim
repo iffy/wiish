@@ -1,15 +1,15 @@
 ## Module for making iOS Webview applications.
 when not defined(ios):
   {.fatal: "webview_ios only works with ios".}
-import asyncdispatch
-import json
-import locks
-import logging
-import net
-import options
-import strformat
-import tables
+import std/json
+import std/locks
+import std/logging
+import std/net
+import std/options
+import std/strformat
+import std/tables
 
+import wiish/async
 import wiish/events ; export events
 import wiish/logsetup
 import wiish/baseapp ; export baseapp
@@ -167,7 +167,7 @@ proc nim_sendMessageToNim(windowId: cint, x:cstring) {.exportc.} =
 proc nim_iterateLoop() {.exportc.} =
   ## Drain the async loop
   try:
-    drain(1)
+    drainEventLoop(2)
   except:
     discard
 
