@@ -15,7 +15,7 @@ proc drainEventLoop*(timeout = 500) =
     let idlefut = idleAsync()
     try:
       waitFor wait(idlefut, timeout.milliseconds)
-    except TimeoutError:
+    except AsyncTimeoutError:
       discard
   else:
     drain(timeout)

@@ -12,9 +12,9 @@ import wiish/plugins/webview
 # App logic
 #---------------------------------------------------
 var counter = initCountTable[string]()
-var senderFn: proc(x:string) = nil
+var senderFn {.threadvar.}: proc(x:string) {.gcsafe.}
 
-proc attachSender*(fn: proc(x:string)) =
+proc attachSender*(fn: proc(x:string) {.gcsafe.} ) =
   senderFn = fn
 
 proc receiveMessage*(msg: string) =
@@ -27,12 +27,11 @@ proc receiveMessage*(msg: string) =
     if not senderFn.isNil:
       senderFn($ %* {"color": color, "count": count})
 
-var timerCounter = 0
-proc timerGuts =
-  {.gcsafe.}:
-    if not senderFn.isNil:
-      timerCounter.inc()
-      senderFn($ %* {"color": "timer", "count": timerCounter})
+var timerCounter {.threadvar.}: int
+proc timerGuts {.gcsafe.} =
+  if not senderFn.isNil:
+    timerCounter.inc()
+    senderFn($ %* {"color": "timer", "count": timerCounter})
 
 proc startTimer() =
   when useChronos:
@@ -50,8 +49,6 @@ proc startTimer() =
         timerGuts()
       )
 
-startTimer()
-
 #---------------------------------------------------
 # Where wiish comes in...
 #---------------------------------------------------
@@ -65,10 +62,11 @@ app.life.addListener proc(ev: LifeEvent) =
     debug "AppStarted"
     when wiish_mobile:
       debug "documents path: ", documentsPath()
+    startTimer()
   of WindowAdded:
     var win = app.getWindow(ev.windowId)
     win.onReady.handle:
-      attachSender(proc(msg: string) =
+      attachSender(proc(msg: string) {.gcsafe.} =
         win.sendMessage(msg)
       )
     win.onMessage.handle(msg):
