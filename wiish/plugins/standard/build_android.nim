@@ -113,7 +113,8 @@ proc apk_path(ctx: ref BuildContext): string {.inline.} =
 proc all_signables(ctx: ref BuildContext): seq[string] =
   ## Return all things that can be signed
   for path in walkDirRec(ctx.build_dir/"app"/"build"/"outputs"):
-    if path.endsWith(".apk") or path.endsWith(".aab"):
+    # if path.endsWith(".apk") or path.endsWith(".aab"):
+    if path.endsWith(".aab"):
       result.add path
 
 proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.} =
