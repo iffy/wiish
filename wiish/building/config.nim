@@ -49,7 +49,6 @@ template extend*(T: typed, dft: untyped) =
 type
   WindowFormat* = enum
     Webview
-    SDL
 
   WiishConfig* = ref object
     name*: string ## project name

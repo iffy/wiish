@@ -21,11 +21,6 @@ ios="--os:macosx -d:ios --threads:on"
 android="--os:linux -d:android --noMain --threads:on"
 mobiledev="-d:wiish_mobiledev"
 
-echo SDL tests
-nimcheck $macOS examples/sdl2/main_desktop.nim
-nimcheck $windows examples/sdl2/main_desktop.nim
-nimcheck $linux examples/sdl2/main_desktop.nim
-
 echo webview tests
 nimcheck $macOS examples/webview/main_desktop.nim
 nimcheck $windows examples/webview/main_desktop.nim

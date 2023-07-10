@@ -41,7 +41,6 @@ See `wiish --help` for more, but here are other examples.  Some only work within
 wiish run --os ios-simulator
 wiish run --os android
 wiish build
-wiish init --base-template opengl my_opengl_app
 ```
 
 # Features
@@ -57,7 +56,6 @@ Wiish provides:
 Wiish uses a plugin system to support various GUI frameworks:
 
 - `wiish/plugins/webview` - For webview apps based on [oskca/webview](https://github.com/oskca/webview).
-- `wiish/plugins/sdl2` - **TEMPORARILY UNMAINTAINED** For SDL and OpenGL apps based on [nim-lang/sdl2](https://github.com/nim-lang/sdl2).
 
 The GUI component is designed to work separately from other features (e.g. auto-updating, packaging, etc...) so that different GUI libraries can be swapped in/out.
 
@@ -75,41 +73,19 @@ The following shows the support matrix of **automated** tests.  Actual support m
 
 | Host OS | `--os`        | Example      | `wiish run` | `wiish build` |
 | ------- | ------------- | ------------ | :---------: | :-----------: |
-| windows | android       | opengl       |   Planned   |    Planned    |
-| windows | android       | sdl2         |   Planned   |    Planned    |
 | windows | android       | webview      |   Planned   |    Planned    |
-| windows | mobiledev     | opengl       |  Untested   |       -       |
-| windows | mobiledev     | sdl2         |  Untested   |       -       |
 | windows | mobiledev     | webview      |  Untested   |       -       |
-| windows | windows       | opengl       |  Untested   |    Planned    |
 | windows | windows       | plainwebview |  Untested   |    Planned    |
-| windows | windows       | sdl2         |  Untested   |    Planned    |
 | windows | windows       | webview      |  Untested   |    Planned    |
-| linux   | android       | opengl       |   Planned   |      Yes      |
-| linux   | android       | sdl2         |   Planned   |      Yes      |
 | linux   | android       | webview      |   Planned   |      Yes      |
-| linux   | mobiledev     | opengl       |     Yes     |       -       |
-| linux   | mobiledev     | sdl2         |     Yes     |       -       |
 | linux   | mobiledev     | webview      |     Yes     |       -       |
-| linux   | linux         | opengl       |     Yes     |    Planned    |
 | linux   | linux         | plainwebview |     Yes     |    Planned    |
-| linux   | linux         | sdl2         |     Yes     |    Planned    |
 | linux   | linux         | webview      |     Yes     |    Planned    |
-| mac     | android       | opengl       |     Yes     |      Yes      |
-| mac     | android       | sdl2         |     Yes     |      Yes      |
 | mac     | android       | webview      |     Yes     |      Yes      |
-| mac     | ios           | opengl       |   Planned   |    Planned    |
-| mac     | ios           | sdl2         |   Planned   |    Planned    |
 | mac     | ios           | webview      |   Planned   |    Planned    |
-| mac     | ios-simulator | opengl       |     Yes     |      Yes      |
-| mac     | ios-simulator | sdl2         |     Yes     |      Yes      |
 | mac     | ios-simulator | webview      |     Yes     |      Yes      |
-| mac     | mobiledev     | opengl       |     Yes     |       -       |
-| mac     | mobiledev     | sdl2         |     Yes     |       -       |
 | mac     | mobiledev     | webview      |     Yes     |       -       |
-| mac     | mac           | opengl       |     Yes     |      Yes      |
 | mac     | mac           | plainwebview |     Yes     |      Yes      |
-| mac     | mac           | sdl2         |     Yes     |      Yes      |
 | mac     | mac           | webview      |     Yes     |      Yes      |
 
 ### GUI-independent features
@@ -143,9 +119,7 @@ See the [`examples`](./examples) directory for more examples of how to use this 
 
 # Plugins
 
-## sdl2
-
-## webview| 
+## webview
 
 ### Messaging
 

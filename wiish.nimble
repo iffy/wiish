@@ -17,9 +17,6 @@ requires "regex >= 0.18.0 & < 1.0.0"
 requires "chronos"
 
 # Graphics dependencies
-requires "opengl >= 1.2.1"
 requires "webview"
-# requires "glfw >= 0.1.0"
-requires "sdl2 >= 2.0.1 & < 3.0.0"
 requires "https://github.com/yglukhov/darwin"
 requires "pixie"

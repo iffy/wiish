@@ -1,0 +1,9 @@
+EventSource	events.html#EventSource	events: EventSource	
+newEventSource	events.html#newEventSource	events: newEventSource[T](): EventSource[T]	
+`$`	events.html#$,EventSource	events: `$`(ev: EventSource): string	
+`$`	events.html#$,ref.EventSource	events: `$`(ev: ref EventSource): string	
+addListener	events.html#addListener,EventSource[T],proc(T)	events: addListener[T](es: var EventSource[T]; listener: proc (message: T): void)	
+removeListener	events.html#removeListener,EventSource[T],proc(T)	events: removeListener[T](es: var EventSource[T]; listener: proc (message: T): void)	
+emit	events.html#emit,EventSource[T],T	events: emit[T](es: EventSource[T]; message: T)	
+handle	events.html#handle.t,EventSource[T],untyped,untyped	events: handle[T](es: EventSource[T]; varname: untyped; fnbody: untyped): untyped	
+handle	events.html#handle.t,EventSource[T],untyped	events: handle[T](es: EventSource[T]; fnbody: untyped): untyped	

@@ -1,0 +1,2 @@
+resourceDir	resources.html#resourceDir	resources: resourceDir(): string	
+resourcePath	resources.html#resourcePath,string	resources: resourcePath(filename: string): string	

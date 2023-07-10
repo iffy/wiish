@@ -88,7 +88,7 @@ proc linuxRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildContext
   case step
   of Compile:
     if ctx.targetFormat != targetRun:
-      raise ValueError.newException("Linux SDL2 building not supported yet")
+      raise ValueError.newException("Linux building not supported yet")
   of Run:
     b.desktopRun(ctx)
   else:
@@ -99,7 +99,7 @@ proc windowsRunStep*(b: WiishWebviewPlugin, step: BuildStep, ctx: ref BuildConte
   case step
   of Compile:
     if ctx.targetFormat != targetRun:
-      raise ValueError.newException("Windows SDL2 building not supported yet")
+      raise ValueError.newException("Windows building not supported yet")
   of Run:
     b.desktopRun(ctx)
   else:

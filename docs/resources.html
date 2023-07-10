@@ -17,7 +17,7 @@
 <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400,500,600' rel='stylesheet' type='text/css'/>
 
 <!-- CSS -->
-<title>logsetup</title>
+<title>resources</title>
 <link rel="stylesheet" type="text/css" href="nimdoc.out.css">
 
 <script type="text/javascript" src="dochack.js"></script>
@@ -69,7 +69,7 @@ window.addEventListener('DOMContentLoaded', main);
 <body>
 <div class="document" id="documentId">
   <div class="container">
-    <h1 class="title">logsetup</h1>
+    <h1 class="title">resources</h1>
     <div class="row">
   <div class="three columns">
   <div class="theme-switch-wrapper">
@@ -107,9 +107,14 @@ window.addEventListener('DOMContentLoaded', main);
 <li>
   <a class="reference reference-toplevel" href="#12" id="62">Procs</a>
   <ul class="simple simple-toc-section">
-      <ul class="simple nested-toc-section">startLogging
-      <li><a class="reference" href="#startLogging"
-    title="startLogging()">startLogging()</a></li>
+      <ul class="simple nested-toc-section">resourceDir
+      <li><a class="reference" href="#resourceDir"
+    title="resourceDir(): string">resourceDir(): string</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">resourcePath
+      <li><a class="reference" href="#resourcePath%2Cstring"
+    title="resourcePath(filename: string): string">resourcePath(filename: string): string</a></li>
 
   </ul>
 
@@ -123,17 +128,7 @@ window.addEventListener('DOMContentLoaded', main);
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
   
-  <p class="module-desc"><p>Logging for Wiish applications.  By importing this module, the Nim stdlib <tt class="docutils literal"><span class="pre">logging</span></tt> module will be configured to log somewhere helpful.</p>
-<p>When running applications in dev mode (i.e. <tt class="docutils literal"><span class="pre">wiish run ...</span></tt>) logs will be printed to the console.</p>
-<p>For built applications, logs will be written to the following files:</p>
-<blockquote><p><ul class="simple"><li><strong>macOS</strong>: <tt class="docutils literal"><span class="pre">~/Library/Logs/{appName}/log.log</span></tt></li>
-<li><strong>Linux</strong>: not yet implemented</li>
-<li><strong>Windows</strong>: not yet implemented</li>
-<li><strong>iOS</strong>: not yet implemented</li>
-<li><strong>Android</strong>: not yet implemented</li>
-</ul>
-</p></blockquote>
-</p>
+  <p class="module-desc">This module contains utilities for accessing files packaged with an application.</p>
   <div class="section" id="6">
 <h1><a class="toc-backref" href="#6">Imports</a></h1>
 <dl class="item">
@@ -142,12 +137,20 @@ window.addEventListener('DOMContentLoaded', main);
 <div class="section" id="12">
 <h1><a class="toc-backref" href="#12">Procs</a></h1>
 <dl class="item">
-<div id="startLogging">
-<dt><pre><span class="Keyword">proc</span> <a href="#startLogging"><span class="Identifier">startLogging</span></a><span class="Other">(</span><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">OSError</span><span class="Other">,</span> <span class="Identifier">IOError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadEnvEffect</span><span class="Other">,</span>
-    <span class="Identifier">ReadIOEffect</span><span class="Other">,</span> <span class="Identifier">WriteDirEffect</span><span class="Other">,</span> <span class="Identifier">ReadDirEffect</span><span class="Other">]</span></span>.}</pre></dt>
+<div id="resourceDir">
+<dt><pre><span class="Keyword">proc</span> <a href="#resourceDir"><span class="Identifier">resourceDir</span></a><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">OSError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span>.}</pre></dt>
 <dd>
 
+Return the absolute path to the directory where resources are for this app.
 
+</dd>
+</div>
+<div id="resourcePath,string">
+<dt><pre><span class="Keyword">proc</span> <a href="#resourcePath%2Cstring"><span class="Identifier">resourcePath</span></a><span class="Other">(</span><span class="Identifier">filename</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">OSError</span><span class="Other">]</span><span class="Other">,</span>
+    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span>.}</pre></dt>
+<dd>
+
+Return the path to a static resource included in the application As a safety measure, this will not return a file outside of the application's resource dir.
 
 </dd>
 </div>
@@ -161,7 +164,7 @@ window.addEventListener('DOMContentLoaded', main);
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2023-07-10 13:45:40 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2023-07-10 13:45:43 UTC</small>
       </div>
     </div>
   </div>
