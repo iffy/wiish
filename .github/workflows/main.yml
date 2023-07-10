@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         nimversion: 
-          - binary:stable
+          - binary:1.6.12
           # - devel
         os:
           - ubuntu-18.04
