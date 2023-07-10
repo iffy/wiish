@@ -17,7 +17,7 @@
 <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400,500,600' rel='stylesheet' type='text/css'/>
 
 <!-- CSS -->
-<title>logsetup</title>
+<title>androidutil</title>
 <link rel="stylesheet" type="text/css" href="nimdoc.out.css">
 
 <script type="text/javascript" src="dochack.js"></script>
@@ -69,7 +69,7 @@ window.addEventListener('DOMContentLoaded', main);
 <body>
 <div class="document" id="documentId">
   <div class="container">
-    <h1 class="title">logsetup</h1>
+    <h1 class="title">androidutil</h1>
     <div class="row">
   <div class="three columns">
   <div class="theme-switch-wrapper">
@@ -99,17 +99,43 @@ window.addEventListener('DOMContentLoaded', main);
   </div>
   <ul class="simple simple-toc" id="toc-list">
 <li>
-  <a class="reference reference-toplevel" href="#6" id="56">Imports</a>
+  <a class="reference reference-toplevel" href="#7" id="57">Types</a>
   <ul class="simple simple-toc-section">
-    
+      <li><a class="reference" href="#JavaVMAttachArgs"
+    title="JavaVMAttachArgs = object
+  version: jint
+  name: cstring
+  group: jobject">JavaVMAttachArgs</a></li>
+
   </ul>
 </li>
 <li>
   <a class="reference reference-toplevel" href="#12" id="62">Procs</a>
   <ul class="simple simple-toc-section">
-      <ul class="simple nested-toc-section">startLogging
-      <li><a class="reference" href="#startLogging"
-    title="startLogging()">startLogging()</a></li>
+      <ul class="simple nested-toc-section">initializeJavaVM
+      <li><a class="reference" href="#initializeJavaVM%2CJNIEnvPtr"
+    title="initializeJavaVM(env: JNIEnvPtr)">initializeJavaVM(env: JNIEnvPtr)</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">jniErrorMessage
+      <li><a class="reference" href="#jniErrorMessage%2Cjint"
+    title="jniErrorMessage(err: jint): string">jniErrorMessage(err: jint): string</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">ok
+      <li><a class="reference" href="#ok%2Cjint"
+    title="ok(rc: jint)">ok(rc: jint)</a></li>
+
+  </ul>
+
+  </ul>
+</li>
+<li>
+  <a class="reference reference-toplevel" href="#18" id="68">Templates</a>
+  <ul class="simple simple-toc-section">
+      <ul class="simple nested-toc-section">withJEnv
+      <li><a class="reference" href="#withJEnv.t%2Cuntyped%2Cuntyped"
+    title="withJEnv(env: untyped; body: untyped): untyped">withJEnv(env: untyped; body: untyped): untyped</a></li>
 
   </ul>
 
@@ -123,28 +149,58 @@ window.addEventListener('DOMContentLoaded', main);
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
   
-  <p class="module-desc"><p>Logging for Wiish applications.  By importing this module, the Nim stdlib <tt class="docutils literal"><span class="pre">logging</span></tt> module will be configured to log somewhere helpful.</p>
-<p>When running applications in dev mode (i.e. <tt class="docutils literal"><span class="pre">wiish run ...</span></tt>) logs will be printed to the console.</p>
-<p>For built applications, logs will be written to the following files:</p>
-<blockquote><p><ul class="simple"><li><strong>macOS</strong>: <tt class="docutils literal"><span class="pre">~/Library/Logs/{appName}/log.log</span></tt></li>
-<li><strong>Linux</strong>: not yet implemented</li>
-<li><strong>Windows</strong>: not yet implemented</li>
-<li><strong>iOS</strong>: not yet implemented</li>
-<li><strong>Android</strong>: not yet implemented</li>
-</ul>
-</p></blockquote>
-</p>
-  <div class="section" id="6">
-<h1><a class="toc-backref" href="#6">Imports</a></h1>
+  <p class="module-desc"></p>
+  <div class="section" id="7">
+<h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
-<a class="reference external" href="baseapp.html">baseapp</a>
+<div id="JavaVMAttachArgs">
+<dt><pre><a href="androidutil.html#JavaVMAttachArgs"><span class="Identifier">JavaVMAttachArgs</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
+  <span class="Identifier">version</span><span class="Other">:</span> <span class="Identifier">jint</span>
+  <span class="Identifier">name</span><span class="Other">:</span> <span class="Identifier">cstring</span>
+  <span class="Identifier">group</span><span class="Other">:</span> <span class="Identifier">jobject</span>
+</pre></dt>
+<dd>
+
+
+
+</dd>
+</div>
+
 </dl></div>
 <div class="section" id="12">
 <h1><a class="toc-backref" href="#12">Procs</a></h1>
 <dl class="item">
-<div id="startLogging">
-<dt><pre><span class="Keyword">proc</span> <a href="#startLogging"><span class="Identifier">startLogging</span></a><span class="Other">(</span><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">OSError</span><span class="Other">,</span> <span class="Identifier">IOError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadEnvEffect</span><span class="Other">,</span>
-    <span class="Identifier">ReadIOEffect</span><span class="Other">,</span> <span class="Identifier">WriteDirEffect</span><span class="Other">,</span> <span class="Identifier">ReadDirEffect</span><span class="Other">]</span></span>.}</pre></dt>
+<div id="initializeJavaVM,JNIEnvPtr">
+<dt><pre><span class="Keyword">proc</span> <a href="#initializeJavaVM%2CJNIEnvPtr"><span class="Identifier">initializeJavaVM</span></a><span class="Other">(</span><span class="Identifier">env</span><span class="Other">:</span> <span class="Identifier">JNIEnvPtr</span><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">RootEffect</span><span class="Other">]</span></span>.}</pre></dt>
+<dd>
+
+Set up the global_JavaVM Call this before doing anything else in here.
+
+</dd>
+</div>
+<div id="jniErrorMessage,jint">
+<dt><pre><span class="Keyword">proc</span> <a href="#jniErrorMessage%2Cjint"><span class="Identifier">jniErrorMessage</span></a><span class="Other">(</span><span class="Identifier">err</span><span class="Other">:</span> <span class="Identifier">jint</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
+<dd>
+
+Convert an error return code into a string
+
+</dd>
+</div>
+<div id="ok,jint">
+<dt><pre><span class="Keyword">proc</span> <a href="#ok%2Cjint"><span class="Identifier">ok</span></a><span class="Other">(</span><span class="Identifier">rc</span><span class="Other">:</span> <span class="Identifier">jint</span><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
+<dd>
+
+
+
+</dd>
+</div>
+
+</dl></div>
+<div class="section" id="18">
+<h1><a class="toc-backref" href="#18">Templates</a></h1>
+<dl class="item">
+<div id="withJEnv.t,untyped,untyped">
+<dt><pre><span class="Keyword">template</span> <a href="#withJEnv.t%2Cuntyped%2Cuntyped"><span class="Identifier">withJEnv</span></a><span class="Other">(</span><span class="Identifier">env</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">body</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
 <dd>
 
 
@@ -161,7 +217,7 @@ window.addEventListener('DOMContentLoaded', main);
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2023-07-10 13:45:40 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2023-07-10 13:45:26 UTC</small>
       </div>
     </div>
   </div>

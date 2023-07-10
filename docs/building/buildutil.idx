@@ -1,0 +1,59 @@
+simulator_sdk_root	building/buildutil.html#simulator_sdk_root	buildutil: simulator_sdk_root	
+ios_sdk_root	building/buildutil.html#ios_sdk_root	buildutil: ios_sdk_root	
+AutoDetectOS	building/buildutil.html#AutoDetectOS	TargetOS.AutoDetectOS	
+Android	building/buildutil.html#Android	TargetOS.Android	
+Ios	building/buildutil.html#Ios	TargetOS.Ios	
+IosSimulator	building/buildutil.html#IosSimulator	TargetOS.IosSimulator	
+MobileDev	building/buildutil.html#MobileDev	TargetOS.MobileDev	
+Linux	building/buildutil.html#Linux	TargetOS.Linux	
+Mac	building/buildutil.html#Mac	TargetOS.Mac	
+Windows	building/buildutil.html#Windows	TargetOS.Windows	
+TargetOS	building/buildutil.html#TargetOS	buildutil: TargetOS	
+targetAuto	building/buildutil.html#targetAuto	TargetFormat.targetAuto	
+targetRun	building/buildutil.html#targetRun	TargetFormat.targetRun	
+targetMacApp	building/buildutil.html#targetMacApp	TargetFormat.targetMacApp	
+targetMacDMG	building/buildutil.html#targetMacDMG	TargetFormat.targetMacDMG	
+targetWinExe	building/buildutil.html#targetWinExe	TargetFormat.targetWinExe	
+targetWinInstaller	building/buildutil.html#targetWinInstaller	TargetFormat.targetWinInstaller	
+targetIosApp	building/buildutil.html#targetIosApp	TargetFormat.targetIosApp	
+targetIosIpa	building/buildutil.html#targetIosIpa	TargetFormat.targetIosIpa	
+targetAndroidApk	building/buildutil.html#targetAndroidApk	TargetFormat.targetAndroidApk	
+targetLinuxBin	building/buildutil.html#targetLinuxBin	TargetFormat.targetLinuxBin	
+TargetFormat	building/buildutil.html#TargetFormat	buildutil: TargetFormat	
+BuildContext	building/buildutil.html#BuildContext	buildutil: BuildContext	
+Setup	building/buildutil.html#Setup	BuildStep.Setup	
+PreCompile	building/buildutil.html#PreCompile	BuildStep.PreCompile	
+Compile	building/buildutil.html#Compile	BuildStep.Compile	
+PostCompile	building/buildutil.html#PostCompile	BuildStep.PostCompile	
+PreBuild	building/buildutil.html#PreBuild	BuildStep.PreBuild	
+Build	building/buildutil.html#Build	BuildStep.Build	
+PostBuild	building/buildutil.html#PostBuild	BuildStep.PostBuild	
+PrePackage	building/buildutil.html#PrePackage	BuildStep.PrePackage	
+Package	building/buildutil.html#Package	BuildStep.Package	
+PostPackage	building/buildutil.html#PostPackage	BuildStep.PostPackage	
+PreSign	building/buildutil.html#PreSign	BuildStep.PreSign	
+Sign	building/buildutil.html#Sign	BuildStep.Sign	
+PostSign	building/buildutil.html#PostSign	BuildStep.PostSign	
+PreNotarize	building/buildutil.html#PreNotarize	BuildStep.PreNotarize	
+Notarize	building/buildutil.html#Notarize	BuildStep.Notarize	
+PostNotarize	building/buildutil.html#PostNotarize	BuildStep.PostNotarize	
+Run	building/buildutil.html#Run	BuildStep.Run	
+BuildStep	building/buildutil.html#BuildStep	buildutil: BuildStep	
+BuildPlugin	building/buildutil.html#BuildPlugin	buildutil: BuildPlugin	
+viableTargets	building/buildutil.html#viableTargets,TargetOS	buildutil: viableTargets(os: TargetOS): set[TargetFormat]	
+desktop	building/buildutil.html#desktop,ref.BuildContext	buildutil: desktop(ctx: ref BuildContext): bool	
+mobile	building/buildutil.html#mobile.t,ref.BuildContext	buildutil: mobile(ctx: ref BuildContext): bool	
+simulator	building/buildutil.html#simulator,ref.BuildContext	buildutil: simulator(ctx: ref BuildContext): bool	
+ios_sdk_path	building/buildutil.html#ios_sdk_path,ref.BuildContext	buildutil: ios_sdk_path(ctx: ref BuildContext): string	
+xcode_project_file	building/buildutil.html#xcode_project_file,ref.BuildContext	buildutil: xcode_project_file(ctx: ref BuildContext): string	
+parseTargetOS	building/buildutil.html#parseTargetOS,string	buildutil: parseTargetOS(x: string): TargetOS	
+parseTargetFormat	building/buildutil.html#parseTargetFormat,string	buildutil: parseTargetFormat(x: string): TargetFormat	
+withDir	building/buildutil.html#withDir.t,string,untyped	buildutil: withDir(dir: string; body: untyped): untyped	
+sh	building/buildutil.html#sh,varargs[string,]	buildutil: sh(args: varargs[string, `$`])	
+shoutput	building/buildutil.html#shoutput,varargs[string,]	buildutil: shoutput(args: varargs[string, `$`]): string	
+log	building/buildutil.html#log,ref.BuildContext,varargs[string]	buildutil: log(ctx: ref BuildContext; msg: varargs[string])	
+logStartStep	building/buildutil.html#logStartStep,ref.BuildContext	buildutil: logStartStep(ctx: ref BuildContext)	
+newBuildContext	building/buildutil.html#newBuildContext	buildutil: newBuildContext(): ref BuildContext	
+main_nim	building/buildutil.html#main_nim,ref.BuildContext	buildutil: main_nim(ctx: ref BuildContext): string	
+getWiishPackageRoot	building/buildutil.html#getWiishPackageRoot	buildutil: getWiishPackageRoot(): string	
+resizePNG	building/buildutil.html#resizePNG,string,string,int,int	buildutil: resizePNG(srcfile: string; outfile: string; width: int; height: int;\n          removeAlpha = false)	

@@ -1,0 +1,28 @@
+extend	building/config.html#extend.t,typed,untyped	config: extend(T: typed; dft: untyped)	
+Webview	building/config.html#Webview	WindowFormat.Webview	
+WindowFormat	building/config.html#WindowFormat	config: WindowFormat	
+WiishConfig	building/config.html#WiishConfig	config: WiishConfig	
+BaseConfig	building/config.html#BaseConfig	config: BaseConfig	
+MacConfig	building/config.html#MacConfig	config: MacConfig	
+MacDesktopConfig	building/config.html#MacDesktopConfig	config: MacDesktopConfig	
+MaciOSConfig	building/config.html#MaciOSConfig	config: MaciOSConfig	
+AndroidConfig	building/config.html#AndroidConfig	config: AndroidConfig	
+hash	building/config.html#hash,WiishConfig	config: hash(c: WiishConfig): Hash	
+`$`	building/config.html#$,C	config: `$`[C: ref object](cfg: C): string	
+add	building/config.html#add,WiishConfig,MacConfig	config: add(c`gensym0: WiishConfig; sub`gensym0: MacConfig)	
+has	building/config.html#has,WiishConfig,	config: has(wc`gensym0: WiishConfig; ext`gensym0: typedesc[MacConfig]): bool	
+get	building/config.html#get,WiishConfig,	config: get(wc`gensym0: WiishConfig; ext`gensym0: typedesc[MacConfig]): MacConfig	
+with	building/config.html#with.t,WiishConfig,,untyped,untyped	config: with(wc`gensym0: WiishConfig; ext`gensym0: typedesc[MacConfig];\n     varname`gensym0: untyped; body`gensym0: untyped): untyped	
+add	building/config.html#add,WiishConfig,MacDesktopConfig	config: add(c`gensym17: WiishConfig; sub`gensym17: MacDesktopConfig)	
+has	building/config.html#has,WiishConfig,_2	config: has(wc`gensym17: WiishConfig; ext`gensym17: typedesc[MacDesktopConfig]): bool	
+get	building/config.html#get,WiishConfig,_2	config: get(wc`gensym17: WiishConfig; ext`gensym17: typedesc[MacDesktopConfig]): MacDesktopConfig	
+with	building/config.html#with.t,WiishConfig,,untyped,untyped_2	config: with(wc`gensym17: WiishConfig; ext`gensym17: typedesc[MacDesktopConfig];\n     varname`gensym17: untyped; body`gensym17: untyped): untyped	
+add	building/config.html#add,WiishConfig,MaciOSConfig	config: add(c`gensym34: WiishConfig; sub`gensym34: MaciOSConfig)	
+has	building/config.html#has,WiishConfig,_3	config: has(wc`gensym34: WiishConfig; ext`gensym34: typedesc[MaciOSConfig]): bool	
+get	building/config.html#get,WiishConfig,_3	config: get(wc`gensym34: WiishConfig; ext`gensym34: typedesc[MaciOSConfig]): MaciOSConfig	
+with	building/config.html#with.t,WiishConfig,,untyped,untyped_3	config: with(wc`gensym34: WiishConfig; ext`gensym34: typedesc[MaciOSConfig];\n     varname`gensym34: untyped; body`gensym34: untyped): untyped	
+add	building/config.html#add,WiishConfig,AndroidConfig	config: add(c`gensym51: WiishConfig; sub`gensym51: AndroidConfig)	
+has	building/config.html#has,WiishConfig,_4	config: has(wc`gensym51: WiishConfig; ext`gensym51: typedesc[AndroidConfig]): bool	
+get	building/config.html#get,WiishConfig,_4	config: get(wc`gensym51: WiishConfig; ext`gensym51: typedesc[AndroidConfig]): AndroidConfig	
+with	building/config.html#with.t,WiishConfig,,untyped,untyped_4	config: with(wc`gensym51: WiishConfig; ext`gensym51: typedesc[AndroidConfig];\n     varname`gensym51: untyped; body`gensym51: untyped): untyped	
+wiishConfig	building/config.html#wiishConfig_2	config: wiishConfig	

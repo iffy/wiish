@@ -1,0 +1,5 @@
+JavaVMAttachArgs	androidutil.html#JavaVMAttachArgs	androidutil: JavaVMAttachArgs	
+jniErrorMessage	androidutil.html#jniErrorMessage,jint	androidutil: jniErrorMessage(err: jint): string	
+ok	androidutil.html#ok,jint	androidutil: ok(rc: jint)	
+initializeJavaVM	androidutil.html#initializeJavaVM,JNIEnvPtr	androidutil: initializeJavaVM(env: JNIEnvPtr)	
+withJEnv	androidutil.html#withJEnv.t,untyped,untyped	androidutil: withJEnv(env: untyped; body: untyped): untyped	

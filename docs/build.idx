@@ -1,0 +1,4 @@
+detectTargetOS	build.html#detectTargetOS,TargetFormat	build: detectTargetOS(targetFormat: TargetFormat): TargetOS	
+detectTargetFormat	build.html#detectTargetFormat,TargetOS	build: detectTargetFormat(targetOS: TargetOS): TargetFormat	
+doBuildSteps	build.html#doBuildSteps.t,ref.BuildContext,T,set[BuildStep]	build: doBuildSteps[T](ctx: ref BuildContext; builders: T; steps: set[BuildStep] = {})	
+build	build.html#build.t,T	build: build[T](builders: T)	

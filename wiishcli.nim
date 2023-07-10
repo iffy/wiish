@@ -10,7 +10,6 @@ import wiish/doctor
 
 import wiish/plugins/standard/standard_doctor
 import wiish/plugins/webview/webview_doctor
-import wiish/plugins/sdl2/sdl2_doctor
 
 proc extractVersion(nimblefile: string): string =
   for line in nimblefile.splitLines():
@@ -72,7 +71,6 @@ proc runDoctor(plugins: seq[string] = @[], targetOS: set[TargetOS] = {}, targetF
   var results: seq[DoctorResult]
   results.add standard_doctor.checkDoctor()
   results.add webview_doctor.checkDoctor()
-  results.add sdl2_doctor.checkDoctor()
   var valid: seq[DoctorResult]
   for r in results:
     let selected = r.isSelected(targetOS, targetFormat, plugins)

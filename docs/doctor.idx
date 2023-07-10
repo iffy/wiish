@@ -1,0 +1,11 @@
+Working	doctor.html#Working	DoctorStatus.Working	
+NotWorking	doctor.html#NotWorking	DoctorStatus.NotWorking	
+NotWorkingButOptional	doctor.html#NotWorkingButOptional	DoctorStatus.NotWorkingButOptional	
+DoctorStatus	doctor.html#DoctorStatus	doctor: DoctorStatus	
+DoctorResult	doctor.html#DoctorResult	doctor: DoctorResult	
+ok	doctor.html#ok,DoctorResult	doctor: ok(res: DoctorResult): bool	
+ok	doctor.html#ok,seq[DoctorResult]	doctor: ok(res: seq[DoctorResult]): bool	
+isSelected	doctor.html#isSelected,DoctorResult,set[TargetOS],set[TargetFormat],seq[string]	doctor: isSelected(res: DoctorResult; targetOS: set[TargetOS] = {};\n           targetFormat: set[TargetFormat] = {}; plugins: seq[string] = @[]): bool	
+filter	doctor.html#filter,seq[DoctorResult],set[TargetOS],set[TargetFormat],seq[string]	doctor: filter(res: seq[DoctorResult]; targetOS: set[TargetOS] = {};\n       targetFormat: set[TargetFormat] = {}; plugins: seq[string] = @[]): seq[\n    DoctorResult]	
+display	doctor.html#display,DoctorResult	doctor: display(res: DoctorResult; selected = true)	
+dr	doctor.html#dr.t,seq[DoctorResult],string,string,untyped	doctor: dr(res: var seq[DoctorResult]; plugin_s: string; name_s: string; body: untyped): untyped	
