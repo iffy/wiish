@@ -16,7 +16,7 @@ var wb = WiishBuild(
       c.category_type = "public.app-category.example"
     cfg.with(MaciOSConfig, c):
       c.sdk_version = ""
-      c.provisioning_profile = ""
+      c.provisioning_profile_id = ""
     cfg.with(AndroidConfig, c):
       c.java_package_name = "org.wiish.webviewexample"
 )

@@ -20,7 +20,6 @@ import wiish/building/buildutil
 
 const
   CODE_SIGN_IDENTITY_VARNAME = "WIISH_IOS_SIGNING_IDENTITY"
-  PROVISIONING_PROFILE_VARNAME = "WIISH_IOS_PROVISIONING_PROFILE_PATH"
   SIMULATOR_APP = "/Applications/Xcode.app/Contents/Developer/Applications/Simulator.app"
 
 var
@@ -314,6 +313,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
     sh "plutil", "-convert", "json", pbxproj_path
     var pbx = readFile(pbxproj_path).parseJson()
     let build_version = now().format("yyyyMMddHHmmss")
+    let provisioning_profile_id = ctx.config.get(MaciOSConfig).provisioning_profile_id
     for (key,obj) in pbx["objects"].pairs():
       var buildSettings = obj.getOrDefault("buildSettings")
       if not buildSettings.isNil:
@@ -323,6 +323,10 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
         if buildSettings.hasKey("CURRENT_PROJECT_VERSION"):
           buildSettings["CURRENT_PROJECT_VERSION"] = % build_version
           ctx.log &"set CURRENT_PROJECT_VERSION to {build_version}" 
+        if provisioning_profile_id != "":
+          if buildSettings.hasKey("PROVISIONING_PROFILE_SPECIFIER"):
+            buildSettings["PROVISIONING_PROFILE_SPECIFIER"] = % provisioning_profile_id
+            ctx.log &"set PROVISIONING_PROFILE_SPECIFIER to {provisioning_profile_id}" 
       if obj.hasKey("productName"):
         obj["productName"] = % ctx.config.name
         ctx.log &"set productName to {ctx.config.name}"
@@ -377,6 +381,11 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
         "build",
         "CONFIGURATION_BUILD_DIR=" & ctx.dist_dir.absolutePath,
       ]
+    let prov_profile_id = ctx.config.get(MaciOSConfig).provisioning_profile_id
+    if prov_profile_id != "":
+      args.add @[
+        "PROVISIONING_PROFILE=" & prov_profile_id
+      ]
     ctx.log args.join(" ")
     sh(args)
   of PostBuild:
@@ -384,10 +393,7 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       ctx.logStartStep()
       let export_plist_path = ctx.build_dir.absolutePath / "ExportOptions.plist"
       if not existsFile(export_plist_path):
-        var prov_profile = getEnv(PROVISIONING_PROFILE_VARNAME, "")
-        var prov_profile_name = ""
-        if prov_profile != "":
-          prov_profile_name = prov_profile.getProvisioningProfileName()
+        var prov_profile_name = ctx.config.get(MaciOSConfig).provisioning_profile_id
         export_plist_path.writeFile(fmt"""
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -422,36 +428,6 @@ proc iosRunStep*(step: BuildStep, ctx: ref BuildContext) =
       sh(args)
   of PrePackage:
     discard
-  #   if not ctx.simulator:
-  #     ctx.logStartStep
-  #     # provisioning profile
-  #     var prov_profile = getEnv(PROVISIONING_PROFILE_VARNAME, "")
-  #     if prov_profile == "":
-  #       let options = listProvisioningProfiles()
-  #       if options.len > 0:
-  #         debug &"Since {PROVISIONING_PROFILE_VARNAME} was not set, choosing a provisioning profile at random ..."
-  #         prov_profile = options[0]
-  #       else:
-  #         raise newException(CatchableError, "No provisioning profile set.  Run 'wiish doctor' for instructions.")
-      
-  #     let dst = ctx.app_dir/"embedded.mobileprovision"
-  #     ctx.log &"Copying '{prov_profile}' to '{dst}'"
-  #     copyFile(prov_profile, dst)
-
-  #     # Extract entitlements from provisioning profile and put them in the signature
-  #     let prov_guts = prov_profile.readFile()
-  #     let i_prestart = prov_guts.find("<key>Entitlements")
-  #     let i_start = prov_guts.find("<dict>", i_prestart)
-  #     let i_end = prov_guts.find("</dict>", i_start) + "</dict>".len
-  #     let entitlements = prov_guts[i_start .. i_end]
-  #     writeFile(ctx.entitlements_file, &"""
-  #       <?xml version="1.0" encoding="UTF-8"?>
-  #       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-  #       <plist version="1.0">
-  #       {entitlements}
-  #       </plist>
-  #     """)
-  #     ctx.log &"Wrote {ctx.entitlements_file}"
   of Package:
     discard
   of PostPackage:
@@ -572,26 +548,26 @@ proc checkDoctor*(): seq[DoctorResult] =
         if identities.len > 0:
           dr.fix.add(&"For instance: {CODE_SIGN_IDENTITY_VARNAME}='{identities[0].fullname}' might work.")
 
-    result.dr "standard", "provisioning-profile":
-      dr.targetOS = {Ios}
-      if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
-        dr.status = NotWorking
-        dr.error = "No provisioning profile chosen for iOS code signing"
-        dr.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found in '{PROV_PROFILE_DIR}'"""
-        let possible_profiles = listProvisioningProfiles()
-        if possible_profiles.len == 0:
-          dr.fix.add("""
-  You *might* be able to create such a profile by:
-  1. Opening Xcode
-  2. Creating a blank iOS project
-  3. Enabling 'Automatically manage signing'
-  4. Building the project once.
+  #   result.dr "standard", "provisioning-profile":
+  #     dr.targetOS = {Ios}
+  #     if getEnv(PROVISIONING_PROFILE_VARNAME, "") == "":
+  #       dr.status = NotWorking
+  #       dr.error = "No provisioning profile chosen for iOS code signing"
+  #       dr.fix = &"""Set {PROVISIONING_PROFILE_VARNAME} to the path of a valid provisioning profile.  They can be found in '{PROV_PROFILE_DIR}'"""
+  #       let possible_profiles = listProvisioningProfiles()
+  #       if possible_profiles.len == 0:
+  #         dr.fix.add("""
+  # You *might* be able to create such a profile by:
+  # 1. Opening Xcode
+  # 2. Creating a blank iOS project
+  # 3. Enabling 'Automatically manage signing'
+  # 4. Building the project once.
 
-  TODO: come up with less goofy instructions.""")
-        else:
-          dr.fix.add(" Here are the profiles wiish can identify:\l\l")
-          for prof in possible_profiles:
-            dr.fix.add(&"   {prof.extractFilename()} '{prof.getProvisioningProfileNAme()}'\l")
+  # TODO: come up with less goofy instructions.""")
+  #       else:
+  #         dr.fix.add(" Here are the profiles wiish can identify:\l\l")
+  #         for prof in possible_profiles:
+  #           dr.fix.add(&"   {prof.extractFilename()} '{prof.getProvisioningProfileNAme()}'\l")
   else:
     result.dr "standard", "os":
       dr.targetOS = {Ios,IosSimulator}

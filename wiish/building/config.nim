@@ -72,7 +72,7 @@ type
   
   MaciOSConfig* = ref object
     sdk_version*: string
-    provisioning_profile*: string
+    provisioning_profile_id*: string
 
   AndroidArchPair = tuple
     abi: string
@@ -114,7 +114,7 @@ extend(MacDesktopConfig, MacDesktopConfig(
 )
 extend(MaciOSConfig, MaciOSConfig(
     sdk_version: "",
-    provisioning_profile: "",
+    provisioning_profile_id: "",
   )
 )
 extend(AndroidConfig, AndroidConfig(
