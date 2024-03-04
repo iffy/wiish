@@ -173,10 +173,10 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
         "--genScript",
         &"-d:appJavaPackageName={ctx.config.get(AndroidConfig).java_package_name}",
         "--nimcache:" & nimcachedir,
-        ctx.main_nim,
       ])
       if BUILD_AS_LIB:
         nimFlags.add("--app:lib")
+      nimFlags.add(ctx.main_nim)
       ctx.log nimFlags.join(" ")
       sh(nimFlags)
 
