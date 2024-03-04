@@ -15,6 +15,8 @@ import wiish/doctor
 import wiish/building/config
 import wiish/building/buildutil
 
+const BUILD_AS_LIB = true
+
 proc csource_dir*(ctx: ref BuildContext, android_abi: string): string {.inline.}
 
 proc replaceInFile*(filename: string, replacements: Table[string, string]) =
@@ -57,7 +59,10 @@ proc parseNimBuildDeps(path: string): tuple[cfiles:seq[string], ipaths:seq[strin
   return (external_c_files, external_i_paths)
 
 proc nimBuildDepJson(ctx: ref BuildContext, abi: string): string =
-  ctx.csource_dir(abi) / ctx.main_nim.extractFilename.changeFileExt(".json")
+  when BUILD_AS_LIB:
+    ctx.csource_dir(abi) / "lib" & ctx.main_nim.extractFilename.changeFileExt(".json")
+  else:
+    ctx.csource_dir(abi) / ctx.main_nim.extractFilename.changeFileExt(".json")
 
 proc getCFiles*(ctx: ref BuildContext): seq[string] =
   ## Get the list of C files and static libs to be compiled
@@ -170,6 +175,8 @@ proc androidRunStep*(step: BuildStep, ctx: ref BuildContext) =
         "--nimcache:" & nimcachedir,
         ctx.main_nim,
       ])
+      if BUILD_AS_LIB:
+        nimFlags.add("--app:lib")
       ctx.log nimFlags.join(" ")
       sh(nimFlags)
 
