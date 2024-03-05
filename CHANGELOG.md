@@ -1,3 +1,14 @@
+# v0.6.0 - 2024-03-04
+
+- **BREAKING CHANGE:** Removed support for SDL/OpenGL. It's too much to maintain and I don't use it.
+- **BREAKING CHANGE:** Switch to `chronos` as the default async backend. To use `std/asyncdispatch` compile with `-d:asyncBackend=asyncdispatch`.
+- **BREAKING CHANGE:** You can set the provisioning_profile_id rather than a path to the file now
+- **NEW:** Building for Android will now also create a bundle instead of just APKs
+- **NEW:** Name Android build artifacts with the applicationId and version information
+- **NEW:** Android builds can now be signed with `--sign`
+- **FIX:** When building the Android shared library, build it as a lib instead of a main program
+- **FIX:** When signing Android stuff, only sign aab files, not apk files
+
 # v0.5.0 - 2022-12-14
 
 - **BREAKING CHANGE:** Remove SDL2/OpenGL examples from tests. I don't use them and don't have the bandwidth to maintain them in parallel with the webview code. I expect someday that SDL2/OpenGL will return.
